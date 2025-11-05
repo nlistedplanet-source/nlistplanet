@@ -153,6 +153,11 @@ npm run build
 
 This creates an optimized build in the `build/` folder.
 
+## 🌐 Deployment
+
+- **Frontend**: Vercel - `https://nlistplanet.vercel.app`
+- **Backend**: Render - `https://nlistplanet-backend.onrender.com`
+
 ## 📞 Support
 
 For issues or questions, please create an issue in the repository.
