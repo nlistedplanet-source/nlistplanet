@@ -1,0 +1,16 @@
+{
+  "companies": [
+    {"id": 1, "name": "OYO Rooms", "isin": "INE803A01015", "sector": "Hospitality", "logo": "🏨", "pricePerShare": 850, "minPrice": 750, "shares": 500, "valuation": "₹4.25 Cr", "description": "Leading budget hotel chain", "founded": "2013", "founders": "Ritesh Agarwal"},
+    {"id": 2, "name": "Unacademy", "isin": "INE902A01017", "sector": "EdTech", "logo": "📚", "pricePerShare": 620, "minPrice": 550, "shares": 800, "valuation": "₹4.96 Cr", "description": "Online learning platform", "founded": "2015", "founders": "Roman Saini"},
+    {"id": 3, "name": "Byju's", "isin": "INE903A01018", "sector": "EdTech", "logo": "🎓", "pricePerShare": 750, "minPrice": 650, "shares": 1000, "valuation": "₹7.5 Cr", "description": "AI learning app", "founded": "2011", "founders": "Byju Raveendran"},
+    {"id": 4, "name": "Swiggy", "isin": "INE904A01019", "sector": "Food Tech", "logo": "🍕", "pricePerShare": 580, "minPrice": 500, "shares": 1200, "valuation": "₹6.96 Cr", "description": "Food delivery", "founded": "2014", "founders": "Sriharsha Majety"},
+    {"id": 5, "name": "Zomato", "isin": "INE905A01020", "sector": "Food Tech", "logo": "🍜", "pricePerShare": 720, "minPrice": 620, "shares": 900, "valuation": "₹6.48 Cr", "description": "Online food delivery", "founded": "2010", "founders": "Deepinder Goyal"},
+    {"id": 6, "name": "PharmEasy", "isin": "INE906A01021", "sector": "HealthTech", "logo": "💊", "pricePerShare": 420, "minPrice": 350, "shares": 600, "valuation": "₹2.52 Cr", "description": "Online medicine", "founded": "2015", "founders": "Dharmil Sheth"},
+    {"id": 7, "name": "Ola Cabs", "isin": "INE907A01022", "sector": "Mobility", "logo": "🚗", "pricePerShare": 890, "minPrice": 780, "shares": 700, "valuation": "₹6.23 Cr", "description": "Ride-hailing", "founded": "2010", "founders": "Bhavish Aggarwal"},
+    {"id": 8, "name": "Urban Company", "isin": "INE908A01023", "sector": "Services", "logo": "🔧", "pricePerShare": 480, "minPrice": 420, "shares": 550, "valuation": "₹2.64 Cr", "description": "Home services", "founded": "2014", "founders": "Abhiraj Bhal"},
+    {"id": 9, "name": "Dream11", "isin": "INE909A01024", "sector": "Gaming", "logo": "🏆", "pricePerShare": 650, "minPrice": 570, "shares": 400, "valuation": "₹2.6 Cr", "description": "Fantasy sports", "founded": "2008", "founders": "Harsh Jain"},
+    {"id": 10, "name": "Nykaa", "isin": "INE910A01025", "sector": "E-commerce", "logo": "💄", "pricePerShare": 550, "minPrice": 480, "shares": 800, "valuation": "₹4.4 Cr", "description": "Beauty e-commerce", "founded": "2012", "founders": "Falguni Nayar"},
+    {"id": 11, "name": "Razorpay", "isin": "INE911A01026", "sector": "FinTech", "logo": "💳", "pricePerShare": 920, "minPrice": 820, "shares": 300, "valuation": "₹2.76 Cr", "description": "Payment gateway", "founded": "2014", "founders": "Harshil Mathur"},
+    {"id": 12, "name": "Lenskart", "isin": "INE912A01027", "sector": "Retail", "logo": "👓", "pricePerShare": 510, "minPrice": 450, "shares": 600, "valuation": "₹3.06 Cr", "description": "Online eyewear", "founded": "2012", "founders": "Peyush Bansal"}
+  ]
+}
