@@ -49,7 +49,9 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
         }
       }
     } catch (err) {
-      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Signup/Signin Error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
