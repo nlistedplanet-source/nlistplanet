@@ -73,6 +73,20 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     }
   };
 
+  const handleClose = () => {
+    setStep(1);
+    setOtp('');
+    setError('');
+    setFormData({
+      email: '',
+      password: '',
+      name: '',
+      mobile: '',
+      role: 'individual'
+    });
+    onClose();
+  };
+
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setError('');
@@ -99,7 +113,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               {isSignUp ? '✍️ Sign Up' : '🔑 Sign In'}
             </h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
             >
               ✕

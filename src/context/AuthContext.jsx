@@ -91,35 +91,100 @@ export function AuthProvider({ children }) {
     }
   ]);
 
-  const signup = (userData) => {
-    const emailExists = users.some(u => u.email === userData.email);
-    if (emailExists) return { success: false };
-
-    // Generate unique user ID
-    const userCount = users.length + 1;
-    const userId = `USR${String(userCount).padStart(3, '0')}`;
-
-    const newUser = {
-      id: Date.now(),
-      userId,
-      ...userData,
-      walletBalance: 50000,
-      roles: ['buyer', 'seller'], // All new users are regular users only
-      rating: 5,
-      emailVerified: userData.emailVerified || false,
-      mobileVerified: userData.mobileVerified || false,
-      joinedDate: new Date().toISOString(),
-    };
-    setUsers([...users, newUser]);
-    setUser(newUser);
-    return { success: true };
+  const signup = async (userData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.signup(userData);
+      if (response.data.success) {
+        const token = response.data.token;
+        localStorage.setItem('authToken', token);
+        setUser(response.data.user);
+        return { success: true, user: response.data.user };
+      }
+      return { success: false };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Signup failed');
+      throw new Error(err.response?.data?.message || 'Signup failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const signin = (email, password) => {
-    const found = users.find(u => u.email === email && u.password === password);
-    if (!found) return { success: false };
-    setUser(found);
-    return { success: true, user: found };
+  const signin = async (email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.signin(email, password);
+      if (response.data.success) {
+        const token = response.data.token;
+        localStorage.setItem('authToken', token);
+        setUser(response.data.user);
+        return { success: true, user: response.data.user };
+      }
+      return { success: false };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid credentials');
+      throw new Error(err.response?.data?.message || 'Invalid credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendEmailOTP = async (email) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.sendEmailOTP(email);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send email OTP');
+      throw new Error(err.response?.data?.message || 'Failed to send email OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyEmailOTP = async (email, otp) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.verifyEmailOTP(email, otp);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid email OTP');
+      throw new Error(err.response?.data?.message || 'Invalid email OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMobileOTP = async (mobile) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.sendMobileOTP(mobile);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send mobile OTP');
+      throw new Error(err.response?.data?.message || 'Failed to send mobile OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyMobileOTP = async (mobile, otp) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.verifyMobileOTP(mobile, otp);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid mobile OTP');
+      throw new Error(err.response?.data?.message || 'Invalid mobile OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
@@ -142,7 +207,22 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, currentRole, switchRole, signup, signin, logout, users, getUserDisplayName }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      currentRole, 
+      switchRole, 
+      signup, 
+      signin, 
+      logout, 
+      users, 
+      getUserDisplayName,
+      sendEmailOTP,
+      verifyEmailOTP,
+      sendMobileOTP,
+      verifyMobileOTP,
+      loading,
+      error
+    }}>
       {children}
     </AuthContext.Provider>
   );
