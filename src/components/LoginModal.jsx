@@ -112,164 +112,96 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
             </div>
           )}
 
-          {/* Step 1: Basic Info */}
-          {(!isSignUp || step === 1) && (
-            <>
-              {isSignUp && (
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    👤 Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required={isSignUp}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  📧 Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  🔒 Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-                  placeholder="Enter your password"
-                />
-              </div>
-
-              {isSignUp && (
-                <>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      � Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={handleChange}
-                      required={isSignUp}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-                      placeholder="+91 9876543210"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      �💼 Account Type
-                    </label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition bg-white"
-                    >
-                      <option value="individual">👤 Individual Investor</option>
-                      <option value="hni">💎 HNI (High Net Worth)</option>
-                      <option value="institutional">🏢 Institutional Investor</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {/* Step 2: Email OTP */}
-          {isSignUp && step === 2 && (
+          {/* Name Field - Signup Only */}
+          {isSignUp && (
             <div>
-              <div className="bg-purple-50 border-2 border-purple-200 p-4 rounded-lg mb-4">
-                <p className="text-purple-700 font-medium">📧 Email OTP sent to:</p>
-                <p className="text-purple-900 font-semibold">{formData.email}</p>
-              </div>
               <label className="block text-gray-700 font-medium mb-2">
-                🔢 Enter Email OTP
+                👤 Full Name
               </label>
               <input
                 type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 required
-                maxLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-center text-2xl font-bold tracking-widest"
-                placeholder="000000"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                placeholder="Enter your full name"
               />
             </div>
           )}
 
-          {/* Step 3: Mobile OTP */}
-          {isSignUp && step === 3 && (
+          {/* Email Field */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              📧 Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              placeholder="your.email@example.com"
+            />
+          </div>
+
+          {/* Password Field */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              🔒 Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {/* Mobile Field - Signup Only */}
+          {isSignUp && (
             <div>
-              <div className="bg-green-50 border-2 border-green-200 p-4 rounded-lg mb-4">
-                <p className="text-green-700 font-medium">📱 SMS OTP sent to:</p>
-                <p className="text-green-900 font-semibold">{formData.mobile}</p>
-              </div>
               <label className="block text-gray-700 font-medium mb-2">
-                🔢 Enter Mobile OTP
+                📱 Mobile Number
               </label>
               <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                type="tel"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
                 required
-                maxLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-center text-2xl font-bold tracking-widest"
-                placeholder="000000"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                placeholder="+91 9876543210"
               />
             </div>
           )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? '⏳ Please wait...' : 
-             isSignUp ? 
-               (step === 1 ? '📧 Send Email OTP' : 
-                step === 2 ? '✅ Verify Email' : 
-                '✅ Verify Mobile & Complete') : 
-             '🚀 Sign In'}
+            {loading ? '⏳ Please wait...' : isSignUp ? '✍️ Sign Up' : '🚀 Sign In'}
           </button>
 
-          {step === 1 && (
-            <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-gray-600">
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                <button
-                  type="button"
-                  onClick={toggleMode}
-                  className="ml-2 text-purple-600 font-semibold hover:text-purple-800 transition"
-                >
-                  {isSignUp ? 'Sign In' : 'Sign Up'}
-                </button>
-              </p>
-            </div>
-          )}
+          {/* Toggle Sign In/Sign Up */}
+          <div className="text-center pt-4 border-t border-gray-200">
+            <p className="text-gray-600">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="ml-2 text-purple-600 font-semibold hover:text-purple-800 transition"
+              >
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
