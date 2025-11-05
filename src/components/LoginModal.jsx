@@ -6,7 +6,8 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    mobile: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          mobile: '',
+          mobile: formData.mobile,
           userType: 'individual'
         };
         const result = await signup(userData);
@@ -59,7 +60,8 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     setFormData({
       email: '',
       password: '',
-      name: ''
+      name: '',
+      mobile: ''
     });
     onClose();
   };
@@ -70,7 +72,8 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     setFormData({
       email: '',
       password: '',
-      name: ''
+      name: '',
+      mobile: ''
     });
   };
 
