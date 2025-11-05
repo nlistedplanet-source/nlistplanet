@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
 
 const LoginModal = ({ isOpen, onClose, setPage }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
-    mobile: '',
-    role: 'individual'
+    name: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,24 +26,22 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
 
     try {
       if (isSignUp) {
-        // Simple Signup
         const userData = {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          mobile: formData.mobile,
-          userType: formData.role
+          mobile: '',
+          userType: 'individual'
         };
         const result = await signup(userData);
         if (result && result.success) {
-          onClose();
+          handleClose();
           setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
         }
       } else {
-        // Sign In
         const result = await signin(formData.email, formData.password);
         if (result && result.success) {
-          onClose();
+          handleClose();
           setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
         } else {
           setError('Invalid email or password');
@@ -60,41 +54,12 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      setLoading(true);
-      const decoded = jwtDecode(credentialResponse.credential);
-      
-      // Google signup/signin with decoded user info
-      const userData = {
-        name: decoded.name,
-        email: decoded.email,
-        password: 'google-oauth-' + decoded.sub, // Google ID as password
-        mobile: '',
-        userType: 'individual',
-        googleId: decoded.sub
-      };
-      
-      const result = await signup(userData);
-      if (result && result.success) {
-        onClose();
-        setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
-      }
-    } catch (err) {
-      setError('Google sign-in failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleClose = () => {
     setError('');
     setFormData({
       email: '',
       password: '',
-      name: '',
-      mobile: '',
-      role: 'individual'
+      name: ''
     });
     onClose();
   };
@@ -105,9 +70,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     setFormData({
       email: '',
       password: '',
-      name: '',
-      mobile: '',
-      role: 'individual'
+      name: ''
     });
   };
 
