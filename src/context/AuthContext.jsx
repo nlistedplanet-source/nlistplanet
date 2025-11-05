@@ -104,8 +104,9 @@ export function AuthProvider({ children }) {
       }
       return { success: false };
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
-      throw new Error(err.response?.data?.message || 'Signup failed');
+      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Signup failed';
+      setError(apiMessage);
+      throw new Error(apiMessage);
     } finally {
       setLoading(false);
     }
@@ -124,8 +125,9 @@ export function AuthProvider({ children }) {
       }
       return { success: false };
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials');
-      throw new Error(err.response?.data?.message || 'Invalid credentials');
+      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Invalid credentials';
+      setError(apiMessage);
+      throw new Error(apiMessage);
     } finally {
       setLoading(false);
     }
