@@ -380,7 +380,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden my-auto">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -436,7 +436,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
           </button>
 
           {isSignIn && (
-            <div className="flex items-center justify-between text-sm text-purple-600 font-semibold">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-purple-600 font-semibold">
               <button
                 type="button"
                 onClick={() => switchMode('forgot')}
