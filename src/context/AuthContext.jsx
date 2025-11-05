@@ -189,6 +189,36 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const requestPasswordReset = async (email, mobile) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.requestPasswordReset({ email, mobile });
+      return response.data;
+    } catch (err) {
+      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to send reset OTP';
+      setError(apiMessage);
+      throw new Error(apiMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async ({ email, mobile, otp, newPassword }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.resetPassword({ email, mobile, otp, newPassword });
+      return response.data;
+    } catch (err) {
+      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to reset password';
+      setError(apiMessage);
+      throw new Error(apiMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setCurrentRole('buyer');
@@ -222,6 +252,8 @@ export function AuthProvider({ children }) {
       verifyEmailOTP,
       sendMobileOTP,
       verifyMobileOTP,
+      requestPasswordReset,
+      resetPassword,
       loading,
       error
     }}>

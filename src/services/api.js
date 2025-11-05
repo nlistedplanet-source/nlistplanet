@@ -32,7 +32,9 @@ export const authAPI = {
   sendEmailOTP: (email) => api.post('/auth/send-email-otp', { email }),
   verifyEmailOTP: (email, otp) => api.post('/auth/verify-email-otp', { email, otp }),
   sendMobileOTP: (mobile) => api.post('/auth/send-mobile-otp', { mobile }),
-  verifyMobileOTP: (mobile, otp) => api.post('/auth/verify-mobile-otp', { mobile, otp })
+  verifyMobileOTP: (mobile, otp) => api.post('/auth/verify-mobile-otp', { mobile, otp }),
+  requestPasswordReset: (payload) => api.post('/auth/forgot-password/send-otp', payload),
+  resetPassword: (payload) => api.post('/auth/forgot-password/reset', payload)
 };
 
 // User APIs
