@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
 const LoginModal = ({ isOpen, onClose, setPage }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [step, setStep] = useState(1); // 1: Form, 2: Email OTP, 3: Mobile OTP
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -11,10 +12,9 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     mobile: '',
     role: 'individual'
   });
-  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signin, signup, sendEmailOTP, verifyEmailOTP, sendMobileOTP, verifyMobileOTP } = useAuth();
+  const { signin, signup } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -30,31 +30,18 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
 
     try {
       if (isSignUp) {
-        if (step === 1) {
-          // Step 1: Send Email OTP
-          await sendEmailOTP(formData.email);
-          setStep(2);
-        } else if (step === 2) {
-          // Step 2: Verify Email OTP & Send Mobile OTP
-          await verifyEmailOTP(formData.email, otp);
-          await sendMobileOTP(formData.mobile);
-          setOtp('');
-          setStep(3);
-        } else if (step === 3) {
-          // Step 3: Verify Mobile OTP & Complete Signup
-          await verifyMobileOTP(formData.mobile, otp);
-          const userData = {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            mobile: formData.mobile,
-            userType: formData.role
-          };
-          const result = await signup(userData);
-          if (result && result.success) {
-            onClose();
-            setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
-          }
+        // Simple Signup
+        const userData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          mobile: formData.mobile,
+          userType: formData.role
+        };
+        const result = await signup(userData);
+        if (result && result.success) {
+          onClose();
+          setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
         }
       } else {
         // Sign In
@@ -73,9 +60,34 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const decoded = jwtDecode(credentialResponse.credential);
+      
+      // Google signup/signin with decoded user info
+      const userData = {
+        name: decoded.name,
+        email: decoded.email,
+        password: 'google-oauth-' + decoded.sub, // Google ID as password
+        mobile: '',
+        userType: 'individual',
+        googleId: decoded.sub
+      };
+      
+      const result = await signup(userData);
+      if (result && result.success) {
+        onClose();
+        setPage(result.user.roles.includes('admin') ? 'admin' : 'user');
+      }
+    } catch (err) {
+      setError('Google sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleClose = () => {
-    setStep(1);
-    setOtp('');
     setError('');
     setFormData({
       email: '',
@@ -90,8 +102,6 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setError('');
-    setStep(1);
-    setOtp('');
     setFormData({
       email: '',
       password: '',
