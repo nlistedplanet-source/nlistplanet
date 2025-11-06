@@ -13,12 +13,12 @@ export default function AboutUs({ setPage }) {
             <div className="flex items-center justify-center mb-6">
               <img 
                 src="/images/logos/logo.png" 
-                alt="Nlisted Logo" 
+                alt="List Logo" 
                 className="h-20 w-20 object-contain"
               />
               <h1 className="text-6xl font-bold ml-4">
-                <span className="text-white">N</span>
-                <span className="text-emerald-300">listed</span>
+                <span className="text-white">L</span>
+                <span className="text-emerald-300">ist</span>
               </h1>
             </div>
             <p className="text-2xl text-purple-100 mb-4">
@@ -295,7 +295,7 @@ export default function AboutUs({ setPage }) {
         <div className="max-w-5xl mx-auto px-4 text-center">
           <h2 className="text-5xl font-bold mb-6">Ready to Start Your Investment Journey?</h2>
           <p className="text-2xl text-purple-100 mb-10">
-            Join thousands of investors who trust Nlisted for their unlisted shares investments
+            Join thousands of investors who trust List for their unlisted shares investments
           </p>
           <div className="flex gap-6 justify-center flex-wrap">
             <button 
@@ -322,10 +322,10 @@ export default function AboutUs({ setPage }) {
             {/* Company Info */}
             <div className="col-span-2">
               <div className="flex items-center mb-4">
-                <img src="/images/logos/logo.png" alt="Nlisted Logo" className="h-12 w-12 object-contain" />
+                <img src="/images/logos/logo.png" alt="List Logo" className="h-12 w-12 object-contain" />
                 <h3 className="text-2xl font-bold ml-2">
-                  <span className="text-white">N</span>
-                  <span className="text-emerald-400">listed</span>
+                  <span className="text-white">L</span>
+                  <span className="text-emerald-400">ist</span>
                 </h3>
               </div>
               <p className="text-gray-400 mb-6 max-w-md">

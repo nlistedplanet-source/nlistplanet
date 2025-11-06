@@ -337,7 +337,7 @@ export default function HomePage({ setPage }) {
               Why Choose 
               <img 
                 src="/images/logos/logo.png" 
-                alt="Nlisted Logo" 
+                alt="List Logo" 
                 className="h-28 w-28 inline-block object-contain -mx-5"
               />
               <span className="text-emerald-500">list</span>
@@ -439,12 +439,12 @@ export default function HomePage({ setPage }) {
               <div className="flex items-center gap-2 mb-4">
                 <img 
                   src="/images/logos/logo.png" 
-                  alt="Nlisted Logo" 
+                  alt="List Logo" 
                   className="h-12 w-12 object-contain"
                 />
                 <h3 className="text-2xl font-bold">
-                  <span className="text-white">N</span>
-                  <span className="text-emerald-400">listed</span>
+                  <span className="text-white">L</span>
+                  <span className="text-emerald-400">ist</span>
                 </h3>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">

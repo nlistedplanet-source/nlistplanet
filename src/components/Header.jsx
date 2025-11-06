@@ -20,7 +20,7 @@ export default function Header({ setPage, currentPage }) {
         <button onClick={() => setPage('home')} className="flex items-center cursor-pointer hover:opacity-80 transition">
           <img 
             src="/images/logos/logo.png" 
-            alt="Nlisted Logo" 
+            alt="List Logo" 
             className="h-16 w-16 object-contain"
           />
           <span className="text-3xl font-bold text-gray-800 hover:text-purple-600 transition -ml-4">List</span>
