@@ -579,10 +579,16 @@ export default function HomePage({ setPage }) {
               <p className="text-gray-400 text-sm">
                 © 2025 Nlisted. All rights reserved.
               </p>
-              <div className="flex gap-6">
+              <div className="flex gap-6 items-center">
                 <a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm">Privacy Policy</a>
                 <a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm">Terms of Service</a>
                 <a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm">Cookie Policy</a>
+                <button 
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:shadow-lg hover:scale-105 transition-all duration-300"
+                >
+                  🔑 Login / Sign Up
+                </button>
               </div>
             </div>
           </div>
