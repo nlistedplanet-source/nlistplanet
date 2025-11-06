@@ -1274,26 +1274,39 @@ export default function UserDashboard({ setPage }) {
 							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 							
 							return (
-								<div key={listing.id || listing._id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-									<div className="flex items-start justify-between gap-4">
+								<div key={listing.id || listing._id} className="bg-gradient-to-br from-white to-emerald-50/30 border-2 border-emerald-100 rounded-2xl p-6 shadow-md hover:shadow-xl hover:border-emerald-200 transition-all duration-300">
+									<div className="flex items-start justify-between gap-4 mb-3">
 										<div className="flex-1">
-											<h3 className="text-lg font-semibold text-gray-900">{listing.company}</h3>
-											<div className="flex items-center gap-2 mt-1">
-												<p className="text-xs text-emerald-600 font-medium">{sellerUsername}</p>
-												{listingDate && <span className="text-xs text-gray-400">• {listingDate}</span>}
+											<h3 className="text-xl font-bold text-gray-900 mb-2">{listing.company}</h3>
+											<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+												<div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 border border-emerald-200 rounded-lg">
+													<span className="text-emerald-600 text-sm">👤</span>
+													<span className="text-sm font-bold text-emerald-700">{sellerUsername}</span>
+												</div>
+												{listingDate && (
+													<div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg">
+														<span className="text-blue-500 text-sm">📅</span>
+														<span className="text-sm font-semibold text-blue-700">{listingDate}</span>
+													</div>
+												)}
 											</div>
-											{company?.sector && <p className="text-xs text-gray-400 mt-1">Sector: {company.sector}</p>}
+											{company?.sector && (
+												<div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 border border-purple-100 rounded-md mt-2">
+													<span className="text-purple-500 text-xs">🏢</span>
+													<span className="text-xs font-medium text-purple-700">{company.sector}</span>
+												</div>
+											)}
 										</div>
 										<StatusBadge status={listing.status} />
 									</div>
 									<div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-										<div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
-											<p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Ask price</p>
-											<p className="mt-1 text-base font-semibold text-emerald-700">{formatCurrency(listing.price)}</p>
+										<div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-200 p-4 shadow-sm">
+											<p className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">💰 Ask price</p>
+											<p className="text-xl font-black text-emerald-700">{formatCurrency(listing.price)}</p>
 										</div>
-										<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-											<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Available</p>
-											<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(listing.shares)}</p>
+										<div className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200 p-4 shadow-sm">
+											<p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">📊 Available</p>
+											<p className="text-xl font-black text-slate-800">{formatShares(listing.shares)}</p>
 										</div>
 									</div>
 									<div className="mt-5 flex gap-2">
@@ -1302,10 +1315,10 @@ export default function UserDashboard({ setPage }) {
 												setTradeContext({ type: 'bid', item: listing });
 												setBidOfferData({ price: listing.price, quantity: listing.shares });
 											}}
-											className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
+											className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 border-2 border-emerald-400"
 										>
-											<span>💰</span>
-											<span>{myBid ? 'Update bid' : 'Place bid'}</span>
+											<span className="text-lg">💰</span>
+											<span>{myBid ? 'Update Bid' : 'Place Bid'}</span>
 										</button>
 										<button
 											onClick={() => {
@@ -1317,10 +1330,10 @@ export default function UserDashboard({ setPage }) {
 													alert('Link copied to clipboard!');
 												}
 											}}
-											className="inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition"
+											className="inline-flex items-center justify-center w-12 h-12 rounded-xl font-medium text-white bg-gradient-to-br from-blue-500 to-cyan-500 border-2 border-blue-400 hover:shadow-lg hover:scale-110 transition-all duration-200"
 											title="Share to social media"
 										>
-											<span>📤</span>
+											<span className="text-xl">📤</span>
 										</button>
 										<button
 											onClick={() => {
@@ -1357,10 +1370,10 @@ Report ID: ${listing._id || listing.id}
 												a.click();
 												URL.revokeObjectURL(url);
 											}}
-											className="inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition"
+											className="inline-flex items-center justify-center w-12 h-12 rounded-xl font-medium text-white bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-400 hover:shadow-lg hover:scale-110 transition-all duration-200"
 											title="Download research report"
 										>
-											<span>📥</span>
+											<span className="text-xl">📥</span>
 										</button>
 									</div>
 								</div>
