@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoginModal from './LoginModal';
 
 export default function HomePage({ setPage }) {
   const [displayText, setDisplayText] = useState('');
@@ -6,6 +7,7 @@ export default function HomePage({ setPage }) {
   const [wordIndex, setWordIndex] = useState(0);
   const words = ['Buy', 'Sell'];
   const [charIndex, setCharIndex] = useState(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const currentWord = words[wordIndex];
@@ -594,6 +596,9 @@ export default function HomePage({ setPage }) {
           </div>
         </div>
       </footer>
+
+      {/* Login Modal */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} setPage={setPage} />
     </div>
   );
 }
