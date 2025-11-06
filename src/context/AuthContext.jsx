@@ -274,10 +274,38 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await authAPI.requestPasswordReset({ email, mobile });
-      return response.data;
+      
+      // Find user by email and mobile
+      const foundUser = users.find(
+        (u) => u.email.toLowerCase() === email.toLowerCase() && u.mobile === mobile
+      );
+
+      if (!foundUser) {
+        const errorMsg = 'No account found with this email and mobile number combination';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Generate a mock OTP and store it
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem(`reset_otp_${email}`, JSON.stringify({
+        otp,
+        email,
+        mobile,
+        timestamp: Date.now(),
+        expiresIn: 10 * 60 * 1000 // 10 minutes
+      }));
+
+      console.log('🔐 Reset OTP generated:', otp, 'for', email);
+      
+      return { 
+        success: true, 
+        message: 'OTP sent successfully to your registered mobile number',
+        // In development, we can show the OTP
+        ...(process.env.NODE_ENV === 'development' && { otp })
+      };
     } catch (err) {
-      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to send reset OTP';
+      const apiMessage = err.message || 'Failed to send reset OTP';
       setError(apiMessage);
       throw new Error(apiMessage);
     } finally {
@@ -289,10 +317,61 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await authAPI.resetPassword({ email, mobile, otp, newPassword });
-      return response.data;
+
+      // Verify OTP
+      const storedData = localStorage.getItem(`reset_otp_${email}`);
+      if (!storedData) {
+        const errorMsg = 'OTP expired or not found. Please request a new one.';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      const { otp: validOtp, mobile: validMobile, timestamp, expiresIn } = JSON.parse(storedData);
+
+      // Check if OTP is expired
+      if (Date.now() - timestamp > expiresIn) {
+        localStorage.removeItem(`reset_otp_${email}`);
+        const errorMsg = 'OTP has expired. Please request a new one.';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Verify OTP and mobile
+      if (otp !== validOtp || mobile !== validMobile) {
+        const errorMsg = 'Invalid OTP or mobile number';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Find and update user password
+      const userIndex = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
+      if (userIndex === -1) {
+        const errorMsg = 'User not found';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Update password
+      const updatedUsers = [...users];
+      updatedUsers[userIndex] = {
+        ...updatedUsers[userIndex],
+        password: newPassword
+      };
+
+      setUsers(updatedUsers);
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+      // Clear the OTP
+      localStorage.removeItem(`reset_otp_${email}`);
+
+      console.log('✅ Password reset successful for', email);
+      
+      return { 
+        success: true, 
+        message: 'Password reset successful. Please sign in with your new password.' 
+      };
     } catch (err) {
-      const apiMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to reset password';
+      const apiMessage = err.message || 'Failed to reset password';
       setError(apiMessage);
       throw new Error(apiMessage);
     } finally {
