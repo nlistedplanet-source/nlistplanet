@@ -23,7 +23,7 @@ export default function Header({ setPage, currentPage }) {
             alt="Nlisted Logo" 
             className="h-16 w-16 object-contain"
           />
-          <span className="text-3xl font-bold text-gray-800 hover:text-purple-600 transition -ml-4">listed</span>
+          <span className="text-3xl font-bold text-gray-800 hover:text-purple-600 transition -ml-4">List</span>
         </button>
       </div>
 
