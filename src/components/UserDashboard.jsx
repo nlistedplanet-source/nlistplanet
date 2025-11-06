@@ -2145,13 +2145,13 @@ export default function UserDashboard({ setPage }) {
 							👤
 						</div>
 						<div className="flex-1">
-							<h3 className="text-white font-bold text-lg truncate">{user.name.split(' ')[0]}</h3>
+							<h3 className="text-white font-bold text-lg truncate">{user.name}</h3>
 							<p className="text-purple-200 text-xs truncate">{user.email}</p>
 						</div>
 					</div>
 					<div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-						<p className="text-purple-200 text-xs mb-1">Wallet Balance</p>
-						<p className="text-white font-bold text-lg">₹{user.walletBalance?.toLocaleString()}</p>
+						<p className="text-purple-200 text-xs mb-1">User ID</p>
+						<p className="text-white font-bold text-sm">{user.userId || 'N/A'}</p>
 					</div>
 				</div>
 
