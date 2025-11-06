@@ -232,40 +232,40 @@ export default function UserDashboard({ setPage }) {
 		return motivationalQuotes[dayOfYear % motivationalQuotes.length];
 	};
 
-		useEffect(() => {
-			if (!user) {
-				setPage('signin');
-			}
-		}, [user, setPage]);
-
-		if (!user) {
-			return null;
-		}
-
 	const myListings = useMemo(
-		() => sellListings.filter((listing) => listing.seller === user.name || listing.seller === user.email),
-		[sellListings, user.name, user.email]
+		() => user ? sellListings.filter((listing) => listing.seller === user.name || listing.seller === user.email) : [],
+		[sellListings, user]
 	);
 	const myRequests = useMemo(
-		() => buyRequests.filter((request) => request.buyer === user.name || request.buyer === user.email),
-		[buyRequests, user.name, user.email]
+		() => user ? buyRequests.filter((request) => request.buyer === user.name || request.buyer === user.email) : [],
+		[buyRequests, user]
 	);
 	const availableListings = useMemo(
-		() => sellListings.filter((listing) => listing.status === 'active' && listing.seller !== user.name && listing.seller !== user.email),
-		[sellListings, user.name, user.email]
+		() => user ? sellListings.filter((listing) => listing.status === 'active' && listing.seller !== user.name && listing.seller !== user.email) : [],
+		[sellListings, user]
 	);
 	const availableRequests = useMemo(
-		() => buyRequests.filter((request) => request.status === 'active' && request.buyer !== user.name && request.buyer !== user.email),
-		[buyRequests, user.name, user.email]
+		() => user ? buyRequests.filter((request) => request.status === 'active' && request.buyer !== user.name && request.buyer !== user.email) : [],
+		[buyRequests, user]
 	);
 	const myBids = useMemo(
-		() => sellListings.filter((listing) => listing.bids?.some((bid) => bid.bidder === user.name || bid.bidder === user.email)),
-		[sellListings, user.name, user.email]
+		() => user ? sellListings.filter((listing) => listing.bids?.some((bid) => bid.bidder === user.name || bid.bidder === user.email)) : [],
+		[sellListings, user]
 	);
 	const myOffers = useMemo(
-		() => buyRequests.filter((request) => request.offers?.some((offer) => offer.seller === user.name || offer.seller === user.email)),
-		[buyRequests, user.name, user.email]
+		() => user ? buyRequests.filter((request) => request.offers?.some((offer) => offer.seller === user.name || offer.seller === user.email)) : [],
+		[buyRequests, user]
 	);
+
+	useEffect(() => {
+		if (!user) {
+			setPage('signin');
+		}
+	}, [user, setPage]);
+
+	if (!user) {
+		return null;
+	}
 
 	const handleCompanySearch = (value) => {
 		setFormData({ ...formData, company: value });
