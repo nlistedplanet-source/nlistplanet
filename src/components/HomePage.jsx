@@ -94,39 +94,6 @@ export default function HomePage({ setPage }) {
             </div>
           </div>
         </div>
-
-        {/* Stylish Scroll Indicator - Centered at Bottom */}
-        <div className="flex justify-center pb-6 relative z-20">
-          <div className="animate-bounce">
-            <div 
-              className="relative group cursor-pointer"
-              onClick={() => {
-                const nextSection = document.getElementById('features-section');
-                if (nextSection) {
-                  nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-            >
-              {/* Pulsing ring effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full blur-lg opacity-50 animate-ping"></div>
-              
-              {/* Static glow ring */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity"></div>
-              
-              {/* Main circle - Smaller size */}
-              <div className="relative bg-white rounded-full p-3 shadow-xl border-2 border-emerald-400 group-hover:border-emerald-600 transition-all duration-300 group-hover:scale-110">
-                <svg 
-                  className="w-6 h-6 text-emerald-600 group-hover:text-emerald-700 transition-colors" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* How to Buy Section */}
