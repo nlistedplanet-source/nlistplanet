@@ -47,9 +47,29 @@ export function AuthProvider({ children }) {
       return { success: false };
     } catch (err) {
       setLoading(false);
-      const apiMessage = err.response?.data?.message || err.message || 'Signup failed';
-      setError(apiMessage);
-      throw new Error(apiMessage);
+      
+      // User-friendly error messages
+      let errorMessage = 'Signup failed. Please try again.';
+      
+      if (err.response) {
+        const status = err.response.status;
+        const backendMessage = err.response.data?.message || err.response.data?.error;
+        
+        if (status === 400 && backendMessage?.toLowerCase().includes('email')) {
+          errorMessage = 'This email is already registered. Please sign in instead.';
+        } else if (status === 400) {
+          errorMessage = backendMessage || 'Invalid information provided. Please check your details.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (backendMessage) {
+          errorMessage = backendMessage;
+        }
+      } else if (err.request) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -79,9 +99,31 @@ export function AuthProvider({ children }) {
       return { success: false };
     } catch (err) {
       setLoading(false);
-      const apiMessage = err.response?.data?.message || err.message || 'Invalid credentials';
-      setError(apiMessage);
-      throw new Error(apiMessage);
+      
+      // User-friendly error messages
+      let errorMessage = 'Something went wrong. Please try again.';
+      
+      if (err.response) {
+        // Backend returned an error response
+        const status = err.response.status;
+        const backendMessage = err.response.data?.message || err.response.data?.error;
+        
+        if (status === 401) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (status === 404) {
+          errorMessage = 'Account not found. Please sign up first.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (backendMessage) {
+          errorMessage = backendMessage;
+        }
+      } else if (err.request) {
+        // Request was made but no response received
+        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -208,9 +250,30 @@ export function AuthProvider({ children }) {
       
       return { success: false };
     } catch (err) {
-      const apiMessage = err.response?.data?.message || err.message || 'Failed to update profile';
-      setError(apiMessage);
-      throw new Error(apiMessage);
+      // User-friendly error messages
+      let errorMessage = 'Failed to update profile. Please try again.';
+      
+      if (err.response) {
+        const status = err.response.status;
+        const backendMessage = err.response.data?.message || err.response.data?.error;
+        
+        if (status === 403) {
+          errorMessage = 'You are not authorized to update this profile.';
+        } else if (status === 400 && backendMessage?.toLowerCase().includes('username')) {
+          errorMessage = 'This username is already taken. Please choose another one.';
+        } else if (status === 404) {
+          errorMessage = 'User not found. Please sign in again.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (backendMessage) {
+          errorMessage = backendMessage;
+        }
+      } else if (err.request) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
