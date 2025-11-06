@@ -209,6 +209,49 @@ export default function UserDashboard({ setPage }) {
 	const [supportForm, setSupportForm] = useState({ subject: '', message: '' });
 	const [supportSubmitted, setSupportSubmitted] = useState(false);
 
+	// Username generator state
+	const [currentUsername, setCurrentUsername] = useState(user.username || user.userId);
+
+	// Funny username generator
+	const generateFunnyUsername = () => {
+		const prefixes = [
+			'ironman', 'batman', 'superman', 'spiderman', 'thor', 'hulk', 'captainamerica', 'blackwidow',
+			'rajnikant', 'salmankhan', 'shahrukhkhan', 'amitabhbachchan', 'akshaykumar', 'hrithikroshan',
+			'deepikapadukone', 'priyankachopra', 'katrinakaif', 'aliabhatt',
+			'sherlock', 'jonsnow', 'tyrionlannister', 'tonystark', 'brucewayne',
+			'delhi', 'mumbai', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'pune', 'goa',
+			'wolf', 'tiger', 'lion', 'eagle', 'falcon', 'panther', 'cobra', 'dragon',
+			'ninja', 'samurai', 'warrior', 'knight', 'viking', 'spartan',
+			'einstein', 'newton', 'tesla', 'edison', 'darwin',
+			'crypto', 'stock', 'trader', 'investor', 'whale', 'bull', 'bear',
+			'rockstar', 'legend', 'champion', 'master', 'boss', 'king', 'queen',
+			'pixel', 'byte', 'quantum', 'matrix', 'cyber', 'tech', 'digital'
+		];
+		
+		const suffixes = [
+			'trader', 'investor', 'pro', 'master', 'king', 'queen', 'boss', 'legend',
+			'warrior', 'hero', 'star', 'genius', 'wizard', 'ninja', 'samurai',
+			'returns', 'gains', 'profits', 'wealth', 'rich', 'millionaire',
+			'hustler', 'grinder', 'player', 'gamer', 'winner', 'champion',
+			'alpha', 'sigma', 'omega', 'prime', 'elite', 'supreme',
+			'_001', '_247', '_360', '_007', '_420', '_786', '_999'
+		];
+		
+		const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+		const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+		
+		return `@${randomPrefix}_${randomSuffix}`;
+	};
+
+	const handleUsernameChange = () => {
+		const newUsername = generateFunnyUsername();
+		setCurrentUsername(newUsername);
+		// Update user object in localStorage
+		const updatedUser = { ...user, username: newUsername };
+		localStorage.setItem('user', JSON.stringify(updatedUser));
+		showNotification('success', 'Username Updated! 🎉', `Your new username is ${newUsername}`);
+	};
+
 	const motivationalQuotes = useMemo(
 		() => [
 			'Success is not final, failure is not fatal: it is the courage to continue that counts.',
@@ -2146,7 +2189,18 @@ export default function UserDashboard({ setPage }) {
 						</div>
 						<div className="flex-1">
 							<h3 className="text-white font-bold text-lg truncate">{user.name}</h3>
-							<p className="text-purple-200 text-xs truncate">{user.username || user.userId}</p>
+							<div className="flex items-center gap-1">
+								<p className="text-purple-200 text-xs truncate">{currentUsername}</p>
+								<button
+									onClick={handleUsernameChange}
+									className="text-purple-200 hover:text-white transition-colors"
+									title="Change username"
+								>
+									<svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+									</svg>
+								</button>
+							</div>
 						</div>
 					</div>
 					<div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
