@@ -2127,7 +2127,7 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100">
+		<div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
 			<Notification
 				show={notification.show}
 				type={notification.type}
@@ -2136,34 +2136,53 @@ export default function UserDashboard({ setPage }) {
 				onClose={() => setNotification({ ...notification, show: false })}
 			/>
 
-			<header className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white shadow-lg">
-				<div className="max-w-6xl mx-auto px-6 py-10">
+			{/* Modern Header with Glass Effect */}
+			<header className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 shadow-2xl">
+				{/* Animated Background Elements */}
+				<div className="absolute inset-0 overflow-hidden">
+					<div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+					<div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+				</div>
+				
+				<div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-						<div>
-							<p className="text-sm uppercase tracking-[0.3em] text-white/70">Dashboard</p>
-							<h1 className="text-3xl font-bold mt-2">{getGreeting()}, {user.name.split(' ')[0]}</h1>
-							<p className="mt-3 text-sm text-white/80 max-w-2xl">{getDailyQuote()}</p>
+						{/* User Info */}
+						<div className="flex items-start gap-4">
+							<div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-3xl shadow-lg">
+								👤
+							</div>
+							<div>
+								<p className="text-xs uppercase tracking-wider text-white/70 font-semibold">Welcome Back</p>
+								<h1 className="text-3xl lg:text-4xl font-bold text-white mt-1 drop-shadow-lg">
+									{getGreeting()}, {user.name.split(' ')[0]}! 
+								</h1>
+								<p className="mt-2 text-sm text-white/90 max-w-2xl leading-relaxed">
+									✨ {getDailyQuote()}
+								</p>
+							</div>
 						</div>
-						<div className="flex flex-col sm:flex-row sm:items-center gap-3">
+
+						{/* Action Buttons */}
+						<div className="flex flex-wrap items-center gap-3">
 							<button
 								onClick={() => setShowProfileModal(true)}
-								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 bg-white shadow hover:shadow-lg transition"
+								className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-purple-700 bg-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
 							>
-								<span>??</span>
+								<span className="text-lg">👤</span>
 								<span>Profile</span>
 							</button>
 							<button
 								onClick={() => setShowPasswordModal(true)}
-								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-white/10 border border-white/30 hover:bg-white/20 transition"
+								className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 hover:scale-105 transition-all duration-200"
 							>
-								<span>??</span>
-								<span>Change password</span>
+								<span className="text-lg">🔐</span>
+								<span>Password</span>
 							</button>
 							<button
 								onClick={logout}
-								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-white/10 border border-white/30 hover:bg-red-500/90 transition"
+								className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white bg-red-500/80 backdrop-blur-sm border-2 border-red-400/50 hover:bg-red-600 hover:scale-105 transition-all duration-200 shadow-lg"
 							>
-								<span>??</span>
+								<span className="text-lg">🚪</span>
 								<span>Logout</span>
 							</button>
 						</div>
@@ -2171,23 +2190,31 @@ export default function UserDashboard({ setPage }) {
 				</div>
 			</header>
 
-			<main className="max-w-6xl mx-auto px-6 -mt-10 pb-20 relative z-10">
-				<div className="bg-white border border-gray-200 rounded-2xl shadow-xl">
-					<nav className="flex flex-wrap gap-2 border-b border-gray-100 px-6 py-4 bg-gray-50 rounded-t-2xl">
+			{/* Main Content Area */}
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pb-16 relative z-10">
+				<div className="bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-3xl shadow-2xl overflow-hidden">
+					{/* Navigation Tabs with Modern Design */}
+					<nav className="flex flex-wrap gap-2 border-b border-gray-200/50 px-4 sm:px-6 py-5 bg-gradient-to-r from-gray-50 to-white">
 						{navItems.map((nav) => (
 							<button
 								key={nav.id}
 								onClick={() => setActiveTab(nav.id)}
-								className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+								className={`group relative inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
 									activeTab === nav.id
-										? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow'
-										: 'bg-white border border-gray-200 text-gray-600 hover:border-purple-200 hover:text-purple-600'
+										? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30 scale-105'
+										: 'bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:shadow-md hover:scale-105'
 								}`}
 							>
-								<span>{nav.icon}</span>
+								<span className={`text-lg transition-transform duration-300 ${activeTab === nav.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+									{nav.icon}
+								</span>
 								<span>{nav.label}</span>
 								{typeof nav.counter === 'number' && nav.counter > 0 && (
-									<span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-white/20 border border-white/50">
+									<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-bold transition-colors ${
+										activeTab === nav.id 
+											? 'bg-white/25 text-white border border-white/40' 
+											: 'bg-purple-100 text-purple-700 border border-purple-200'
+									}`}>
 										{nav.counter}
 									</span>
 								)}
@@ -2195,9 +2222,19 @@ export default function UserDashboard({ setPage }) {
 						))}
 					</nav>
 
-					<section className="px-6 py-8">
-						{renderActiveTab()}
+					{/* Content Section with Better Padding */}
+					<section className="px-4 sm:px-6 lg:px-8 py-8">
+						<div className="animate-fadeIn">
+							{renderActiveTab()}
+						</div>
 					</section>
+				</div>
+
+				{/* Footer Info */}
+				<div className="mt-8 text-center">
+					<p className="text-sm text-gray-500">
+						💼 Manage your unlisted shares portfolio with confidence
+					</p>
 				</div>
 			</main>
 
