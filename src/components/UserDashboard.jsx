@@ -371,40 +371,60 @@ export default function UserDashboard({ setPage }) {
 		setCompanySuggestions([]);
 	};
 
-	const handleCreateSellListing = (e) => {
+	const handleCreateSellListing = async (e) => {
 		e.preventDefault();
-		createSellListing({ ...formData, seller: user.email, sellerName: user.name });
-		showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
-		setFormData({ company: '', isin: '', price: '', shares: '' });
-		setFormType(null);
+		try {
+			await createSellListing({ ...formData, seller: user.email, sellerName: user.name });
+			showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
+			setFormData({ company: '', isin: '', price: '', shares: '' });
+			setFormType(null);
+		} catch (error) {
+			console.error('Failed to create listing:', error);
+			showNotification('error', 'Failed to create listing', 'Please try again later.');
+		}
 	};
 
-	const handleCreateBuyRequest = (e) => {
+	const handleCreateBuyRequest = async (e) => {
 		e.preventDefault();
-		createBuyRequest({ ...formData, buyer: user.email, buyerName: user.name });
-		showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
-		setFormData({ company: '', isin: '', price: '', shares: '' });
-		setFormType(null);
+		try {
+			await createBuyRequest({ ...formData, buyer: user.email, buyerName: user.name });
+			showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+			setFormData({ company: '', isin: '', price: '', shares: '' });
+			setFormType(null);
+		} catch (error) {
+			console.error('Failed to create buy request:', error);
+			showNotification('error', 'Failed to create buy request', 'Please try again later.');
+		}
 	};
 
-	const handlePlaceBid = (e) => {
+	const handlePlaceBid = async (e) => {
 		e.preventDefault();
 		if (!tradeContext) return;
-		placeBid(tradeContext.item.id, { ...bidOfferData, bidder: user.email, bidderName: user.name });
-		showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
-		setTradeContext(null);
-		setSelectedItem(null);
-		setBidOfferData({ price: '', quantity: '' });
+		try {
+			await placeBid(tradeContext.item._id || tradeContext.item.id, { ...bidOfferData, bidder: user.email, bidderName: user.name });
+			showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+			setTradeContext(null);
+			setSelectedItem(null);
+			setBidOfferData({ price: '', quantity: '' });
+		} catch (error) {
+			console.error('Failed to place bid:', error);
+			showNotification('error', 'Failed to place bid', 'Please try again later.');
+		}
 	};
 
-	const handleMakeOffer = (e) => {
+	const handleMakeOffer = async (e) => {
 		e.preventDefault();
 		if (!tradeContext) return;
-		makeOffer(tradeContext.item.id, { ...bidOfferData, seller: user.email, sellerName: user.name });
-		showNotification('success', 'Offer submitted! 🎯', `Offer of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
-		setTradeContext(null);
-		setSelectedItem(null);
-		setBidOfferData({ price: '', quantity: '' });
+		try {
+			makeOffer(tradeContext.item._id || tradeContext.item.id, { ...bidOfferData, seller: user.email, sellerName: user.name });
+			showNotification('success', 'Offer submitted! 🎯', `Offer of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+			setTradeContext(null);
+			setSelectedItem(null);
+			setBidOfferData({ price: '', quantity: '' });
+		} catch (error) {
+			console.error('Failed to make offer:', error);
+			showNotification('error', 'Failed to make offer', 'Please try again later.');
+		}
 	};
 
 	const navItems = [
