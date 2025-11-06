@@ -2146,7 +2146,7 @@ export default function UserDashboard({ setPage }) {
 						</div>
 						<div className="flex-1">
 							<h3 className="text-white font-bold text-lg truncate">{user.name}</h3>
-							<p className="text-purple-200 text-xs truncate">{user.email}</p>
+							<p className="text-purple-200 text-xs truncate">{user.username || user.userId}</p>
 						</div>
 					</div>
 					<div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
@@ -2218,8 +2218,8 @@ export default function UserDashboard({ setPage }) {
 								<h1 className="text-2xl font-bold text-gray-900">
 									{getGreeting()}, {user.name.split(' ')[0]}! 👋
 								</h1>
-								<p className="text-sm text-gray-600 mt-1">
-									{getDailyQuote()}
+								<p className="text-sm text-purple-600 font-medium mt-1 italic">
+									✨ {getDailyQuote()}
 								</p>
 							</div>
 							

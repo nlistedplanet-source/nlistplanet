@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
     {
       id: 1,
       userId: 'ADMIN001',
+      username: '@nlistplanet',
       name: 'Admin',
       email: 'nlistedplanet@gmail.com',
       password: 'Div@10390beena',
@@ -29,6 +30,7 @@ export function AuthProvider({ children }) {
     {
       id: 2,
       userId: 'USR002',
+      username: '@rahul_trader',
       name: 'Rahul Kumar',
       email: 'rahul@gmail.com',
       password: 'rahul123',
@@ -45,6 +47,7 @@ export function AuthProvider({ children }) {
     {
       id: 3,
       userId: 'USR003',
+      username: '@priya_investor',
       name: 'Priya Sharma',
       email: 'priya@gmail.com',
       password: 'priya123',
@@ -61,6 +64,7 @@ export function AuthProvider({ children }) {
     {
       id: 4,
       userId: 'USR004',
+      username: '@vikram_wealth',
       name: 'Vikram Singh',
       email: 'vikram@gmail.com',
       password: 'vikram123',
@@ -77,6 +81,7 @@ export function AuthProvider({ children }) {
     {
       id: 5,
       userId: 'USR005',
+      username: '@anjali_stocks',
       name: 'Anjali Gupta',
       email: 'anjali@gmail.com',
       password: 'anjali123',
@@ -122,9 +127,17 @@ export function AuthProvider({ children }) {
           throw new Error('User already exists');
         }
         
+        // Generate username from name
+        const generateUsername = (name) => {
+          const cleanName = name.toLowerCase().replace(/\s+/g, '_');
+          const randomNum = Math.floor(Math.random() * 999);
+          return `@${cleanName}_${randomNum}`;
+        };
+        
         const newUser = {
           id: users.length + 1,
           userId: `USR${String(users.length + 1).padStart(3, '0')}`,
+          username: generateUsername(userData.name),
           name: userData.name,
           email: userData.email,
           password: userData.password,
