@@ -1270,12 +1270,18 @@ export default function UserDashboard({ setPage }) {
 						availableListings.map((listing) => {
 							const company = companies.find((c) => c.isin === listing.isin || c.name.toLowerCase() === listing.company.toLowerCase());
 							const myBid = listing.bids?.find((bid) => bid.bidder === user.name || bid.bidder === user.email);
+							const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
+							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+							
 							return (
-								<div key={listing.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
+								<div key={listing.id || listing._id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
 									<div className="flex items-start justify-between gap-4">
-										<div>
+										<div className="flex-1">
 											<h3 className="text-lg font-semibold text-gray-900">{listing.company}</h3>
-											<p className="text-xs text-gray-500 mt-1">Seller: {getUserDisplayName(listing.seller, listing.seller)}</p>
+											<div className="flex items-center gap-2 mt-1">
+												<p className="text-xs text-emerald-600 font-medium">{sellerUsername}</p>
+												{listingDate && <span className="text-xs text-gray-400">• {listingDate}</span>}
+											</div>
 											{company?.sector && <p className="text-xs text-gray-400 mt-1">Sector: {company.sector}</p>}
 										</div>
 										<StatusBadge status={listing.status} />
@@ -1290,23 +1296,71 @@ export default function UserDashboard({ setPage }) {
 											<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(listing.shares)}</p>
 										</div>
 									</div>
-									<div className="mt-5 flex flex-col gap-3">
+									<div className="mt-5 flex gap-2">
 										<button
 											onClick={() => {
 												setTradeContext({ type: 'bid', item: listing });
 												setBidOfferData({ price: listing.price, quantity: listing.shares });
 											}}
-											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
+											className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
 										>
-											<span></span>
+											<span>💰</span>
 											<span>{myBid ? 'Update bid' : 'Place bid'}</span>
 										</button>
 										<button
-											onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
+											onClick={() => {
+												const shareText = `Check out ${listing.company} shares on Nlist!\n\n💰 Price: ${formatCurrency(listing.price)}\n📊 Shares: ${formatShares(listing.shares)}\n🔗 Visit: ${window.location.origin}`;
+												if (navigator.share) {
+													navigator.share({ title: `${listing.company} - Nlist`, text: shareText, url: window.location.href });
+												} else {
+													navigator.clipboard.writeText(shareText);
+													alert('Link copied to clipboard!');
+												}
+											}}
+											className="inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition"
+											title="Share to social media"
 										>
-											<span></span>
-											<span>See bid history</span>
+											<span>📤</span>
+										</button>
+										<button
+											onClick={() => {
+												const reportContent = `
+===========================================
+NLIST - RESEARCH REPORT
+===========================================
+
+Company: ${listing.company}
+ISIN: ${listing.isin || 'N/A'}
+Sector: ${company?.sector || 'N/A'}
+
+LISTING DETAILS
+--------------
+Seller: ${sellerUsername}
+Ask Price: ${formatCurrency(listing.price)}
+Available Shares: ${formatShares(listing.shares)}
+Listed Date: ${listingDate}
+Status: ${listing.status}
+
+Market Overview: ${company?.description || 'N/A'}
+
+===========================================
+Generated on: ${new Date().toLocaleString('en-IN')}
+Report ID: ${listing._id || listing.id}
+===========================================
+												`.trim();
+												
+												const blob = new Blob([reportContent], { type: 'text/plain' });
+												const url = URL.createObjectURL(blob);
+												const a = document.createElement('a');
+												a.href = url;
+												a.download = `${listing.company}-Research-Report.txt`;
+												a.click();
+												URL.revokeObjectURL(url);
+											}}
+											className="inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition"
+											title="Download research report"
+										>
+											<span>📥</span>
 										</button>
 									</div>
 								</div>
