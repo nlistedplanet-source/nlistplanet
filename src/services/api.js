@@ -48,6 +48,7 @@ export const userAPI = {
 export const listingAPI = {
   getAllListings: () => api.get('/listings'),
   createSellListing: (listingData) => api.post('/listings/sell', listingData),
+  createBuyRequest: (listingData) => api.post('/listings/buy', listingData),
   placeBid: (listingId, bidData) => api.post(`/listings/${listingId}/bid`, bidData)
 };
 
@@ -59,6 +60,13 @@ export const bidAPI = {
 // Companies APIs
 export const companyAPI = {
   getAllCompanies: () => api.get('/companies')
+};
+
+// Portfolio APIs
+export const portfolioAPI = {
+  getPortfolio: () => api.get('/portfolio'),
+  addTransaction: (transactionData) => api.post('/portfolio/transactions', transactionData),
+  updateHoldingPrice: (isin, newPrice) => api.patch(`/portfolio/holdings/${isin}/price`, { newPrice })
 };
 
 export default api;

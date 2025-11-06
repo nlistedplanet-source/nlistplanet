@@ -1,40 +1,45 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { portfolioAPI } from '../services/api';
 
 export const PortfolioContext = createContext();
 
 export function PortfolioProvider({ children }) {
-  // Load from localStorage
-  const loadFromStorage = (key, defaultValue) => {
+  // Portfolio Holdings - Completed purchases
+  const [holdings, setHoldings] = useState([]);
+  
+  // Transaction History - All completed transactions
+  const [transactions, setTransactions] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  // Fetch portfolio from MongoDB on mount
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
+
+  const fetchPortfolio = async () => {
     try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : defaultValue;
-    } catch {
-      return defaultValue;
+      setLoading(true);
+      const response = await portfolioAPI.getPortfolio();
+      const portfolio = response.data;
+      setHoldings(portfolio.holdings || []);
+      setTransactions(portfolio.transactions || []);
+    } catch (error) {
+      console.error('Failed to fetch portfolio:', error);
+      setHoldings([]);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Portfolio Holdings - Completed purchases
-  const [holdings, setHoldings] = useState(() => loadFromStorage('portfolioHoldings', []));
-  
-  // Transaction History - All completed transactions
-  const [transactions, setTransactions] = useState(() => loadFromStorage('transactionHistory', []));
-
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem('portfolioHoldings', JSON.stringify(holdings));
-  }, [holdings]);
-
-  useEffect(() => {
-    localStorage.setItem('transactionHistory', JSON.stringify(transactions));
-  }, [transactions]);
-
-  // Add new holding to portfolio
+  // Add new holding to portfolio (deprecated - use addTransaction instead)
   const addHolding = (holdingData) => {
     const newHolding = {
       id: Date.now(),
       ...holdingData,
       purchaseDate: new Date().toISOString(),
-      currentPrice: holdingData.purchasePrice, // Initially same as purchase price
+      currentPrice: holdingData.purchasePrice,
       lastUpdated: new Date().toISOString()
     };
     setHoldings([...holdings, newHolding]);
@@ -42,17 +47,26 @@ export function PortfolioProvider({ children }) {
   };
 
   // Update current price of holding
-  const updateCurrentPrice = (holdingId, newPrice) => {
-    setHoldings(holdings.map(holding => 
-      holding.id === holdingId 
-        ? { ...holding, currentPrice: newPrice, lastUpdated: new Date().toISOString() }
-        : holding
-    ));
+  const updateCurrentPrice = async (holdingId, newPrice) => {
+    try {
+      const holding = holdings.find(h => h._id === holdingId);
+      if (!holding) return;
+      
+      await portfolioAPI.updateHoldingPrice(holding.isin, newPrice);
+      setHoldings(holdings.map(h => 
+        h._id === holdingId 
+          ? { ...h, currentPrice: newPrice, lastUpdated: new Date().toISOString() }
+          : h
+      ));
+    } catch (error) {
+      console.error('Failed to update price:', error);
+      throw error;
+    }
   };
 
   // Remove holding from portfolio (when sold completely)
   const removeHolding = (holdingId) => {
-    setHoldings(holdings.filter(holding => holding.id !== holdingId));
+    setHoldings(holdings.filter(holding => holding._id !== holdingId));
   };
 
   // Update holding quantity
@@ -61,7 +75,7 @@ export function PortfolioProvider({ children }) {
       removeHolding(holdingId);
     } else {
       setHoldings(holdings.map(holding =>
-        holding.id === holdingId
+        holding._id === holdingId
           ? { ...holding, quantity: newQuantity, lastUpdated: new Date().toISOString() }
           : holding
       ));
@@ -69,57 +83,19 @@ export function PortfolioProvider({ children }) {
   };
 
   // Add transaction to history
-  const addTransaction = (transactionData) => {
-    const newTransaction = {
-      id: Date.now(),
-      ...transactionData,
-      completedAt: new Date().toISOString()
-    };
-    setTransactions([newTransaction, ...transactions]);
-    
-    // If it's a buy transaction, add to holdings
-    if (transactionData.type === 'buy') {
-      const existingHolding = holdings.find(h => 
-        h.company === transactionData.company && h.isin === transactionData.isin
-      );
+  const addTransaction = async (transactionData) => {
+    try {
+      const response = await portfolioAPI.addTransaction(transactionData);
+      const portfolio = response.data.portfolio;
       
-      if (existingHolding) {
-        // Update existing holding
-        const totalQuantity = existingHolding.quantity + transactionData.quantity;
-        const avgPrice = ((existingHolding.purchasePrice * existingHolding.quantity) + 
-                         (transactionData.price * transactionData.quantity)) / totalQuantity;
-        
-        setHoldings(holdings.map(holding =>
-          holding.id === existingHolding.id
-            ? { 
-                ...holding, 
-                quantity: totalQuantity,
-                purchasePrice: avgPrice,
-                lastUpdated: new Date().toISOString()
-              }
-            : holding
-        ));
-      } else {
-        // Add new holding
-        addHolding({
-          company: transactionData.company,
-          isin: transactionData.isin,
-          quantity: transactionData.quantity,
-          purchasePrice: transactionData.price
-        });
-      }
-    } else if (transactionData.type === 'sell') {
-      // Reduce quantity from holdings
-      const existingHolding = holdings.find(h => 
-        h.company === transactionData.company && h.isin === transactionData.isin
-      );
+      setHoldings(portfolio.holdings || []);
+      setTransactions(portfolio.transactions || []);
       
-      if (existingHolding) {
-        updateHoldingQuantity(existingHolding.id, existingHolding.quantity - transactionData.quantity);
-      }
+      return portfolio.transactions[0]; // Return the newly added transaction
+    } catch (error) {
+      console.error('Failed to add transaction:', error);
+      throw error;
     }
-    
-    return newTransaction;
   };
 
   // Get portfolio summary
@@ -142,12 +118,14 @@ export function PortfolioProvider({ children }) {
     <PortfolioContext.Provider value={{
       holdings,
       transactions,
+      loading,
       addHolding,
       updateCurrentPrice,
       removeHolding,
       updateHoldingQuantity,
       addTransaction,
-      getPortfolioSummary
+      getPortfolioSummary,
+      fetchPortfolio
     }}>
       {children}
     </PortfolioContext.Provider>

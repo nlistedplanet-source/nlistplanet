@@ -1,88 +1,89 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { listingAPI } from '../services/api';
 
 export const ListingContext = createContext();
 
 export function ListingProvider({ children }) {
-  // Load from localStorage or initialize empty
-  const loadFromStorage = (key, defaultValue) => {
+  // Sell Listings - Users/Admin want to SELL shares
+  const [sellListings, setSellListings] = useState([]);
+
+  // Buy Requests - Users/Admin want to BUY shares
+  const [buyRequests, setBuyRequests] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all listings from MongoDB on mount
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const fetchListings = async () => {
     try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : defaultValue;
-    } catch {
-      return defaultValue;
+      setLoading(true);
+      const response = await listingAPI.getAllListings();
+      const listings = response.data;
+      
+      // Separate sell and buy listings
+      setSellListings(listings.filter(l => l.type === 'sell'));
+      setBuyRequests(listings.filter(l => l.type === 'buy'));
+    } catch (error) {
+      console.error('Failed to fetch listings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Sell Listings - Users/Admin want to SELL shares
-  const [sellListings, setSellListings] = useState(() => loadFromStorage('sellListings', []));
-
-  // Buy Requests - Users/Admin want to BUY shares
-  const [buyRequests, setBuyRequests] = useState(() => loadFromStorage('buyRequests', []));
-
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    localStorage.setItem('sellListings', JSON.stringify(sellListings));
-  }, [sellListings]);
-
-  useEffect(() => {
-    localStorage.setItem('buyRequests', JSON.stringify(buyRequests));
-  }, [buyRequests]);
-
   // Create Sell Listing
-  const createSellListing = (data) => {
-    const newListing = { 
-      id: Date.now(), 
-      ...data, 
-      type: 'sell',
-      status: 'active',
-      bids: [],
-      createdAt: new Date().toISOString()
-    };
-    setSellListings([...sellListings, newListing]);
-    return newListing;
+  const createSellListing = async (data) => {
+    try {
+      const response = await listingAPI.createSellListing(data);
+      const newListing = response.data.listing;
+      setSellListings([...sellListings, newListing]);
+      return newListing;
+    } catch (error) {
+      console.error('Failed to create sell listing:', error);
+      throw error;
+    }
   };
 
   // Create Buy Request
-  const createBuyRequest = (data) => {
-    const newRequest = { 
-      id: Date.now(), 
-      ...data, 
-      type: 'buy',
-      status: 'active',
-      offers: [],
-      createdAt: new Date().toISOString()
-    };
-    setBuyRequests([...buyRequests, newRequest]);
-    return newRequest;
+  const createBuyRequest = async (data) => {
+    try {
+      const response = await listingAPI.createBuyRequest(data);
+      const newRequest = response.data.listing;
+      setBuyRequests([...buyRequests, newRequest]);
+      return newRequest;
+    } catch (error) {
+      console.error('Failed to create buy request:', error);
+      throw error;
+    }
   };
 
   // Place Bid on Sell Listing
-  const placeBid = (listingId, bidData) => {
-    setSellListings(sellListings.map(listing => {
-      if (listing.id === listingId) {
-        const newBid = {
-          id: Date.now(),
-          ...bidData,
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        };
-        return { ...listing, bids: [...listing.bids, newBid] };
-      }
-      return listing;
-    }));
+  const placeBid = async (listingId, bidData) => {
+    try {
+      const response = await listingAPI.placeBid(listingId, bidData);
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(listing => 
+        listing._id === listingId ? updatedListing : listing
+      ));
+    } catch (error) {
+      console.error('Failed to place bid:', error);
+      throw error;
+    }
   };
 
-  // Make Offer on Buy Request
+  // Make Offer on Buy Request (Local state for now - TODO: Backend endpoint)
   const makeOffer = (requestId, offerData) => {
     setBuyRequests(buyRequests.map(request => {
-      if (request.id === requestId) {
+      if (request._id === requestId) {
         const newOffer = {
           id: Date.now(),
           ...offerData,
           status: 'pending',
           createdAt: new Date().toISOString()
         };
-        return { ...request, offers: [...request.offers, newOffer] };
+        return { ...request, offers: [...(request.offers || []), newOffer] };
       }
       return request;
     }));
@@ -91,9 +92,9 @@ export function ListingProvider({ children }) {
   // Accept Bid (Seller accepts bid)
   const acceptBid = (listingId, bidId) => {
     setSellListings(sellListings.map(listing => {
-      if (listing.id === listingId) {
+      if (listing._id === listingId) {
         const updatedBids = listing.bids.map(bid => 
-          bid.id === bidId ? { ...bid, status: 'accepted' } : { ...bid, status: 'rejected' }
+          bid._id === bidId ? { ...bid, status: 'accepted' } : { ...bid, status: 'rejected' }
         );
         return { 
           ...listing, 
@@ -109,8 +110,8 @@ export function ListingProvider({ children }) {
   // Accept Offer (Buyer accepts offer)
   const acceptOffer = (requestId, offerId) => {
     setBuyRequests(buyRequests.map(request => {
-      if (request.id === requestId) {
-        const updatedOffers = request.offers.map(offer => 
+      if (request._id === requestId) {
+        const updatedOffers = (request.offers || []).map(offer => 
           offer.id === offerId ? { ...offer, status: 'accepted' } : { ...offer, status: 'rejected' }
         );
         return { 
@@ -128,11 +129,11 @@ export function ListingProvider({ children }) {
   const adminApprove = (id, type) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => 
-        listing.id === id ? { ...listing, status: 'approved' } : listing
+        listing._id === id ? { ...listing, status: 'approved' } : listing
       ));
     } else {
       setBuyRequests(buyRequests.map(request => 
-        request.id === id ? { ...request, status: 'approved' } : request
+        request._id === id ? { ...request, status: 'approved' } : request
       ));
     }
   };
@@ -141,11 +142,11 @@ export function ListingProvider({ children }) {
   const adminClose = (id, type) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => 
-        listing.id === id ? { ...listing, status: 'closed', closedAt: new Date().toISOString() } : listing
+        listing._id === id ? { ...listing, status: 'closed', closedAt: new Date().toISOString() } : listing
       ));
     } else {
       setBuyRequests(buyRequests.map(request => 
-        request.id === id ? { ...request, status: 'closed', closedAt: new Date().toISOString() } : request
+        request._id === id ? { ...request, status: 'closed', closedAt: new Date().toISOString() } : request
       ));
     }
   };
@@ -154,9 +155,9 @@ export function ListingProvider({ children }) {
   const counterOffer = (listingId, bidId, newPrice, type) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
-        if (listing.id === listingId) {
+        if (listing._id === listingId) {
           const updatedBids = listing.bids.map(bid => 
-            bid.id === bidId ? { 
+            bid._id === bidId ? { 
               ...bid, 
               counterPrice: newPrice,
               status: 'counter_offered',
@@ -169,8 +170,8 @@ export function ListingProvider({ children }) {
       }));
     } else {
       setBuyRequests(buyRequests.map(request => {
-        if (request.id === listingId) {
-          const updatedOffers = request.offers.map(offer => 
+        if (request._id === listingId) {
+          const updatedOffers = (request.offers || []).map(offer => 
             offer.id === bidId ? { 
               ...offer, 
               counterPrice: newPrice,
@@ -189,9 +190,9 @@ export function ListingProvider({ children }) {
   const acceptCounterOffer = (listingId, bidId, type) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
-        if (listing.id === listingId) {
+        if (listing._id === listingId) {
           const updatedBids = listing.bids.map(bid => 
-            bid.id === bidId ? { 
+            bid._id === bidId ? { 
               ...bid, 
               status: 'counter_accepted_by_bidder',
               acceptedAt: new Date().toISOString()
@@ -208,8 +209,8 @@ export function ListingProvider({ children }) {
       }));
     } else {
       setBuyRequests(buyRequests.map(request => {
-        if (request.id === listingId) {
-          const updatedOffers = request.offers.map(offer => 
+        if (request._id === listingId) {
+          const updatedOffers = (request.offers || []).map(offer => 
             offer.id === bidId ? { 
               ...offer, 
               status: 'counter_accepted_by_offerer',
@@ -232,9 +233,9 @@ export function ListingProvider({ children }) {
   const rejectCounterOffer = (listingId, bidId, type) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
-        if (listing.id === listingId) {
+        if (listing._id === listingId) {
           const updatedBids = listing.bids.map(bid => 
-            bid.id === bidId ? { ...bid, status: 'rejected' } : bid
+            bid._id === bidId ? { ...bid, status: 'rejected' } : bid
           );
           return { ...listing, bids: updatedBids };
         }
@@ -242,8 +243,8 @@ export function ListingProvider({ children }) {
       }));
     } else {
       setBuyRequests(buyRequests.map(request => {
-        if (request.id === listingId) {
-          const updatedOffers = request.offers.map(offer => 
+        if (request._id === listingId) {
+          const updatedOffers = (request.offers || []).map(offer => 
             offer.id === bidId ? { ...offer, status: 'rejected' } : offer
           );
           return { ...request, offers: updatedOffers };
@@ -257,6 +258,7 @@ export function ListingProvider({ children }) {
     <ListingContext.Provider value={{ 
       sellListings,
       buyRequests,
+      loading,
       createSellListing,
       createBuyRequest,
       placeBid,
@@ -267,7 +269,8 @@ export function ListingProvider({ children }) {
       adminClose,
       counterOffer,
       acceptCounterOffer,
-      rejectCounterOffer
+      rejectCounterOffer,
+      fetchListings
     }}>
       {children}
     </ListingContext.Provider>
