@@ -2246,7 +2246,10 @@ export default function UserDashboard({ setPage }) {
 						<span>Password</span>
 					</button>
 					<button
-						onClick={logout}
+						onClick={() => {
+							logout();
+							setPage('home');
+						}}
 						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-red-500/20 hover:bg-red-500 transition-all border border-red-400/30"
 					>
 						<span className="text-lg">🚪</span>
