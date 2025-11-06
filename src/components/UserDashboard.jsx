@@ -2183,13 +2183,13 @@ export default function UserDashboard({ setPage }) {
 			<aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto">
 				{/* Logo & User Info */}
 				<div className="p-6 border-b border-white/10">
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-2xl shadow-lg">
+					<div className="flex items-center gap-3">
+						<div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-3xl shadow-lg">
 							👤
 						</div>
 						<div className="flex-1">
-							<h3 className="text-white font-bold text-lg truncate">{user.name}</h3>
-							<div className="flex items-center gap-1">
+							<h3 className="text-white font-bold text-base truncate">{user.name}</h3>
+							<div className="flex items-center gap-1 mt-1">
 								<p className="text-purple-200 text-xs truncate">{currentUsername}</p>
 								<button
 									onClick={handleUsernameChange}
@@ -2201,11 +2201,8 @@ export default function UserDashboard({ setPage }) {
 									</svg>
 								</button>
 							</div>
+							<p className="text-purple-300 text-xs mt-1">ID: {user.userId || 'N/A'}</p>
 						</div>
-					</div>
-					<div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-						<p className="text-purple-200 text-xs mb-1">User ID</p>
-						<p className="text-white font-bold text-sm">{user.userId || 'N/A'}</p>
 					</div>
 				</div>
 
