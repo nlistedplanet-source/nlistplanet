@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ListingProvider } from './context/ListingContext';
 import { BidProvider } from './context/BidContext';
 import { CompanyProvider } from './context/CompanyContext';
+import { PortfolioProvider } from './context/PortfolioContext';
 
 export default function App() {
   const [page, setPage] = useState('home');
@@ -29,10 +30,12 @@ export default function App() {
       <BidProvider>
         <ListingProvider>
           <CompanyProvider>
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-              {page !== 'user' && page !== 'admin' && <Header setPage={setPage} currentPage={page} />}
-              {renderPage()}
-            </div>
+            <PortfolioProvider>
+              <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+                {page !== 'user' && page !== 'admin' && <Header setPage={setPage} currentPage={page} />}
+                {renderPage()}
+              </div>
+            </PortfolioProvider>
           </CompanyProvider>
         </ListingProvider>
       </BidProvider>

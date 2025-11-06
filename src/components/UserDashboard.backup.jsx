@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
-import { usePortfolio } from '../context/PortfolioContext';
 import UserProfile from './UserProfile';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
@@ -153,16 +152,16 @@ const formatShares = (value) => {
 };
 
 const formatDate = (iso) => {
-	if (!iso) return 'ï¿½';
+	if (!iso) return '—';
 	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return 'ï¿½';
+	if (Number.isNaN(date.getTime())) return '—';
 	return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 const formatDateTime = (iso) => {
-	if (!iso) return 'ï¿½';
+	if (!iso) return '—';
 	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return 'ï¿½';
+	if (Number.isNaN(date.getTime())) return '—';
 	return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 };
 
@@ -182,9 +181,8 @@ export default function UserDashboard({ setPage }) {
 		rejectCounterOffer
 	} = useListing();
 	const { companies, searchCompany } = useCompany();
-	const portfolio = usePortfolio();
 
-	const [activeTab, setActiveTab] = useState('marketplace');
+	const [activeTab, setActiveTab] = useState('overview');
 	const [browseFilter, setBrowseFilter] = useState('sell');
 	const [formType, setFormType] = useState(null);
 	const [formData, setFormData] = useState({ company: '', isin: '', price: '', shares: '' });
@@ -207,7 +205,7 @@ export default function UserDashboard({ setPage }) {
 			'The secret of getting ahead is getting started.',
 			'Success is walking from failure to failure with no loss of enthusiasm.',
 			"Opportunities don't happen. You create them.",
-			"Your limitationï¿½it's only your imagination.",
+			"Your limitation—it's only your imagination.",
 			'Great things never come from comfort zones.',
 			'Dream it. Wish it. Do it.',
 		"Success doesn't just find you. You have to go out and get it.",
@@ -348,13 +346,11 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const navItems = [
-		{ id: 'marketplace', label: 'Nlist Zone', icon: 'ðŸª' },
-		{ id: 'buy', label: 'Buy', icon: 'ðŸ›’', counter: myRequests.length },
-		{ id: 'sell', label: 'Sell', icon: 'ðŸ“ˆ', counter: myListings.length },
-		{ id: 'orders', label: 'Orders', icon: 'ðŸ“‹' },
-		{ id: 'portfolio', label: 'Portfolio', icon: 'ðŸ’¼' },
-		{ id: 'faq', label: 'FAQ', icon: 'â“' },
-		{ id: 'support', label: 'Support', icon: 'ðŸ’¬' }
+		{ id: 'overview', label: 'Overview', icon: '??' },
+		{ id: 'myListings', label: 'Sell Listings', icon: '??', counter: myListings.length },
+		{ id: 'myRequests', label: 'Buy Requests', icon: '??', counter: myRequests.length },
+		{ id: 'activity', label: 'Bids & Offers', icon: '??', counter: myBids.length + myOffers.length },
+		{ id: 'browse', label: 'Marketplace', icon: '??' }
 	];
 
 	const renderOverview = () => (
@@ -401,7 +397,7 @@ export default function UserDashboard({ setPage }) {
 											<div>
 												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
 												<p className="text-xs text-gray-500 mt-1">Listed {formatDate(listing.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ï¿½ {formatShares(listing.shares)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} • {formatShares(listing.shares)}</p>
 											</div>
 											<StatusBadge status={listing.status} />
 										</div>
@@ -448,7 +444,7 @@ export default function UserDashboard({ setPage }) {
 											<div>
 												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
 												<p className="text-xs text-gray-500 mt-1">Posted {formatDate(request.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} ï¿½ {formatShares(request.shares)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} • {formatShares(request.shares)}</p>
 											</div>
 											<StatusBadge status={request.status} />
 										</div>
@@ -528,7 +524,7 @@ export default function UserDashboard({ setPage }) {
 								<div className="flex items-start justify-between gap-4">
 									<div>
 										<h3 className="text-xl font-semibold text-gray-900">{listing.company}</h3>
-										<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || 'ï¿½'}</p>
+										<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || '—'}</p>
 										<p className="text-xs text-gray-400 mt-1">Created {formatDate(listing.createdAt)}</p>
 									</div>
 									<StatusBadge status={listing.status} size="lg" />
@@ -598,7 +594,7 @@ export default function UserDashboard({ setPage }) {
 								<div className="flex items-start justify-between gap-4">
 									<div>
 										<h3 className="text-xl font-semibold text-gray-900">{request.company}</h3>
-										<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || 'ï¿½'}</p>
+										<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || '—'}</p>
 										<p className="text-xs text-gray-400 mt-1">Created {formatDate(request.createdAt)}</p>
 									</div>
 									<StatusBadge status={request.status} size="lg" />
@@ -672,7 +668,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="flex items-start justify-between gap-4">
 											<div>
 												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ask ï¿½ {formatShares(listing.shares)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ask • {formatShares(listing.shares)}</p>
 												{latestInteraction && (
 													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
 												)}
@@ -715,7 +711,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="flex items-start justify-between gap-4">
 											<div>
 												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} target ï¿½ {formatShares(request.shares)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} target • {formatShares(request.shares)}</p>
 												{latestInteraction && (
 													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
 												)}
@@ -888,22 +884,18 @@ export default function UserDashboard({ setPage }) {
 
 	const renderActiveTab = () => {
 		switch (activeTab) {
-			case 'marketplace':
-				return renderBrowse(); // Rename to marketplace later
-			case 'buy':
-				return renderMyRequests();
-			case 'sell':
+			case 'overview':
+				return renderOverview();
+			case 'myListings':
 				return renderMyListings();
-			case 'orders':
-				return <div className="text-center py-12 text-gray-500">Orders section coming soon...</div>;
-			case 'portfolio':
-				return <div className="text-center py-12 text-gray-500">Portfolio section coming soon...</div>;
-			case 'faq':
-				return <div className="text-center py-12 text-gray-500">FAQ section coming soon...</div>;
-			case 'support':
-				return <div className="text-center py-12 text-gray-500">Support section coming soon...</div>;
-			default:
+			case 'myRequests':
+				return renderMyRequests();
+			case 'activity':
+				return renderActivity();
+			case 'browse':
 				return renderBrowse();
+			default:
+				return null;
 		}
 	};
 
@@ -955,7 +947,7 @@ export default function UserDashboard({ setPage }) {
 						<div>
 							<p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">{type === 'sell' ? 'Sell listing' : 'Buy request'}</p>
 							<h3 className="text-2xl font-bold text-gray-900 mt-1">{item.company}</h3>
-							<p className="text-sm text-gray-500 mt-1">{formatCurrency(item.price)} ï¿½ {formatShares(item.shares)}</p>
+							<p className="text-sm text-gray-500 mt-1">{formatCurrency(item.price)} • {formatShares(item.shares)}</p>
 						</div>
 						<button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition">
 							<svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
