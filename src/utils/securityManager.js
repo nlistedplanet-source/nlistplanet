@@ -14,7 +14,7 @@ class SecurityManager {
       navigator.userAgent,
       navigator.language,
       new Date().getTimezoneOffset(),
-      screen.width + 'x' + screen.height,
+      window.screen.width + 'x' + window.screen.height,
       navigator.hardwareConcurrency || 'unknown'
     ].join('|');
     
