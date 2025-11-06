@@ -475,7 +475,10 @@ export default function HomePage({ setPage }) {
                   alt="Nlisted Logo" 
                   className="h-12 w-12 object-contain"
                 />
-                <h3 className="text-2xl font-bold text-emerald-400">Nlisted</h3>
+                <h3 className="text-2xl font-bold">
+                  <span className="text-white">N</span>
+                  <span className="text-emerald-400">listed</span>
+                </h3>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">
                 India's most trusted platform for buying and selling unlisted shares with complete transparency and security.
