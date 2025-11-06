@@ -85,3 +85,50 @@ code {
 .animate-progress {
   animation: progress 4s linear;
 }
+
+/* Auto-hide scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  opacity: 0;
+  animation: fadeInScrollbar 0.3s ease 0.5s forwards;
+}
+
+@keyframes fadeInScrollbar {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hide scrollbar when not hovering */
+.sidebar-scroll:not(:hover)::-webkit-scrollbar-thumb {
+  animation: fadeOutScrollbar 0.3s ease 1s forwards;
+}
+
+@keyframes fadeOutScrollbar {
+  to {
+    opacity: 0;
+  }
+}

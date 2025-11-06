@@ -8,29 +8,29 @@ import ChangePassword from './ChangePassword';
 import Notification from './Notification';
 
 const STATUS_META = {
-	active: { icon: '??', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
-	pending_admin_approval: { icon: '?', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
-	approved: { icon: '?', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
-	closed: { icon: '??', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
+	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	pending_admin_approval: { icon: '⏳', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	approved: { icon: '✅', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	closed: { icon: '🔒', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
 };
 
 const INTERACTION_META = {
-	pending: { icon: '?', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
-	accepted: { icon: '?', label: 'Accepted', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
-	counter_offered: { icon: '??', label: 'Countered', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
-	counter_accepted_by_bidder: { icon: '??', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
-	counter_accepted_by_offerer: { icon: '??', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
-	rejected: { icon: '?', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' }
+	pending: { icon: '⏳', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
+	accepted: { icon: '✅', label: 'Accepted', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	counter_offered: { icon: '🔄', label: 'Countered', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
+	counter_accepted_by_bidder: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	counter_accepted_by_offerer: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	rejected: { icon: '❌', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' }
 };
 
 const getStatusMeta = (status) => {
-	if (!status) return { icon: '??', label: 'Unknown', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
-	return STATUS_META[status] || { icon: '??', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	if (!status) return { icon: '❓', label: 'Unknown', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	return STATUS_META[status] || { icon: '❓', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
 };
 
 const getInteractionMeta = (status) => {
-	if (!status) return { icon: '?', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
-	return INTERACTION_META[status] || { icon: '??', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	if (!status) return { icon: '⏳', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	return INTERACTION_META[status] || { icon: '❓', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
 };
 
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -370,7 +370,7 @@ export default function UserDashboard({ setPage }) {
 	const handleCreateSellListing = (e) => {
 		e.preventDefault();
 		createSellListing({ ...formData, seller: user.email, sellerName: user.name });
-		showNotification('success', 'Shares listed! ??', `Your ${formData.shares} shares of ${formData.company} are now live.`);
+		showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
 		setFormData({ company: '', isin: '', price: '', shares: '' });
 		setFormType(null);
 	};
@@ -378,7 +378,7 @@ export default function UserDashboard({ setPage }) {
 	const handleCreateBuyRequest = (e) => {
 		e.preventDefault();
 		createBuyRequest({ ...formData, buyer: user.email, buyerName: user.name });
-		showNotification('success', 'Buy request posted! ??', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+		showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
 		setFormData({ company: '', isin: '', price: '', shares: '' });
 		setFormType(null);
 	};
@@ -387,7 +387,7 @@ export default function UserDashboard({ setPage }) {
 		e.preventDefault();
 		if (!tradeContext) return;
 		placeBid(tradeContext.item.id, { ...bidOfferData, bidder: user.email, bidderName: user.name });
-		showNotification('success', 'Bid submitted! ??', `Bid of ?${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+		showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
 		setTradeContext(null);
 		setSelectedItem(null);
 		setBidOfferData({ price: '', quantity: '' });
@@ -397,7 +397,7 @@ export default function UserDashboard({ setPage }) {
 		e.preventDefault();
 		if (!tradeContext) return;
 		makeOffer(tradeContext.item.id, { ...bidOfferData, seller: user.email, sellerName: user.name });
-		showNotification('success', 'Offer submitted! ??', `Offer of ?${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+		showNotification('success', 'Offer submitted! 🎯', `Offer of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
 		setTradeContext(null);
 		setSelectedItem(null);
 		setBidOfferData({ price: '', quantity: '' });
@@ -421,14 +421,12 @@ export default function UserDashboard({ setPage }) {
 					subtitle="Monitor everything you are selling, buying, and negotiating in one glance."
 				/>
 				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-					<SummaryTile icon="??" label="Sell Listings" value={myListings.length} helper="Listed by you" tone="emerald" />
-					<SummaryTile icon="??" label="Buy Requests" value={myRequests.length} helper="Requests you posted" tone="blue" />
-					<SummaryTile icon="??" label="Active Bids" value={myBids.length} helper="Listings you bid on" tone="amber" />
-					<SummaryTile icon="??" label="Active Offers" value={myOffers.length} helper="Requests you offered on" tone="purple" />
-				</div>
-			</section>
-
-			<section className="space-y-6">
+				<SummaryTile icon="📊" label="Sell Listings" value={myListings.length} helper="Listed by you" tone="emerald" />
+				<SummaryTile icon="💰" label="Buy Requests" value={myRequests.length} helper="Requests you posted" tone="blue" />
+				<SummaryTile icon="🎯" label="Active Bids" value={myBids.length} helper="Listings you bid on" tone="amber" />
+				<SummaryTile icon="✨" label="Active Offers" value={myOffers.length} helper="Requests you offered on" tone="purple" />
+			</div>
+		</section>			<section className="space-y-6">
 				<SectionHeader
 					title="Your Pipeline"
 					subtitle="Track everything you are selling and buying with real-time status."
@@ -475,7 +473,7 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<EmptyState
-								icon="??"
+								icon=""
 								title="No listings yet"
 								description="List your unlisted shares to invite bids from verified buyers."
 								actionLabel="Create listing"
@@ -522,7 +520,7 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<EmptyState
-								icon="??"
+								icon=""
 								title="No buy requests yet"
 								description="Tell sellers what you need so they can respond quickly."
 								actionLabel="Post request"
@@ -540,14 +538,14 @@ export default function UserDashboard({ setPage }) {
 				/>
 				<div className="grid gap-5 md:grid-cols-2">
 					<QuickActionCard
-						icon="??"
+						icon=""
 						title="List shares for sale"
 						description="Create a polished listing so buyers can bid instantly."
 						tone="emerald"
 						onClick={() => setFormType('sell')}
 					/>
 					<QuickActionCard
-						icon="??"
+						icon=""
 						title="Request shares to buy"
 						description="Set your desired price and quantity to attract sellers."
 						tone="blue"
@@ -1231,36 +1229,34 @@ export default function UserDashboard({ setPage }) {
 				title="Explore Marketplace"
 				subtitle="Discover fresh opportunities and respond instantly with bids or offers."
 			/>
-			<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
-				<button
-					onClick={() => setBrowseFilter('sell')}
-					className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
-						browseFilter === 'sell'
-							? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow'
-							: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-					}`}
-				>
-					<span>??</span>
-					<span>Available Listings</span>
-				</button>
-				<button
-					onClick={() => setBrowseFilter('buy')}
-					className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
-						browseFilter === 'buy'
-							? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow'
-							: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-					}`}
-				>
-					<span>??</span>
-					<span>Open Buy Requests</span>
-				</button>
-			</div>
-
-			{browseFilter === 'sell' ? (
+		<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
+			<button
+				onClick={() => setBrowseFilter('sell')}
+				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+					browseFilter === 'sell'
+						? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow'
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+				}`}
+			>
+				<span>📋</span>
+				<span>Available Listings</span>
+			</button>
+			<button
+				onClick={() => setBrowseFilter('buy')}
+				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+					browseFilter === 'buy'
+						? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow'
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+				}`}
+			>
+				<span>🛒</span>
+				<span>Open Buy Requests</span>
+			</button>
+		</div>			{browseFilter === 'sell' ? (
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{availableListings.length === 0 ? (
 						<EmptyState
-							icon="??"
+							icon=""
 							title="No active listings from others"
 							description="Check back soon or post a buy request to let sellers know what you need."
 							actionLabel="Post buy request"
@@ -1298,14 +1294,14 @@ export default function UserDashboard({ setPage }) {
 											}}
 											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
 										>
-											<span>??</span>
+											<span></span>
 											<span>{myBid ? 'Update bid' : 'Place bid'}</span>
 										</button>
 										<button
 											onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
 											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
 										>
-											<span>??</span>
+											<span></span>
 											<span>See bid history</span>
 										</button>
 									</div>
@@ -1318,7 +1314,7 @@ export default function UserDashboard({ setPage }) {
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{availableRequests.length === 0 ? (
 						<EmptyState
-							icon="??"
+							icon=""
 							title="No open requests from others"
 							description="List your shares for sale and reach serious buyers faster."
 							actionLabel="Create listing"
@@ -1356,14 +1352,14 @@ export default function UserDashboard({ setPage }) {
 											}}
 											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 to-cyan-500 shadow hover:shadow-lg transition"
 										>
-											<span>??</span>
+											<span></span>
 											<span>{myOffer ? 'Update offer' : 'Make offer'}</span>
 										</button>
 										<button
 											onClick={() => setSelectedItem({ item: request, type: 'buy' })}
 											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
 										>
-											<span>??</span>
+											<span></span>
 											<span>See offer history</span>
 										</button>
 									</div>
@@ -1867,13 +1863,13 @@ export default function UserDashboard({ setPage }) {
 			const newPrice = prompt('Enter your counter price');
 			if (!newPrice) return;
 			counterOffer(item.id, interactionId, newPrice, type);
-			showNotification('info', 'Counter submitted ??', `Proposed new price: ?${newPrice}`);
+			showNotification('info', 'Counter submitted ', `Proposed new price: ?${newPrice}`);
 			setSelectedItem(null);
 		};
 
 		const onAcceptCounter = (interactionId) => {
 			acceptCounterOffer(item.id, interactionId, type);
-			showNotification('success', 'Counter accepted ??', 'Admin will review the final terms.');
+			showNotification('success', 'Counter accepted ', 'Admin will review the final terms.');
 			setSelectedItem(null);
 		};
 
@@ -1953,7 +1949,7 @@ export default function UserDashboard({ setPage }) {
 													onClick={() => onCounter(interaction.id)}
 													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-orange-600 border border-orange-200 bg-orange-50/40 hover:bg-orange-50 transition"
 												>
-													<span>??</span>
+													<span></span>
 													<span>Counter offer</span>
 												</button>
 											)}
@@ -1962,7 +1958,7 @@ export default function UserDashboard({ setPage }) {
 													onClick={() => onAcceptCounter(interaction.id)}
 													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
 												>
-													<span>??</span>
+													<span></span>
 													<span>Accept counter</span>
 												</button>
 											)}
@@ -2180,7 +2176,7 @@ export default function UserDashboard({ setPage }) {
 			/>
 
 			{/* Left Sidebar Navigation */}
-			<aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto">
+			<aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto sidebar-scroll">
 				{/* Logo & User Info */}
 				<div className="p-6 border-b border-white/10">
 					<div className="flex items-center gap-3">
@@ -2317,3 +2313,6 @@ export default function UserDashboard({ setPage }) {
 		</div>
 	);
 }
+
+
+
