@@ -197,6 +197,17 @@ export default function UserDashboard({ setPage }) {
 	const [showProfileModal, setShowProfileModal] = useState(false);
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
+	
+	// Portfolio section states
+	const [editingPrice, setEditingPrice] = useState(null);
+	const [newPrice, setNewPrice] = useState('');
+	
+	// FAQ section state
+	const [openFaqIndex, setOpenFaqIndex] = useState(null);
+	
+	// Support section states
+	const [supportForm, setSupportForm] = useState({ subject: '', message: '' });
+	const [supportSubmitted, setSupportSubmitted] = useState(false);
 
 	const motivationalQuotes = useMemo(
 		() => [
@@ -1322,22 +1333,467 @@ export default function UserDashboard({ setPage }) {
 		</div>
 	);
 
+	const renderOrders = () => {
+		// Combine all active and previous orders
+		const activeOrders = [
+			...myListings.filter(l => l.status === 'active' || l.status === 'pending_admin_approval'),
+			...myRequests.filter(r => r.status === 'active' || r.status === 'pending_admin_approval')
+		];
+		
+		const previousOrders = [
+			...myListings.filter(l => l.status === 'approved' || l.status === 'closed'),
+			...myRequests.filter(r => r.status === 'approved' || r.status === 'closed')
+		];
+
+		return (
+			<div className="space-y-6">
+				<div>
+					<h2 className="text-2xl font-bold text-gray-900">📋 Orders & Transactions</h2>
+					<p className="text-sm text-gray-500 mt-1">Track all your active and completed deals</p>
+				</div>
+
+				{/* Active Orders */}
+				<div>
+					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+						<span>⚡</span>
+						<span>Active Orders ({activeOrders.length})</span>
+					</h3>
+					{activeOrders.length === 0 ? (
+						<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+							<p className="text-gray-500">No active orders</p>
+						</div>
+					) : (
+						<div className="space-y-3">
+							{activeOrders.map((order) => {
+								const isSell = 'seller' in order || 'bids' in order;
+								const isBuy = 'buyer' in order || 'offers' in order;
+								
+								return (
+									<div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<div className="flex items-center gap-3">
+													<span className="text-2xl">{isSell ? '📈' : '🛒'}</span>
+													<div>
+														<h4 className="font-semibold text-gray-900">{order.company}</h4>
+														<p className="text-xs text-gray-500">
+															{isSell ? 'Sell Listing' : 'Buy Request'} • {formatDate(order.createdAt)}
+														</p>
+													</div>
+												</div>
+												<div className="mt-4 grid grid-cols-3 gap-4">
+													<div>
+														<p className="text-xs text-gray-600">Price</p>
+														<p className="text-sm font-semibold text-gray-900">{formatCurrency(order.price)}</p>
+													</div>
+													<div>
+														<p className="text-xs text-gray-600">Quantity</p>
+														<p className="text-sm font-semibold text-gray-900">{formatShares(order.shares)}</p>
+													</div>
+													<div>
+														<p className="text-xs text-gray-600">
+															{isSell ? 'Bids' : 'Offers'}
+														</p>
+														<p className="text-sm font-semibold text-gray-900">
+															{isSell ? (order.bids?.length || 0) : (order.offers?.length || 0)}
+														</p>
+													</div>
+												</div>
+											</div>
+											<div className="flex flex-col items-end gap-2">
+												<StatusBadge status={order.status} />
+												<button
+													onClick={() => setSelectedItem({ item: order, type: isSell ? 'sell' : 'buy' })}
+													className="px-3 py-1 rounded-lg text-xs font-semibold text-purple-600 bg-purple-100 hover:bg-purple-200"
+												>
+													View Details
+												</button>
+											</div>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+
+				{/* Previous Orders */}
+				<div className="pt-6 border-t border-gray-200">
+					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+						<span>📜</span>
+						<span>Previous Orders ({previousOrders.length})</span>
+					</h3>
+					{previousOrders.length === 0 ? (
+						<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+							<p className="text-gray-500">No previous orders</p>
+						</div>
+					) : (
+						<div className="grid gap-4 md:grid-cols-2">
+							{previousOrders.map((order) => {
+								const isSell = 'seller' in order || 'bids' in order;
+								const acceptedItem = isSell 
+									? order.bids?.find(b => b.id === order.acceptedBid)
+									: order.offers?.find(o => o.id === order.acceptedOffer);
+								
+								return (
+									<div key={order.id} className="bg-white border border-green-200 rounded-xl p-4">
+										<div className="flex items-start gap-3 mb-3">
+											<span className="text-xl">{isSell ? '📈' : '🛒'}</span>
+											<div className="flex-1">
+												<h4 className="font-semibold text-gray-900">{order.company}</h4>
+												<p className="text-xs text-gray-500">{isSell ? 'Sell' : 'Buy'}</p>
+											</div>
+											<StatusBadge status={order.status} />
+										</div>
+										{acceptedItem && (
+											<div className="bg-green-50 rounded-lg p-3 border border-green-200">
+												<p className="text-xs text-green-600 font-semibold mb-2">✅ Deal Completed</p>
+												<div className="grid grid-cols-2 gap-2 text-xs">
+													<div>
+														<p className="text-gray-600">{isSell ? 'Buyer' : 'Seller'}</p>
+														<p className="font-semibold">
+															{isSell ? (acceptedItem.bidderName || acceptedItem.bidder) : (acceptedItem.sellerName || acceptedItem.seller)}
+														</p>
+													</div>
+													<div>
+														<p className="text-gray-600">Final Price</p>
+														<p className="font-semibold text-green-700">
+															{formatCurrency(acceptedItem.counterPrice || acceptedItem.price)}
+														</p>
+													</div>
+												</div>
+											</div>
+										)}
+										{order.closedAt && (
+											<p className="text-xs text-gray-400 mt-2">Closed: {formatDate(order.closedAt)}</p>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	};
+
+	const renderPortfolio = () => {
+		const { holdings, updateCurrentPrice } = portfolio;
+		const summary = portfolio.getPortfolioSummary();
+
+		return (
+			<div className="space-y-6">
+				<div>
+					<h2 className="text-2xl font-bold text-gray-900">💼 My Portfolio</h2>
+					<p className="text-sm text-gray-500 mt-1">Track your unlisted share investments</p>
+				</div>
+
+				{/* Portfolio Summary */}
+				<div className="grid gap-4 md:grid-cols-4">
+					<div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+						<p className="text-sm opacity-90">Total Holdings</p>
+						<p className="text-3xl font-bold mt-2">{summary.totalHoldings}</p>
+					</div>
+					<div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 text-white">
+						<p className="text-sm opacity-90">Invested</p>
+						<p className="text-2xl font-bold mt-2">{formatCurrency(summary.totalInvestment)}</p>
+					</div>
+					<div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 text-white">
+						<p className="text-sm opacity-90">Current Value</p>
+						<p className="text-2xl font-bold mt-2">{formatCurrency(summary.currentValue)}</p>
+					</div>
+					<div className={`bg-gradient-to-br rounded-xl p-5 text-white ${summary.totalGainLoss >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600'}`}>
+						<p className="text-sm opacity-90">Gain/Loss</p>
+						<p className="text-2xl font-bold mt-2">
+							{summary.totalGainLoss >= 0 ? '+' : ''}{formatCurrency(summary.totalGainLoss)}
+						</p>
+						<p className="text-xs opacity-75 mt-1">{summary.gainLossPercent >= 0 ? '+' : ''}{summary.gainLossPercent.toFixed(2)}%</p>
+					</div>
+				</div>
+
+				{/* Holdings List */}
+				<div>
+					<h3 className="text-lg font-semibold text-gray-900 mb-4">Your Holdings</h3>
+					{holdings.length === 0 ? (
+						<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+							<p className="text-gray-500">No holdings yet. Complete a buy transaction to add shares to your portfolio.</p>
+						</div>
+					) : (
+						<div className="space-y-3">
+							{holdings.map((holding) => {
+								const investment = holding.purchasePrice * holding.quantity;
+								const currentVal = holding.currentPrice * holding.quantity;
+								const gain = currentVal - investment;
+								const gainPercent = ((gain / investment) * 100);
+
+								return (
+									<div key={holding.id} className="bg-white border border-gray-200 rounded-xl p-5">
+										<div className="flex items-start justify-between mb-4">
+											<div>
+												<h4 className="font-semibold text-gray-900">{holding.company}</h4>
+												<p className="text-xs text-gray-500">ISIN: {holding.isin}</p>
+												<p className="text-xs text-gray-400">Purchased: {formatDate(holding.purchaseDate)}</p>
+											</div>
+											<div className={`px-3 py-1 rounded-full text-xs font-semibold ${gain >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+												{gain >= 0 ? '↗' : '↘'} {gain >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
+											</div>
+										</div>
+
+										<div className="grid grid-cols-4 gap-4 mb-4">
+											<div>
+												<p className="text-xs text-gray-600">Quantity</p>
+												<p className="text-sm font-semibold text-gray-900">{formatShares(holding.quantity)}</p>
+											</div>
+											<div>
+												<p className="text-xs text-gray-600">Buy Price</p>
+												<p className="text-sm font-semibold text-gray-900">{formatCurrency(holding.purchasePrice)}</p>
+											</div>
+											<div>
+												<p className="text-xs text-gray-600">Current Price</p>
+												{editingPrice === holding.id ? (
+													<input
+														type="number"
+														value={newPrice}
+														onChange={(e) => setNewPrice(e.target.value)}
+														className="w-full px-2 py-1 text-sm border rounded"
+														autoFocus
+														onBlur={() => {
+															if (newPrice && parseFloat(newPrice) > 0) {
+																updateCurrentPrice(holding.id, parseFloat(newPrice));
+															}
+															setEditingPrice(null);
+															setNewPrice('');
+														}}
+													/>
+												) : (
+													<button
+														onClick={() => {
+															setEditingPrice(holding.id);
+															setNewPrice(holding.currentPrice.toString());
+														}}
+														className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+													>
+														{formatCurrency(holding.currentPrice)} ✏️
+													</button>
+												)}
+											</div>
+											<div>
+												<p className="text-xs text-gray-600">Total Value</p>
+												<p className={`text-sm font-semibold ${gain >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+													{formatCurrency(currentVal)}
+												</p>
+											</div>
+										</div>
+
+										<div className="flex gap-2">
+											<button
+												onClick={() => {
+													setFormType('sell');
+													setFormData({ company: holding.company, isin: holding.isin, price: holding.currentPrice.toString(), shares: holding.quantity.toString() });
+												}}
+												className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+											>
+												📈 Sell
+											</button>
+											<button
+												onClick={() => {
+													setFormType('buy');
+													setFormData({ company: holding.company, isin: holding.isin, price: holding.currentPrice.toString(), shares: '' });
+												}}
+												className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100"
+											>
+												🛒 Buy More
+											</button>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	};
+
+	const renderFAQ = () => {
+		const faqs = [
+			{
+				q: "What are unlisted shares?",
+				a: "Unlisted shares are equity shares of companies that are not listed on recognized stock exchanges like NSE or BSE. These shares can be bought and sold through private transactions."
+			},
+			{
+				q: "How does the trading process work?",
+				a: "1. Sellers list their shares with asking price. 2. Buyers either accept the price or place bids. 3. Sellers can counter-offer. 4. Once both parties agree, admin reviews and approves the transaction."
+			},
+			{
+				q: "Is it safe to trade unlisted shares here?",
+				a: "Yes! All transactions go through admin verification. We verify both buyers and sellers before finalizing any deal. However, please do your own due diligence before investing."
+			},
+			{
+				q: "What documents do I need?",
+				a: "For selling: Share certificates, PAN card, Demat account details. For buying: PAN card, Demat account, and payment proof after deal confirmation."
+			},
+			{
+				q: "How long does transaction approval take?",
+				a: "Typically 1-3 business days after both parties accept the deal. Admin verifies all documents before final approval."
+			},
+			{
+				q: "Can I cancel my listing or request?",
+				a: "Yes, you can cancel active listings/requests anytime before a bid/offer is accepted. Once accepted and pending admin approval, cancellation requires admin consent."
+			},
+			{
+				q: "What fees do you charge?",
+				a: "Platform fee details are shared during transaction approval. Generally, a small percentage of transaction value is charged to ensure quality service."
+			},
+			{
+				q: "How do I update share prices in my portfolio?",
+				a: "Click the edit icon (✏️) next to current price in your portfolio section. You can manually update prices based on latest valuations."
+			}
+		];
+
+		return (
+			<div className="space-y-6">
+				<div>
+					<h2 className="text-2xl font-bold text-gray-900">❓ Frequently Asked Questions</h2>
+					<p className="text-sm text-gray-500 mt-1">Everything you need to know about trading unlisted shares</p>
+				</div>
+
+				<div className="space-y-3">
+					{faqs.map((faq, index) => (
+						<div key={index} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+							<button
+								onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+								className="w-full px-5 py-4 text-left flex items-start justify-between hover:bg-gray-50 transition"
+							>
+								<div className="flex-1">
+									<h4 className="font-semibold text-gray-900">{faq.q}</h4>
+								</div>
+								<span className="text-xl ml-4">{openFaqIndex === index ? '−' : '+'}</span>
+							</button>
+							{openFaqIndex === index && (
+								<div className="px-5 pb-4 pt-2 border-t border-gray-100 bg-gray-50">
+									<p className="text-sm text-gray-700 leading-relaxed">{faq.a}</p>
+								</div>
+							)}
+						</div>
+					))}
+				</div>
+
+				<div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-6">
+					<h4 className="font-semibold text-blue-900 mb-2">Still have questions?</h4>
+					<p className="text-sm text-blue-700 mb-4">Our support team is here to help you!</p>
+					<button
+						onClick={() => setActiveTab('support')}
+						className="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700"
+					>
+						Contact Support
+					</button>
+				</div>
+			</div>
+		);
+	};
+
+	const renderSupport = () => {
+		const handleSubmit = (e) => {
+			e.preventDefault();
+			// In real app, this would send email to admin
+			console.log('Support request:', supportForm);
+			showNotification('success', 'Message Sent!', 'Our support team will get back to you within 24 hours.');
+			setSupportSubmitted(true);
+			setTimeout(() => {
+				setSupportSubmitted(false);
+				setSupportForm({ subject: '', message: '' });
+			}, 3000);
+		};
+
+		return (
+			<div className="space-y-6">
+				<div>
+					<h2 className="text-2xl font-bold text-gray-900">💬 Support & Help</h2>
+					<p className="text-sm text-gray-500 mt-1">Get assistance from our team</p>
+				</div>
+
+				<div className="grid gap-6 md:grid-cols-3">
+					<div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+						<div className="text-3xl mb-3">📧</div>
+						<h4 className="font-semibold mb-2">Email Support</h4>
+						<p className="text-sm opacity-90">support@unlistedhub.com</p>
+						<p className="text-xs opacity-75 mt-2">Response within 24 hours</p>
+					</div>
+					<div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+						<div className="text-3xl mb-3">📱</div>
+						<h4 className="font-semibold mb-2">Phone Support</h4>
+						<p className="text-sm opacity-90">+91 1234567890</p>
+						<p className="text-xs opacity-75 mt-2">Mon-Fri, 9 AM - 6 PM</p>
+					</div>
+					<div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+						<div className="text-3xl mb-3">💬</div>
+						<h4 className="font-semibold mb-2">Live Chat</h4>
+						<p className="text-sm opacity-90">Coming Soon</p>
+						<p className="text-xs opacity-75 mt-2">Instant assistance</p>
+					</div>
+				</div>
+
+				<div className="bg-white border border-gray-200 rounded-xl p-6">
+					<h3 className="text-lg font-semibold text-gray-900 mb-4">Send us a message</h3>
+					{supportSubmitted ? (
+						<div className="text-center py-12">
+							<div className="text-6xl mb-4">✅</div>
+							<h4 className="text-xl font-semibold text-green-700 mb-2">Message Sent Successfully!</h4>
+							<p className="text-gray-600">We'll get back to you within 24 hours.</p>
+						</div>
+					) : (
+						<form onSubmit={handleSubmit} className="space-y-4">
+							<div>
+								<label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+								<input
+									type="text"
+									value={supportForm.subject}
+									onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+									className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+									placeholder="What do you need help with?"
+									required
+								/>
+							</div>
+							<div>
+								<label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+								<textarea
+									value={supportForm.message}
+									onChange={(e) => setSupportForm({ ...supportForm, message: e.target.value })}
+									className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent h-32 resize-none"
+									placeholder="Describe your issue or question in detail..."
+									required
+								/>
+							</div>
+							<button
+								type="submit"
+								className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition"
+							>
+								Send Message
+							</button>
+						</form>
+					)}
+				</div>
+			</div>
+		);
+	};
+
 	const renderActiveTab = () => {
 		switch (activeTab) {
 			case 'marketplace':
-				return renderBrowse(); // Rename to marketplace later
+				return renderBrowse();
 			case 'buy':
 				return renderMyRequests();
 			case 'sell':
 				return renderMyListings();
 			case 'orders':
-				return <div className="text-center py-12 text-gray-500">Orders section coming soon...</div>;
+				return renderOrders();
 			case 'portfolio':
-				return <div className="text-center py-12 text-gray-500">Portfolio section coming soon...</div>;
+				return renderPortfolio();
 			case 'faq':
-				return <div className="text-center py-12 text-gray-500">FAQ section coming soon...</div>;
+				return renderFAQ();
 			case 'support':
-				return <div className="text-center py-12 text-gray-500">Support section coming soon...</div>;
+				return renderSupport();
 			default:
 				return renderBrowse();
 		}
