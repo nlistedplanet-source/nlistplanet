@@ -185,6 +185,8 @@ export default function UserDashboard({ setPage }) {
 	const portfolio = usePortfolio();
 
 	const [activeTab, setActiveTab] = useState('marketplace');
+	const [buySubTab, setBuySubTab] = useState('list');
+	const [sellSubTab, setSellSubTab] = useState('list');
 	const [browseFilter, setBrowseFilter] = useState('sell');
 	const [formType, setFormType] = useState(null);
 	const [formData, setFormData] = useState({ company: '', isin: '', price: '', shares: '' });
@@ -502,145 +504,579 @@ export default function UserDashboard({ setPage }) {
 		</div>
 	);
 
-	const renderMyListings = () => (
-		<div className="space-y-8">
-			<SectionHeader
-				title="My Sell Listings"
-				subtitle="Every listing you created with live status and bid activity."
-				actionLabel="Create listing"
-				onAction={() => setFormType('sell')}
-			/>
-			{myListings.length === 0 ? (
-				<EmptyState
-					icon="??"
-					title="No listings yet"
-					description="List your unlisted shares to invite bids from verified buyers."
-					actionLabel="Create listing"
-					onAction={() => setFormType('sell')}
-				/>
-			) : (
-				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-					{myListings.map((listing) => {
-						const acceptedBid = listing.acceptedBid ? listing.bids?.find((bid) => bid.id === listing.acceptedBid) : null;
-						const negotiations = listing.bids?.filter((bid) => ['pending', 'counter_offered'].includes(bid.status)).length || 0;
-						return (
-							<div key={listing.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-								<div className="flex items-start justify-between gap-4">
-									<div>
-										<h3 className="text-xl font-semibold text-gray-900">{listing.company}</h3>
-										<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || '�'}</p>
-										<p className="text-xs text-gray-400 mt-1">Created {formatDate(listing.createdAt)}</p>
-									</div>
-									<StatusBadge status={listing.status} size="lg" />
-								</div>
-								<div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-									<div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
-										<p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Ask price</p>
-										<p className="mt-1 text-base font-semibold text-emerald-700">{formatCurrency(listing.price)}</p>
-									</div>
-									<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-										<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares</p>
-										<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(listing.shares)}</p>
-									</div>
-								</div>
-								<div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-									<p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Bids & Negotiations</p>
-									<p className="mt-3 text-sm text-gray-600">
-										{listing.bids?.length ? `${listing.bids.length} bids received` : 'No bids yet'}
-									</p>
-									{acceptedBid && (
-										<p className="mt-2 text-xs font-semibold text-emerald-600">Accepted at {formatCurrency(acceptedBid.counterPrice || acceptedBid.price)}</p>
-									)}
-									{negotiations > 0 && (
-										<p className="mt-1 text-xs text-orange-600">{negotiations} negotiation{negotiations > 1 ? 's' : ''} in progress</p>
-									)}
-								</div>
-								<div className="mt-5 flex flex-col gap-3">
-									<button
-										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-										className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
-									>
-										<span>??</span>
-										<span>Review bids</span>
-									</button>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			)}
-		</div>
-	);
+	const renderMyListings = () => {
+		// Filter sell listings based on sub-tab  
+		const myActiveListings = myListings.filter(l => l.status === 'active');
+		const bidsReceived = myListings.filter(l => l.bids && l.bids.length > 0);
+		const counterOfferListings = myListings.filter(l => 
+			l.bids?.some(b => b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder')
+		);
+		const completedListings = myListings.filter(l => 
+			l.status === 'approved' || l.status === 'closed'
+		);
 
-	const renderMyRequests = () => (
-		<div className="space-y-8">
-			<SectionHeader
-				title="My Buy Requests"
-				subtitle="Keep tabs on offers from sellers and admin approvals."
-				actionLabel="Post request"
-				onAction={() => setFormType('buy')}
-			/>
-			{myRequests.length === 0 ? (
-				<EmptyState
-					icon="??"
-					title="No requests yet"
-					description="Share what you want to buy so verified holders can respond."
-					actionLabel="Post request"
-					onAction={() => setFormType('buy')}
-				/>
-			) : (
-				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-					{myRequests.map((request) => {
-						const acceptedOffer = request.acceptedOffer ? request.offers?.find((offer) => offer.id === request.acceptedOffer) : null;
-						const negotiations = request.offers?.filter((offer) => ['pending', 'counter_offered'].includes(offer.status)).length || 0;
-						return (
-							<div key={request.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-								<div className="flex items-start justify-between gap-4">
-									<div>
-										<h3 className="text-xl font-semibold text-gray-900">{request.company}</h3>
-										<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || '�'}</p>
-										<p className="text-xs text-gray-400 mt-1">Created {formatDate(request.createdAt)}</p>
-									</div>
-									<StatusBadge status={request.status} size="lg" />
-								</div>
-								<div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-									<div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
-										<p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Target price</p>
-										<p className="mt-1 text-base font-semibold text-blue-700">{formatCurrency(request.price)}</p>
-									</div>
-									<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-										<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares needed</p>
-										<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(request.shares)}</p>
-									</div>
-								</div>
-								<div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-									<p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Seller offers</p>
-									<p className="mt-3 text-sm text-gray-600">
-										{request.offers?.length ? `${request.offers.length} offers received` : 'No offers yet'}
-									</p>
-									{acceptedOffer && (
-										<p className="mt-2 text-xs font-semibold text-emerald-600">Accepted at {formatCurrency(acceptedOffer.counterPrice || acceptedOffer.price)}</p>
-									)}
-									{negotiations > 0 && (
-										<p className="mt-1 text-xs text-orange-600">{negotiations} negotiation{negotiations > 1 ? 's' : ''} in progress</p>
-									)}
-								</div>
-								<div className="mt-5 flex flex-col gap-3">
-									<button
-										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-										className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
-									>
-										<span>??</span>
-										<span>Review offers</span>
-									</button>
-								</div>
-							</div>
-						);
-					})}
+		return (
+			<div className="space-y-6">
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900">📈 Sell Management</h2>
+						<p className="text-sm text-gray-500 mt-1">Manage your sell listings and received bids</p>
+					</div>
+					<button
+						onClick={() => setFormType('sell')}
+						className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 shadow hover:shadow-lg transition"
+					>
+						<span>➕</span>
+						<span>New Sell Listing</span>
+					</button>
 				</div>
-			)}
-		</div>
-	);
+
+				{/* Sub-tabs */}
+				<div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+					<button
+						onClick={() => setSellSubTab('list')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							sellSubTab === 'list'
+								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						📋 Sell List ({myActiveListings.length})
+					</button>
+					<button
+						onClick={() => setSellSubTab('bids')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							sellSubTab === 'bids'
+								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						💰 Bids Received ({bidsReceived.length})
+					</button>
+					<button
+						onClick={() => setSellSubTab('counter')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							sellSubTab === 'counter'
+								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						🔄 Counter Offers ({counterOfferListings.length})
+					</button>
+					<button
+						onClick={() => setSellSubTab('completed')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							sellSubTab === 'completed'
+								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						✅ Completed ({completedListings.length})
+					</button>
+				</div>
+
+				{/* Content based on sub-tab */}
+				{sellSubTab === 'list' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Sell Listings</h3>
+						{myActiveListings.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No active sell listings</p>
+								<button
+									onClick={() => setFormType('sell')}
+									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
+								>
+									<span>➕</span>
+									<span>Create your first listing</span>
+								</button>
+							</div>
+						) : (
+							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+								{myActiveListings.map((listing) => (
+									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+										<div className="flex items-start justify-between">
+											<div>
+												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
+												<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || 'N/A'}</p>
+											</div>
+											<StatusBadge status={listing.status} />
+										</div>
+										<div className="mt-4 grid grid-cols-2 gap-3">
+											<div className="bg-emerald-50 rounded-lg p-3">
+												<p className="text-xs text-emerald-600 font-semibold">Ask Price</p>
+												<p className="text-sm font-bold text-emerald-700 mt-1">{formatCurrency(listing.price)}</p>
+											</div>
+											<div className="bg-gray-50 rounded-lg p-3">
+												<p className="text-xs text-gray-600 font-semibold">Quantity</p>
+												<p className="text-sm font-bold text-gray-700 mt-1">{formatShares(listing.shares)}</p>
+											</div>
+										</div>
+										<div className="mt-4 flex items-center justify-between text-xs">
+											<span className="text-gray-500">Bids: {listing.bids?.length || 0}</span>
+											<span className="text-gray-400">{formatDate(listing.createdAt)}</span>
+										</div>
+										<button
+											onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+											className="mt-4 w-full px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
+										>
+											View Details
+										</button>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
+				{sellSubTab === 'bids' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Bids Received from Buyers</h3>
+						{bidsReceived.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No bids received yet</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{bidsReceived.map((listing) => (
+									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
+										<div className="flex items-start justify-between mb-4">
+											<div>
+												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
+												<p className="text-sm text-gray-500">Your ask: {formatCurrency(listing.price)} for {formatShares(listing.shares)}</p>
+											</div>
+											<StatusBadge status={listing.status} />
+										</div>
+										<div className="space-y-2">
+											<p className="text-sm font-semibold text-gray-700">Received Bids ({listing.bids?.length || 0}):</p>
+											{listing.bids?.map((bid) => (
+												<div key={bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+													<div>
+														<p className="text-sm font-semibold text-gray-900">
+															{bid.bidderName || bid.bidder}
+														</p>
+														<p className="text-xs text-gray-600">
+															{formatCurrency(bid.counterPrice || bid.price)} × {formatShares(bid.quantity)}
+														</p>
+													</div>
+													<div className="flex items-center gap-2">
+														<InteractionBadge status={bid.status} />
+														<button
+															onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+															className="px-3 py-1 rounded-lg text-xs font-semibold text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
+														>
+															Review
+														</button>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
+				{sellSubTab === 'counter' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Counter Offer Negotiations</h3>
+						{counterOfferListings.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No counter offers in progress</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{counterOfferListings.map((listing) => {
+									const counterBids = listing.bids?.filter(b => 
+										b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder'
+									);
+									return (
+										<div key={listing.id} className="bg-white border border-orange-200 rounded-xl p-5">
+											<div className="flex items-start justify-between mb-4">
+												<div>
+													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
+													<p className="text-sm text-gray-500">Original: {formatCurrency(listing.price)}</p>
+												</div>
+												<span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+													🔄 In Negotiation
+												</span>
+											</div>
+											<div className="space-y-2">
+												{counterBids?.map((bid) => (
+													<div key={bid.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+														<div className="flex items-start justify-between">
+															<div>
+																<p className="text-sm font-semibold text-gray-900">{bid.bidderName || bid.bidder}</p>
+																<p className="text-xs text-gray-600 mt-1">
+																	Counter: {formatCurrency(bid.counterPrice)} × {formatShares(bid.quantity)}
+																</p>
+																{bid.counterAt && (
+																	<p className="text-xs text-gray-400 mt-1">{formatDate(bid.counterAt)}</p>
+																)}
+															</div>
+															<button
+																onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+																className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg transition"
+															>
+																Respond
+															</button>
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				)}
+
+				{sellSubTab === 'completed' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Transactions</h3>
+						{completedListings.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No completed transactions yet</p>
+							</div>
+						) : (
+							<div className="grid gap-5 md:grid-cols-2">
+								{completedListings.map((listing) => {
+									const acceptedBid = listing.acceptedBid 
+										? listing.bids?.find(b => b.id === listing.acceptedBid)
+										: null;
+									return (
+										<div key={listing.id} className="bg-white border border-green-200 rounded-xl p-5">
+											<div className="flex items-start justify-between mb-4">
+												<div>
+													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
+													<p className="text-xs text-gray-500">ISIN: {listing.isin || 'N/A'}</p>
+												</div>
+												<StatusBadge status={listing.status} />
+											</div>
+											{acceptedBid && (
+												<div className="bg-green-50 rounded-lg p-4 border border-green-200">
+													<p className="text-xs text-green-600 font-semibold mb-2">✅ Deal Closed</p>
+													<div className="grid grid-cols-2 gap-3 text-sm">
+														<div>
+															<p className="text-xs text-gray-600">Buyer</p>
+															<p className="font-semibold text-gray-900">{acceptedBid.bidderName || acceptedBid.bidder}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Final Price</p>
+															<p className="font-semibold text-green-700">{formatCurrency(acceptedBid.counterPrice || acceptedBid.price)}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Quantity</p>
+															<p className="font-semibold text-gray-900">{formatShares(acceptedBid.quantity)}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Status</p>
+															<p className="font-semibold text-green-700 capitalize">{listing.status}</p>
+														</div>
+													</div>
+												</div>
+											)}
+											{listing.closedAt && (
+												<p className="text-xs text-gray-400 mt-3">Closed: {formatDate(listing.closedAt)}</p>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				)}
+			</div>
+		);
+	};
+
+	const renderMyRequests = () => {
+		// Filter buy requests based on sub-tab
+		const myActiveRequests = myRequests.filter(r => r.status === 'active');
+		const offersReceived = myRequests.filter(r => r.offers && r.offers.length > 0);
+		const counterOfferRequests = myRequests.filter(r => 
+			r.offers?.some(o => o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer')
+		);
+		const completedRequests = myRequests.filter(r => 
+			r.status === 'approved' || r.status === 'closed'
+		);
+
+		return (
+			<div className="space-y-6">
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900">🛒 Buy Management</h2>
+						<p className="text-sm text-gray-500 mt-1">Manage your buy requests and received offers</p>
+					</div>
+					<button
+						onClick={() => setFormType('buy')}
+						className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 shadow hover:shadow-lg transition"
+					>
+						<span>➕</span>
+						<span>New Buy Request</span>
+					</button>
+				</div>
+
+				{/* Sub-tabs */}
+				<div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+					<button
+						onClick={() => setBuySubTab('list')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							buySubTab === 'list'
+								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						📋 Buy List ({myActiveRequests.length})
+					</button>
+					<button
+						onClick={() => setBuySubTab('offers')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							buySubTab === 'offers'
+								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						💰 Offers Received ({offersReceived.length})
+					</button>
+					<button
+						onClick={() => setBuySubTab('counter')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							buySubTab === 'counter'
+								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						🔄 Counter Offers ({counterOfferRequests.length})
+					</button>
+					<button
+						onClick={() => setBuySubTab('completed')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							buySubTab === 'completed'
+								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						✅ Completed ({completedRequests.length})
+					</button>
+				</div>
+
+				{/* Content based on sub-tab */}
+				{buySubTab === 'list' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Buy Requests</h3>
+						{myActiveRequests.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No active buy requests</p>
+								<button
+									onClick={() => setFormType('buy')}
+									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
+								>
+									<span>➕</span>
+									<span>Create your first request</span>
+								</button>
+							</div>
+						) : (
+							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+								{myActiveRequests.map((request) => (
+									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+										<div className="flex items-start justify-between">
+											<div>
+												<h4 className="font-semibold text-gray-900">{request.company}</h4>
+												<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || 'N/A'}</p>
+											</div>
+											<StatusBadge status={request.status} />
+										</div>
+										<div className="mt-4 grid grid-cols-2 gap-3">
+											<div className="bg-blue-50 rounded-lg p-3">
+												<p className="text-xs text-blue-600 font-semibold">Target Price</p>
+												<p className="text-sm font-bold text-blue-700 mt-1">{formatCurrency(request.price)}</p>
+											</div>
+											<div className="bg-gray-50 rounded-lg p-3">
+												<p className="text-xs text-gray-600 font-semibold">Quantity</p>
+												<p className="text-sm font-bold text-gray-700 mt-1">{formatShares(request.shares)}</p>
+											</div>
+										</div>
+										<div className="mt-4 flex items-center justify-between text-xs">
+											<span className="text-gray-500">Offers: {request.offers?.length || 0}</span>
+											<span className="text-gray-400">{formatDate(request.createdAt)}</span>
+										</div>
+										<button
+											onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+											className="mt-4 w-full px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
+										>
+											View Details
+										</button>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
+				{buySubTab === 'offers' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Offers Received from Sellers</h3>
+						{offersReceived.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No offers received yet</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{offersReceived.map((request) => (
+									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5">
+										<div className="flex items-start justify-between mb-4">
+											<div>
+												<h4 className="font-semibold text-gray-900">{request.company}</h4>
+												<p className="text-sm text-gray-500">Your request: {formatCurrency(request.price)} for {formatShares(request.shares)}</p>
+											</div>
+											<StatusBadge status={request.status} />
+										</div>
+										<div className="space-y-2">
+											<p className="text-sm font-semibold text-gray-700">Received Offers ({request.offers?.length || 0}):</p>
+											{request.offers?.map((offer) => (
+												<div key={offer.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+													<div>
+														<p className="text-sm font-semibold text-gray-900">
+															{offer.sellerName || offer.seller}
+														</p>
+														<p className="text-xs text-gray-600">
+															{formatCurrency(offer.counterPrice || offer.price)} × {formatShares(offer.quantity)}
+														</p>
+													</div>
+													<div className="flex items-center gap-2">
+														<InteractionBadge status={offer.status} />
+														<button
+															onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+															className="px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 bg-blue-100 hover:bg-blue-200"
+														>
+															Review
+														</button>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
+				{buySubTab === 'counter' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Counter Offer Negotiations</h3>
+						{counterOfferRequests.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No counter offers in progress</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{counterOfferRequests.map((request) => {
+									const counterOffers = request.offers?.filter(o => 
+										o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer'
+									);
+									return (
+										<div key={request.id} className="bg-white border border-orange-200 rounded-xl p-5">
+											<div className="flex items-start justify-between mb-4">
+												<div>
+													<h4 className="font-semibold text-gray-900">{request.company}</h4>
+													<p className="text-sm text-gray-500">Original: {formatCurrency(request.price)}</p>
+												</div>
+												<span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+													🔄 In Negotiation
+												</span>
+											</div>
+											<div className="space-y-2">
+												{counterOffers?.map((offer) => (
+													<div key={offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+														<div className="flex items-start justify-between">
+															<div>
+																<p className="text-sm font-semibold text-gray-900">{offer.sellerName || offer.seller}</p>
+																<p className="text-xs text-gray-600 mt-1">
+																	Counter: {formatCurrency(offer.counterPrice)} × {formatShares(offer.quantity)}
+																</p>
+																{offer.counterAt && (
+																	<p className="text-xs text-gray-400 mt-1">{formatDate(offer.counterAt)}</p>
+																)}
+															</div>
+															<button
+																onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+																className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg transition"
+															>
+																Respond
+															</button>
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				)}
+
+				{buySubTab === 'completed' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Transactions</h3>
+						{completedRequests.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<p className="text-gray-500">No completed transactions yet</p>
+							</div>
+						) : (
+							<div className="grid gap-5 md:grid-cols-2">
+								{completedRequests.map((request) => {
+									const acceptedOffer = request.acceptedOffer 
+										? request.offers?.find(o => o.id === request.acceptedOffer)
+										: null;
+									return (
+										<div key={request.id} className="bg-white border border-green-200 rounded-xl p-5">
+											<div className="flex items-start justify-between mb-4">
+												<div>
+													<h4 className="font-semibold text-gray-900">{request.company}</h4>
+													<p className="text-xs text-gray-500">ISIN: {request.isin || 'N/A'}</p>
+												</div>
+												<StatusBadge status={request.status} />
+											</div>
+											{acceptedOffer && (
+												<div className="bg-green-50 rounded-lg p-4 border border-green-200">
+													<p className="text-xs text-green-600 font-semibold mb-2">✅ Deal Closed</p>
+													<div className="grid grid-cols-2 gap-3 text-sm">
+														<div>
+															<p className="text-xs text-gray-600">Seller</p>
+															<p className="font-semibold text-gray-900">{acceptedOffer.sellerName || acceptedOffer.seller}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Final Price</p>
+															<p className="font-semibold text-green-700">{formatCurrency(acceptedOffer.counterPrice || acceptedOffer.price)}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Quantity</p>
+															<p className="font-semibold text-gray-900">{formatShares(acceptedOffer.quantity)}</p>
+														</div>
+														<div>
+															<p className="text-xs text-gray-600">Status</p>
+															<p className="font-semibold text-green-700 capitalize">{request.status}</p>
+														</div>
+													</div>
+												</div>
+											)}
+											{request.closedAt && (
+												<p className="text-xs text-gray-400 mt-3">Closed: {formatDate(request.closedAt)}</p>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				)}
+			</div>
+		);
+	};
 
 	const renderActivity = () => (
 		<div className="space-y-8">
