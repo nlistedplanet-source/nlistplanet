@@ -1,6 +1,6 @@
 {
   "name": "unlisted-hub",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "P2P Marketplace for Unlisted Shares - ONE Account, Multiple Roles",
   "private": true,
   "dependencies": {
