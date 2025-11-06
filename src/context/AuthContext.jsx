@@ -8,6 +8,26 @@ export function AuthProvider({ children }) {
   const [currentRole, setCurrentRole] = useState('buyer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Restore user from localStorage on page load
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    const savedRole = localStorage.getItem('currentRole');
+    
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to parse saved user:', e);
+        localStorage.removeItem('user');
+      }
+    }
+    
+    if (savedRole) {
+      setCurrentRole(savedRole);
+    }
+  }, []);
+
   const [users, setUsers] = useState([
     // Pre-created admin account
     {
@@ -200,6 +220,12 @@ export function AuthProvider({ children }) {
         
         setUser(foundUser);
         localStorage.setItem('user', JSON.stringify(foundUser));
+        
+        // Set default role based on user type
+        const defaultRole = foundUser.roles.includes('admin') ? 'admin' : 'buyer';
+        setCurrentRole(defaultRole);
+        localStorage.setItem('currentRole', defaultRole);
+        
         setLoading(false);
         return { success: true, user: foundUser };
       }
@@ -382,10 +408,16 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setUser(null);
     setCurrentRole('buyer');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentRole');
+    localStorage.removeItem('authToken');
   };
 
   const switchRole = (role) => {
-    if (user?.roles.includes(role)) setCurrentRole(role);
+    if (user?.roles.includes(role)) {
+      setCurrentRole(role);
+      localStorage.setItem('currentRole', role);
+    }
   };
 
   // Get user display name (User ID for normal users, Name for admin)
