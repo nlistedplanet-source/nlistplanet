@@ -6,10 +6,60 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/images/logos/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/logos/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/images/logos/apple-touch-icon.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Listed Point - P2P Marketplace for Listed Shares" />
-    <title>Listed Point - P2P Marketplace</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Buy and sell unlisted shares of India's fastest-growing companies on Nlisted - India's most trusted platform" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Nlisted" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-startup-image" href="/images/logos/logo.png" />
+    
+    <title>Nlisted - Unlisted Shares Trading Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PWA Custom Styles -->
+    <style>
+      /* Hide address bar on mobile */
+      @media (display-mode: standalone) {
+        body {
+          -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+        }
+      }
+      
+      /* iOS Safe Area Support */
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      
+      /* Animation for install prompt */
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      .animate-slideUp {
+        animation: slideUp 0.3s ease-out;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
