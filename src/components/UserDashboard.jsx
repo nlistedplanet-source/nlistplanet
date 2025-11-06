@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
@@ -6,1013 +6,1286 @@ import UserProfile from './UserProfile';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
 
+const STATUS_META = {
+	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	pending_admin_approval: { icon: '⏳', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	approved: { icon: '✅', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	closed: { icon: '🔒', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
+};
+
+const INTERACTION_META = {
+	pending: { icon: '⏳', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
+	accepted: { icon: '✅', label: 'Accepted', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	counter_offered: { icon: '🔄', label: 'Countered', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
+	counter_accepted_by_bidder: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	counter_accepted_by_offerer: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	rejected: { icon: '❌', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' }
+};
+
+const getStatusMeta = (status) => {
+	if (!status) return { icon: 'ℹ️', label: 'Unknown', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	return STATUS_META[status] || { icon: 'ℹ️', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+};
+
+const getInteractionMeta = (status) => {
+	if (!status) return { icon: '⏳', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+	return INTERACTION_META[status] || { icon: 'ℹ️', label: status.replace(/_/g, ' '), classes: 'bg-slate-100 text-slate-600 border border-slate-200' };
+};
+
+const StatusBadge = ({ status, size = 'sm' }) => {
+	const meta = getStatusMeta(status);
+	const sizeClasses = size === 'lg' ? 'px-3 py-1.5 text-xs' : 'px-2.5 py-1 text-[11px]';
+	return (
+		<span className={`inline-flex items-center gap-1 font-semibold rounded-full ${sizeClasses} ${meta.classes}`}>
+			<span>{meta.icon}</span>
+			<span className="uppercase tracking-wide">{meta.label}</span>
+		</span>
+	);
+};
+
+const InteractionBadge = ({ status }) => {
+	const meta = getInteractionMeta(status);
+	return (
+		<span className={`inline-flex items-center gap-1 font-semibold rounded-full px-2.5 py-1 text-[11px] ${meta.classes}`}>
+			<span>{meta.icon}</span>
+			<span>{meta.label}</span>
+		</span>
+	);
+};
+
+const SummaryTile = ({ icon, label, value, helper, tone = 'emerald' }) => {
+	const toneMap = {
+		emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+		blue: 'bg-blue-50 text-blue-600 border-blue-100',
+		purple: 'bg-purple-50 text-purple-600 border-purple-100',
+		amber: 'bg-amber-50 text-amber-600 border-amber-100'
+	};
+
+	return (
+		<div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+			<div className={`inline-flex items-center gap-2 rounded-xl px-3 py-1 text-sm font-semibold border ${toneMap[tone] || toneMap.emerald}`}>
+				<span>{icon}</span>
+				<span>{label}</span>
+			</div>
+			<div className="mt-4 text-3xl font-bold text-gray-900">{value}</div>
+			{helper && <p className="mt-2 text-sm text-gray-500">{helper}</p>}
+		</div>
+	);
+};
+
+const EmptyState = ({ icon = '✨', title, description, actionLabel, onAction }) => (
+	<div className="flex flex-col items-center justify-center text-center bg-white border border-dashed border-gray-300 rounded-2xl py-12 px-6">
+		<div className="text-4xl mb-4">{icon}</div>
+		<h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
+		{description && <p className="text-sm text-gray-500 max-w-md">{description}</p>}
+		{actionLabel && onAction && (
+			<button
+				onClick={onAction}
+				className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl shadow hover:shadow-lg transition"
+			>
+				<span>➕</span>
+				<span>{actionLabel}</span>
+			</button>
+		)}
+	</div>
+);
+
+const QuickActionCard = ({ icon, title, description, tone = 'emerald', onClick }) => {
+	const toneMap = {
+		emerald: 'from-emerald-500 to-teal-500 text-white',
+		blue: 'from-blue-500 to-cyan-500 text-white'
+	};
+
+	return (
+		<button onClick={onClick} className="group w-full text-left">
+			<div className="bg-white border border-gray-200 rounded-2xl px-5 py-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+				<div className={`inline-flex items-center justify-center rounded-2xl px-3 py-3 bg-gradient-to-br ${toneMap[tone] || toneMap.emerald} text-2xl shadow-md`}>{icon}</div>
+				<h3 className="mt-4 text-lg font-semibold text-gray-900">{title}</h3>
+				<p className="mt-2 text-sm text-gray-500">{description}</p>
+				<span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-purple-600 group-hover:text-purple-700">
+					Start now
+					<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+						<path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" />
+					</svg>
+				</span>
+			</div>
+		</button>
+	);
+};
+
+const SectionHeader = ({ title, subtitle, actionLabel, onAction, actionTone = 'primary' }) => (
+	<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+		<div>
+			<h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+			{subtitle && <p className="text-sm text-gray-500 mt-1 max-w-2xl">{subtitle}</p>}
+		</div>
+		{actionLabel && onAction && (
+			<button
+				onClick={onAction}
+				className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
+					actionTone === 'secondary'
+						? 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+						: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow hover:shadow-lg'
+				}`}
+			>
+				<span>➕</span>
+				<span>{actionLabel}</span>
+			</button>
+		)}
+	</div>
+);
+
+const formatCurrency = (value) => {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return `₹${value}`;
+	return new Intl.NumberFormat('en-IN', {
+		style: 'currency',
+		currency: 'INR',
+		maximumFractionDigits: 0
+	}).format(numeric);
+};
+
+const formatShares = (value) => {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return `${value} shares`;
+	return `${numeric.toLocaleString('en-IN')} shares`;
+};
+
+const formatDate = (iso) => {
+	if (!iso) return '—';
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return '—';
+	return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const formatDateTime = (iso) => {
+	if (!iso) return '—';
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return '—';
+	return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
+
 export default function UserDashboard({ setPage }) {
-  const { user, logout, getUserDisplayName } = useAuth();
-  const { sellListings, buyRequests, createSellListing, createBuyRequest, placeBid, makeOffer, acceptBid, acceptOffer, counterOffer, acceptCounterOffer, rejectCounterOffer } = useListing();
-  const { companies, searchCompany, getCompanyByName } = useCompany();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [browseSubTab, setBrowseSubTab] = useState('shares'); // 'shares' or 'requests'
-  const [formType, setFormType] = useState(null);
-  const [formData, setFormData] = useState({ company: '', isin: '', price: '', shares: '' });
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [bidOfferData, setBidOfferData] = useState({ price: '', quantity: '' });
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [companySuggestions, setCompanySuggestions] = useState([]);
-  const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
+	const { user, logout, getUserDisplayName } = useAuth();
+	const {
+		sellListings,
+		buyRequests,
+		createSellListing,
+		createBuyRequest,
+		placeBid,
+		makeOffer,
+		acceptBid,
+		acceptOffer,
+		counterOffer,
+		acceptCounterOffer,
+		rejectCounterOffer
+	} = useListing();
+	const { companies, searchCompany } = useCompany();
 
-  // Show notification helper
-  const showNotification = (type, title, message) => {
-    setNotification({ show: true, type, title, message });
-  };
+	const [activeTab, setActiveTab] = useState('overview');
+	const [browseFilter, setBrowseFilter] = useState('sell');
+	const [formType, setFormType] = useState(null);
+	const [formData, setFormData] = useState({ company: '', isin: '', price: '', shares: '' });
+	const [companySuggestions, setCompanySuggestions] = useState([]);
+	const [selectedItem, setSelectedItem] = useState(null);
+	const [tradeContext, setTradeContext] = useState(null);
+	const [bidOfferData, setBidOfferData] = useState({ price: '', quantity: '' });
+	const [showProfileModal, setShowProfileModal] = useState(false);
+	const [showPasswordModal, setShowPasswordModal] = useState(false);
+	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
 
-  // Daily motivational quotes
-  const motivationalQuotes = [
-    "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-    "The only way to do great work is to love what you do.",
-    "Believe you can and you're halfway there.",
-    "Don't watch the clock; do what it does. Keep going.",
-    "The future belongs to those who believe in the beauty of their dreams.",
-    "It always seems impossible until it's done.",
-    "The secret of getting ahead is getting started.",
-    "Success is walking from failure to failure with no loss of enthusiasm.",
-    "Opportunities don't happen. You create them.",
-    "Your limitation—it's only your imagination.",
-    "Great things never come from comfort zones.",
-    "Dream it. Wish it. Do it.",
-    "Success doesn't just find you. You have to go out and get it.",
-    "The harder you work for something, the greater you'll feel when you achieve it.",
-    "Don't stop when you're tired. Stop when you're done."
-  ];
+	const motivationalQuotes = useMemo(
+		() => [
+			'Success is not final, failure is not fatal: it is the courage to continue that counts.',
+			'The only way to do great work is to love what you do.',
+			"Believe you can and you're halfway there.",
+			"Don't watch the clock; do what it does. Keep going.",
+			'The future belongs to those who believe in the beauty of their dreams.',
+			"It always seems impossible until it's done.",
+			'The secret of getting ahead is getting started.',
+			'Success is walking from failure to failure with no loss of enthusiasm.',
+			"Opportunities don't happen. You create them.",
+			"Your limitation—it's only your imagination.",
+			'Great things never come from comfort zones.',
+			'Dream it. Wish it. Do it.',
+		"Success doesn't just find you. You have to go out and get it.",
+		'The harder you work for something, the greater you\'ll feel when you achieve it.',
+		"Don't stop when you're tired. Stop when you're done."
+	],
+	[]
+);	const showNotification = (type, title, message) => {
+		setNotification({ show: true, type, title, message });
+	};
 
-  // Get time-based greeting
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
+	const getGreeting = () => {
+		const hour = new Date().getHours();
+		if (hour < 12) return 'Good Morning';
+		if (hour < 17) return 'Good Afternoon';
+		return 'Good Evening';
+	};
 
-  // Get quote based on day of year for daily rotation
-  const getDailyQuote = () => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const diff = now - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    return motivationalQuotes[dayOfYear % motivationalQuotes.length];
-  };
+	const getDailyQuote = () => {
+		const today = new Date();
+		const start = new Date(today.getFullYear(), 0, 0);
+		const diff = today - start;
+		const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+		return motivationalQuotes[dayOfYear % motivationalQuotes.length];
+	};
 
-  if (!user) {
-    setPage('signin');
-    return null;
-  }
+		useEffect(() => {
+			if (!user) {
+				setPage('signin');
+			}
+		}, [user, setPage]);
 
-  // User's own listings and requests
-  const myListings = sellListings.filter(l => l.seller === user.name || l.seller === user.email);
-  const myRequests = buyRequests.filter(r => r.buyer === user.name || r.buyer === user.email);
+		if (!user) {
+			return null;
+		}
 
-  // Available listings/requests from others
-  const availableListings = sellListings.filter(l => l.status === 'active' && l.seller !== user.name && l.seller !== user.email);
-  const availableRequests = buyRequests.filter(r => r.status === 'active' && r.buyer !== user.name && r.buyer !== user.email);
+	const myListings = useMemo(
+		() => sellListings.filter((listing) => listing.seller === user.name || listing.seller === user.email),
+		[sellListings, user.name, user.email]
+	);
+	const myRequests = useMemo(
+		() => buyRequests.filter((request) => request.buyer === user.name || request.buyer === user.email),
+		[buyRequests, user.name, user.email]
+	);
+	const availableListings = useMemo(
+		() => sellListings.filter((listing) => listing.status === 'active' && listing.seller !== user.name && listing.seller !== user.email),
+		[sellListings, user.name, user.email]
+	);
+	const availableRequests = useMemo(
+		() => buyRequests.filter((request) => request.status === 'active' && request.buyer !== user.name && request.buyer !== user.email),
+		[buyRequests, user.name, user.email]
+	);
+	const myBids = useMemo(
+		() => sellListings.filter((listing) => listing.bids?.some((bid) => bid.bidder === user.name || bid.bidder === user.email)),
+		[sellListings, user.name, user.email]
+	);
+	const myOffers = useMemo(
+		() => buyRequests.filter((request) => request.offers?.some((offer) => offer.seller === user.name || offer.seller === user.email)),
+		[buyRequests, user.name, user.email]
+	);
 
-  // Bids I've placed on others' listings
-  const myBids = sellListings.filter(l => l.bids?.some(b => b.bidder === user.name || b.bidder === user.email));
+	const handleCompanySearch = (value) => {
+		setFormData({ ...formData, company: value });
+		if (value.length >= 2) {
+			const results = searchCompany(value);
+			setCompanySuggestions(results);
+		} else {
+			setCompanySuggestions([]);
+		}
+	};
 
-  // Offers I've made on others' requests
-  const myOffers = buyRequests.filter(r => r.offers?.some(o => o.seller === user.name || o.seller === user.email));
+	const selectCompany = (company) => {
+		setFormData({
+			...formData,
+			company: company.name,
+			isin: company.isin,
+			price: company.currentPrice || formData.price
+		});
+		setCompanySuggestions([]);
+	};
 
-  // Auto-search company when user types
-  const handleCompanySearch = (value) => {
-    setFormData({...formData, company: value});
-    if (value.length >= 2) {
-      const results = searchCompany(value);
-      setCompanySuggestions(results);
-    } else {
-      setCompanySuggestions([]);
-    }
-  };
+	const handleCreateSellListing = (e) => {
+		e.preventDefault();
+		createSellListing({ ...formData, seller: user.name });
+		showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
+		setFormData({ company: '', isin: '', price: '', shares: '' });
+		setFormType(null);
+	};
 
-  // Select company from suggestions
-  const selectCompany = (company) => {
-    setFormData({
-      ...formData,
-      company: company.name,
-      isin: company.isin
-    });
-    setCompanySuggestions([]);
-  };
+	const handleCreateBuyRequest = (e) => {
+		e.preventDefault();
+		createBuyRequest({ ...formData, buyer: user.name });
+		showNotification('success', 'Buy request posted! 🚀', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+		setFormData({ company: '', isin: '', price: '', shares: '' });
+		setFormType(null);
+	};
 
-  const handleCreateSellListing = (e) => {
-    e.preventDefault();
-    createSellListing({ ...formData, seller: user.name });
-    showNotification('success', 'Shares Listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live for sale at ₹${formData.price}`);
-    setFormData({ company: '', isin: '', price: '', shares: '' });
-    setFormType(null);
-  };
+	const handlePlaceBid = (e) => {
+		e.preventDefault();
+		if (!tradeContext) return;
+		placeBid(tradeContext.item.id, { ...bidOfferData, bidder: user.name });
+		showNotification('success', 'Bid submitted! 💰', `Bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+		setTradeContext(null);
+		setSelectedItem(null);
+		setBidOfferData({ price: '', quantity: '' });
+	};
 
-  const handleCreateBuyRequest = (e) => {
-    e.preventDefault();
-    createBuyRequest({ ...formData, buyer: user.name });
-    showNotification('success', 'Buy Request Posted! 🚀', `Looking to buy ${formData.shares} shares of ${formData.company} at ₹${formData.price} per share`);
-    setFormData({ company: '', isin: '', price: '', shares: '' });
-    setFormType(null);
-  };
+	const handleMakeOffer = (e) => {
+		e.preventDefault();
+		if (!tradeContext) return;
+		makeOffer(tradeContext.item.id, { ...bidOfferData, seller: user.name });
+		showNotification('success', 'Offer submitted! 📊', `Offer of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+		setTradeContext(null);
+		setSelectedItem(null);
+		setBidOfferData({ price: '', quantity: '' });
+	};
 
-  const handlePlaceBid = (e) => {
-    e.preventDefault();
-    placeBid(selectedItem.id, { ...bidOfferData, bidder: user.name });
-    showNotification('success', 'Bid Placed! 💰', `Your bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares has been submitted`);
-    setSelectedItem(null);
-    setBidOfferData({ price: '', quantity: '' });
-  };
+	const navItems = [
+		{ id: 'overview', label: 'Overview', icon: '📊' },
+		{ id: 'myListings', label: 'Sell Listings', icon: '📈', counter: myListings.length },
+		{ id: 'myRequests', label: 'Buy Requests', icon: '🛒', counter: myRequests.length },
+		{ id: 'activity', label: 'Bids & Offers', icon: '🤝', counter: myBids.length + myOffers.length },
+		{ id: 'browse', label: 'Marketplace', icon: '🔍' }
+	];
 
-  const handleMakeOffer = (e) => {
-    e.preventDefault();
-    makeOffer(selectedItem.id, { ...bidOfferData, seller: user.name });
-    showNotification('success', 'Offer Submitted! 📊', `Offering ${bidOfferData.quantity} shares at ₹${bidOfferData.price} per share`);
-    setSelectedItem(null);
-    setBidOfferData({ price: '', quantity: '' });
-  };
+	const renderOverview = () => (
+		<div className="space-y-10">
+			<section className="space-y-6">
+				<SectionHeader
+					title="Trading Snapshot"
+					subtitle="Monitor everything you are selling, buying, and negotiating in one glance."
+				/>
+				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+					<SummaryTile icon="📈" label="Sell Listings" value={myListings.length} helper="Listed by you" tone="emerald" />
+					<SummaryTile icon="🛒" label="Buy Requests" value={myRequests.length} helper="Requests you posted" tone="blue" />
+					<SummaryTile icon="💰" label="Active Bids" value={myBids.length} helper="Listings you bid on" tone="amber" />
+					<SummaryTile icon="📊" label="Active Offers" value={myOffers.length} helper="Requests you offered on" tone="purple" />
+				</div>
+			</section>
 
-  return (
-    <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 min-h-screen flex">
-      {/* Left Sidebar Menu */}
-      <div className="w-64 bg-white shadow-xl fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-gray-200">
-        {/* Logo Section */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50 flex justify-center">
-          <img 
-            src="/images/logos/logo.png" 
-            alt="Nlisted Logo" 
-            className="h-16 w-16 object-contain"
-          />
-        </div>
+			<section className="space-y-6">
+				<SectionHeader
+					title="Your Pipeline"
+					subtitle="Track everything you are selling and buying with real-time status."
+					actionLabel="Go to marketplace"
+					actionTone="secondary"
+					onAction={() => setActiveTab('browse')}
+				/>
+				<div className="grid gap-6 md:grid-cols-2">
+					<div className="bg-white border border-gray-200 rounded-2xl p-6">
+						<div className="flex items-center justify-between mb-4">
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">You are selling</h3>
+								<p className="text-sm text-gray-500">Incoming bids, approvals, and next steps.</p>
+							</div>
+							<span className="text-sm font-semibold text-gray-600">{myListings.length} listings</span>
+						</div>
+						{myListings.length > 0 ? (
+							<div className="space-y-3">
+								{myListings.slice(0, 3).map((listing) => (
+									<button
+										key={listing.id}
+										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
+									>
+										<div className="flex items-start justify-between gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
+												<p className="text-xs text-gray-500 mt-1">Listed {formatDate(listing.createdAt)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} • {formatShares(listing.shares)}</p>
+											</div>
+											<StatusBadge status={listing.status} />
+										</div>
+										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+											<span>{listing.bids?.length || 0} bids</span>
+											{listing.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
+										</div>
+									</button>
+								))}
+								{myListings.length > 3 && (
+									<button onClick={() => setActiveTab('myListings')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
+										View all listings →
+									</button>
+								)}
+							</div>
+						) : (
+							<EmptyState
+								icon="📈"
+								title="No listings yet"
+								description="List your unlisted shares to invite bids from verified buyers."
+								actionLabel="Create listing"
+								onAction={() => setFormType('sell')}
+							/>
+						)}
+					</div>
 
-        {/* Navigation Menu */}
-        <div className="p-4">
-          <nav className="space-y-1">
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left ${
-                activeTab === 'overview' 
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="text-lg">📊</span>
-              <span className="font-medium text-sm">Dashboard</span>
-            </button>
+					<div className="bg-white border border-gray-200 rounded-2xl p-6">
+						<div className="flex items-center justify-between mb-4">
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">You want to buy</h3>
+								<p className="text-sm text-gray-500">Offers from sellers and negotiation status.</p>
+							</div>
+							<span className="text-sm font-semibold text-gray-600">{myRequests.length} requests</span>
+						</div>
+						{myRequests.length > 0 ? (
+							<div className="space-y-3">
+								{myRequests.slice(0, 3).map((request) => (
+									<button
+										key={request.id}
+										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
+									>
+										<div className="flex items-start justify-between gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
+												<p className="text-xs text-gray-500 mt-1">Posted {formatDate(request.createdAt)}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} • {formatShares(request.shares)}</p>
+											</div>
+											<StatusBadge status={request.status} />
+										</div>
+										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+											<span>{request.offers?.length || 0} offers</span>
+											{request.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
+										</div>
+									</button>
+								))}
+								{myRequests.length > 3 && (
+									<button onClick={() => setActiveTab('myRequests')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
+										View all requests →
+									</button>
+								)}
+							</div>
+						) : (
+							<EmptyState
+								icon="🛒"
+								title="No buy requests yet"
+								description="Tell sellers what you need so they can respond quickly."
+								actionLabel="Post request"
+								onAction={() => setFormType('buy')}
+							/>
+						)}
+					</div>
+				</div>
+			</section>
 
-            <button 
-              onClick={() => setActiveTab('myListings')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left ${
-                activeTab === 'myListings' 
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="text-lg">📈</span>
-              <span className="font-medium text-sm">My Sell Listings</span>
-              {myListings.length > 0 && (
-                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                  activeTab === 'myListings' ? 'bg-white text-purple-600' : 'bg-purple-100 text-purple-700'
-                }`}>
-                  {myListings.length}
-                </span>
-              )}
-            </button>
+			<section className="space-y-6">
+				<SectionHeader
+					title="Action Center"
+					subtitle="Launch a new listing or request in just a few clicks."
+				/>
+				<div className="grid gap-5 md:grid-cols-2">
+					<QuickActionCard
+						icon="📈"
+						title="List shares for sale"
+						description="Create a polished listing so buyers can bid instantly."
+						tone="emerald"
+						onClick={() => setFormType('sell')}
+					/>
+					<QuickActionCard
+						icon="🛒"
+						title="Request shares to buy"
+						description="Set your desired price and quantity to attract sellers."
+						tone="blue"
+						onClick={() => setFormType('buy')}
+					/>
+				</div>
+			</section>
+		</div>
+	);
 
-            <button 
-              onClick={() => setActiveTab('myRequests')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left ${
-                activeTab === 'myRequests' 
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="text-lg">🛒</span>
-              <span className="font-medium text-sm">My Buy Requests</span>
-              {myRequests.length > 0 && (
-                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                  activeTab === 'myRequests' ? 'bg-white text-purple-600' : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {myRequests.length}
-                </span>
-              )}
-            </button>
+	const renderMyListings = () => (
+		<div className="space-y-8">
+			<SectionHeader
+				title="My Sell Listings"
+				subtitle="Every listing you created with live status and bid activity."
+				actionLabel="Create listing"
+				onAction={() => setFormType('sell')}
+			/>
+			{myListings.length === 0 ? (
+				<EmptyState
+					icon="📈"
+					title="No listings yet"
+					description="List your unlisted shares to invite bids from verified buyers."
+					actionLabel="Create listing"
+					onAction={() => setFormType('sell')}
+				/>
+			) : (
+				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+					{myListings.map((listing) => {
+						const acceptedBid = listing.acceptedBid ? listing.bids?.find((bid) => bid.id === listing.acceptedBid) : null;
+						const negotiations = listing.bids?.filter((bid) => ['pending', 'counter_offered'].includes(bid.status)).length || 0;
+						return (
+							<div key={listing.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
+								<div className="flex items-start justify-between gap-4">
+									<div>
+										<h3 className="text-xl font-semibold text-gray-900">{listing.company}</h3>
+										<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || '—'}</p>
+										<p className="text-xs text-gray-400 mt-1">Created {formatDate(listing.createdAt)}</p>
+									</div>
+									<StatusBadge status={listing.status} size="lg" />
+								</div>
+								<div className="mt-5 grid grid-cols-2 gap-4 text-sm">
+									<div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+										<p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Ask price</p>
+										<p className="mt-1 text-base font-semibold text-emerald-700">{formatCurrency(listing.price)}</p>
+									</div>
+									<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+										<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares</p>
+										<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(listing.shares)}</p>
+									</div>
+								</div>
+								<div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+									<p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Bids & Negotiations</p>
+									<p className="mt-3 text-sm text-gray-600">
+										{listing.bids?.length ? `${listing.bids.length} bids received` : 'No bids yet'}
+									</p>
+									{acceptedBid && (
+										<p className="mt-2 text-xs font-semibold text-emerald-600">Accepted at {formatCurrency(acceptedBid.counterPrice || acceptedBid.price)}</p>
+									)}
+									{negotiations > 0 && (
+										<p className="mt-1 text-xs text-orange-600">{negotiations} negotiation{negotiations > 1 ? 's' : ''} in progress</p>
+									)}
+								</div>
+								<div className="mt-5 flex flex-col gap-3">
+									<button
+										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+										className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
+									>
+										<span>📋</span>
+										<span>Review bids</span>
+									</button>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
 
-            <button 
-              onClick={() => setActiveTab('browse')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left ${
-                activeTab === 'browse' 
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="text-lg">🔍</span>
-              <span className="font-medium text-sm">Browse Market</span>
-            </button>
+	const renderMyRequests = () => (
+		<div className="space-y-8">
+			<SectionHeader
+				title="My Buy Requests"
+				subtitle="Keep tabs on offers from sellers and admin approvals."
+				actionLabel="Post request"
+				onAction={() => setFormType('buy')}
+			/>
+			{myRequests.length === 0 ? (
+				<EmptyState
+					icon="🛒"
+					title="No requests yet"
+					description="Share what you want to buy so verified holders can respond."
+					actionLabel="Post request"
+					onAction={() => setFormType('buy')}
+				/>
+			) : (
+				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+					{myRequests.map((request) => {
+						const acceptedOffer = request.acceptedOffer ? request.offers?.find((offer) => offer.id === request.acceptedOffer) : null;
+						const negotiations = request.offers?.filter((offer) => ['pending', 'counter_offered'].includes(offer.status)).length || 0;
+						return (
+							<div key={request.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
+								<div className="flex items-start justify-between gap-4">
+									<div>
+										<h3 className="text-xl font-semibold text-gray-900">{request.company}</h3>
+										<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || '—'}</p>
+										<p className="text-xs text-gray-400 mt-1">Created {formatDate(request.createdAt)}</p>
+									</div>
+									<StatusBadge status={request.status} size="lg" />
+								</div>
+								<div className="mt-5 grid grid-cols-2 gap-4 text-sm">
+									<div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
+										<p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Target price</p>
+										<p className="mt-1 text-base font-semibold text-blue-700">{formatCurrency(request.price)}</p>
+									</div>
+									<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+										<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares needed</p>
+										<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(request.shares)}</p>
+									</div>
+								</div>
+								<div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+									<p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Seller offers</p>
+									<p className="mt-3 text-sm text-gray-600">
+										{request.offers?.length ? `${request.offers.length} offers received` : 'No offers yet'}
+									</p>
+									{acceptedOffer && (
+										<p className="mt-2 text-xs font-semibold text-emerald-600">Accepted at {formatCurrency(acceptedOffer.counterPrice || acceptedOffer.price)}</p>
+									)}
+									{negotiations > 0 && (
+										<p className="mt-1 text-xs text-orange-600">{negotiations} negotiation{negotiations > 1 ? 's' : ''} in progress</p>
+									)}
+								</div>
+								<div className="mt-5 flex flex-col gap-3">
+									<button
+										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+										className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
+									>
+										<span>📋</span>
+										<span>Review offers</span>
+									</button>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
 
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <button 
-                onClick={() => setFormType('sell')}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <span className="text-lg">➕</span>
-                <span className="font-medium text-sm">New Listing</span>
-              </button>
+	const renderActivity = () => (
+		<div className="space-y-8">
+			<SectionHeader title="Your Bids & Offers" subtitle="Follow up on every negotiation you started." />
+			<div className="grid gap-6 md:grid-cols-2">
+				<div className="bg-white border border-gray-200 rounded-2xl p-6">
+					<div className="flex items-center justify-between mb-4">
+						<div>
+							<h3 className="text-lg font-semibold text-gray-900">Bids on other sellers</h3>
+							<p className="text-sm text-gray-500">Respond to counters or check acceptance status.</p>
+						</div>
+						<span className="text-sm font-semibold text-gray-600">{myBids.length} listings</span>
+					</div>
+					{myBids.length === 0 ? (
+						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't placed any bids yet.</p>
+					) : (
+						<div className="space-y-3">
+							{myBids.map((listing) => {
+								const myInteractions = listing.bids?.filter((bid) => bid.bidder === user.name || bid.bidder === user.email) || [];
+								const latestInteraction = myInteractions[myInteractions.length - 1];
+								return (
+									<button
+										key={listing.id}
+										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
+									>
+										<div className="flex items-start justify-between gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ask • {formatShares(listing.shares)}</p>
+												{latestInteraction && (
+													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
+												)}
+											</div>
+											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
+										</div>
+										<div className="mt-2 text-xs text-gray-500">
+											{myInteractions.length} bid{myInteractions.length > 1 ? 's' : ''} placed by you
+										</div>
+									</button>
+								);
+							})}
+						</div>
+					)}
+				</div>
 
-              <button 
-                onClick={() => setFormType('buy')}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-              >
-                <span className="text-lg">📝</span>
-                <span className="font-medium text-sm">New Buy Request</span>
-              </button>
-            </div>
+				<div className="bg-white border border-gray-200 rounded-2xl p-6">
+					<div className="flex items-center justify-between mb-4">
+						<div>
+							<h3 className="text-lg font-semibold text-gray-900">Offers to active buyers</h3>
+							<p className="text-sm text-gray-500">See which buyers have responded to your offers.</p>
+						</div>
+						<span className="text-sm font-semibold text-gray-600">{myOffers.length} requests</span>
+					</div>
+					{myOffers.length === 0 ? (
+						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't made any offers yet.</p>
+					) : (
+						<div className="space-y-3">
+							{myOffers.map((request) => {
+								const myInteractions = request.offers?.filter((offer) => offer.seller === user.name || offer.seller === user.email) || [];
+								const latestInteraction = myInteractions[myInteractions.length - 1];
+								return (
+									<button
+										key={request.id}
+										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
+									>
+										<div className="flex items-start justify-between gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
+												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} target • {formatShares(request.shares)}</p>
+												{latestInteraction && (
+													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
+												)}
+											</div>
+											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
+										</div>
+										<div className="mt-2 text-xs text-gray-500">
+											{myInteractions.length} offer{myInteractions.length > 1 ? 's' : ''} submitted by you
+										</div>
+									</button>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <button 
-                onClick={() => setShowProfileModal(true)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left text-gray-700 hover:bg-gray-100"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="font-medium text-sm">User Profile</span>
-              </button>
+	const renderBrowse = () => (
+		<div className="space-y-8">
+			<SectionHeader
+				title="Explore Marketplace"
+				subtitle="Discover fresh opportunities and respond instantly with bids or offers."
+			/>
+			<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
+				<button
+					onClick={() => setBrowseFilter('sell')}
+					className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+						browseFilter === 'sell'
+							? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow'
+							: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+					}`}
+				>
+					<span>📈</span>
+					<span>Available Listings</span>
+				</button>
+				<button
+					onClick={() => setBrowseFilter('buy')}
+					className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+						browseFilter === 'buy'
+							? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow'
+							: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+					}`}
+				>
+					<span>🛒</span>
+					<span>Open Buy Requests</span>
+				</button>
+			</div>
 
-              <button 
-                onClick={() => setShowPasswordModal(true)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left text-gray-700 hover:bg-gray-100"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-                <span className="font-medium text-sm">Change Password</span>
-              </button>
+			{browseFilter === 'sell' ? (
+				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+					{availableListings.length === 0 ? (
+						<EmptyState
+							icon="🧭"
+							title="No active listings from others"
+							description="Check back soon or post a buy request to let sellers know what you need."
+							actionLabel="Post buy request"
+							onAction={() => setFormType('buy')}
+						/>
+					) : (
+						availableListings.map((listing) => {
+							const company = companies.find((c) => c.isin === listing.isin || c.name.toLowerCase() === listing.company.toLowerCase());
+							const myBid = listing.bids?.find((bid) => bid.bidder === user.name || bid.bidder === user.email);
+							return (
+								<div key={listing.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
+									<div className="flex items-start justify-between gap-4">
+										<div>
+											<h3 className="text-lg font-semibold text-gray-900">{listing.company}</h3>
+											<p className="text-xs text-gray-500 mt-1">Seller: {getUserDisplayName(listing.seller, listing.seller)}</p>
+											{company?.sector && <p className="text-xs text-gray-400 mt-1">Sector: {company.sector}</p>}
+										</div>
+										<StatusBadge status={listing.status} />
+									</div>
+									<div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+										<div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+											<p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Ask price</p>
+											<p className="mt-1 text-base font-semibold text-emerald-700">{formatCurrency(listing.price)}</p>
+										</div>
+										<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+											<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Available</p>
+											<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(listing.shares)}</p>
+										</div>
+									</div>
+									<div className="mt-5 flex flex-col gap-3">
+										<button
+											onClick={() => {
+												setTradeContext({ type: 'bid', item: listing });
+												setBidOfferData({ price: listing.price, quantity: listing.shares });
+											}}
+											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
+										>
+											<span>💰</span>
+											<span>{myBid ? 'Update bid' : 'Place bid'}</span>
+										</button>
+										<button
+											onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
+										>
+											<span>📋</span>
+											<span>See bid history</span>
+										</button>
+									</div>
+								</div>
+							);
+						})
+					)}
+				</div>
+			) : (
+				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+					{availableRequests.length === 0 ? (
+						<EmptyState
+							icon="🧭"
+							title="No open requests from others"
+							description="List your shares for sale and reach serious buyers faster."
+							actionLabel="Create listing"
+							onAction={() => setFormType('sell')}
+						/>
+					) : (
+						availableRequests.map((request) => {
+							const company = companies.find((c) => c.isin === request.isin || c.name.toLowerCase() === request.company.toLowerCase());
+							const myOffer = request.offers?.find((offer) => offer.seller === user.name || offer.seller === user.email);
+							return (
+								<div key={request.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
+									<div className="flex items-start justify-between gap-4">
+										<div>
+											<h3 className="text-lg font-semibold text-gray-900">{request.company}</h3>
+											<p className="text-xs text-gray-500 mt-1">Buyer: {getUserDisplayName(request.buyer, request.buyer)}</p>
+											{company?.sector && <p className="text-xs text-gray-400 mt-1">Sector: {company.sector}</p>}
+										</div>
+										<StatusBadge status={request.status} />
+									</div>
+									<div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+										<div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
+											<p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Target price</p>
+											<p className="mt-1 text-base font-semibold text-blue-700">{formatCurrency(request.price)}</p>
+										</div>
+										<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+											<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares needed</p>
+											<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(request.shares)}</p>
+										</div>
+									</div>
+									<div className="mt-5 flex flex-col gap-3">
+										<button
+											onClick={() => {
+												setTradeContext({ type: 'offer', item: request });
+												setBidOfferData({ price: request.price, quantity: request.shares });
+											}}
+											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 to-cyan-500 shadow hover:shadow-lg transition"
+										>
+											<span>📊</span>
+											<span>{myOffer ? 'Update offer' : 'Make offer'}</span>
+										</button>
+										<button
+											onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
+										>
+											<span>📋</span>
+											<span>See offer history</span>
+										</button>
+									</div>
+								</div>
+							);
+						})
+					)}
+				</div>
+			)}
+		</div>
+	);
 
-              <button 
-                onClick={() => { logout(); setPage('home'); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-left text-red-600 hover:bg-red-50"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span className="font-medium text-sm">Logout</span>
-              </button>
-            </div>
-          </nav>
-        </div>
-      </div>
+	const renderActiveTab = () => {
+		switch (activeTab) {
+			case 'overview':
+				return renderOverview();
+			case 'myListings':
+				return renderMyListings();
+			case 'myRequests':
+				return renderMyRequests();
+			case 'activity':
+				return renderActivity();
+			case 'browse':
+				return renderBrowse();
+			default:
+				return null;
+		}
+	};
 
-      {/* Main Content Area */}
-      <div className="flex-1 ml-64 p-8">
-        {/* Welcome Header */}
-        <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-100 rounded-2xl shadow-lg p-8 border border-blue-200">
-          <h1 className="text-3xl font-bold mb-2 text-gray-800">{getGreeting()}, {user.name}!</h1>
-          <p className="text-indigo-600 italic text-lg font-medium">"<span className="font-semibold">{getDailyQuote()}</span>"</p>
-        </div>
+	const renderNegotiationModal = () => {
+		if (!selectedItem) return null;
+		const { item, type } = selectedItem;
+		const interactions = type === 'sell' ? item.bids || [] : item.offers || [];
+		const isOwner = type === 'sell'
+			? item.seller === user.name || item.seller === user.email
+			: item.buyer === user.name || item.buyer === user.email;
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div>
-            <div className="grid md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xl">📈</span>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{myListings.length}</div>
-                <p className="text-gray-500 text-sm font-medium">Active Listings</p>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🛒</span>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{myRequests.length}</div>
-                <p className="text-gray-500 text-sm font-medium">Buy Requests</p>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xl">💰</span>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{myBids.length}</div>
-                <p className="text-gray-500 text-sm font-medium">Bids Placed</p>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🎯</span>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{myOffers.length}</div>
-                <p className="text-gray-500 text-sm font-medium">Offers Made</p>
-              </div>
-            </div>
+		const handleClose = () => setSelectedItem(null);
 
-            <div className="grid md:grid-cols-2 gap-5">
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md cursor-pointer hover:shadow-lg transition group" onClick={() => setFormType('sell')}>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
-                    📊
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Sell Your Shares</h3>
-                    <p className="text-gray-600 text-sm">List your unlisted shares for sale and receive bids from buyers</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md cursor-pointer hover:shadow-lg transition group" onClick={() => setFormType('buy')}>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
-                    🛒
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Post Buy Request</h3>
-                    <p className="text-gray-600 text-sm">Request specific shares and receive offers from sellers</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+		const onAccept = (interactionId) => {
+			if (type === 'sell') {
+				acceptBid(item.id, interactionId);
+				showNotification('success', 'Bid accepted ✅', 'We have notified the bidder. Await admin approval.');
+			} else {
+				acceptOffer(item.id, interactionId);
+				showNotification('success', 'Offer accepted ✅', 'Seller will be notified immediately.');
+			}
+			setSelectedItem(null);
+		};
 
-        {/* My Sell Listings Tab */}
-        {activeTab === 'myListings' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">My Sell Listings</h2>
-              <button onClick={() => setFormType('sell')} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-700 shadow-lg transition">
-                + Add New Listing
-              </button>
-            </div>
+		const onCounter = (interactionId) => {
+			const newPrice = prompt('Enter your counter price');
+			if (!newPrice) return;
+			counterOffer(item.id, interactionId, newPrice, type);
+			showNotification('info', 'Counter submitted 🔄', `Proposed new price: ₹${newPrice}`);
+			setSelectedItem(null);
+		};
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {myListings.length > 0 ? (
-                myListings.map(listing => (
-                  <div key={listing.id} className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-lg hover:shadow-xl transition">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">{listing.company}</h3>
-                        <p className="text-gray-600 text-sm">ISIN: {listing.isin}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        listing.status === 'active' ? 'bg-green-100 text-green-700' :
-                        listing.status === 'pending_admin_approval' ? 'bg-orange-100 text-orange-700' :
-                        listing.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {listing.status}
-                      </span>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Price:</span>
-                        <span className="font-bold text-emerald-600">₹{listing.price}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Shares:</span>
-                        <span className="font-bold text-gray-900">{listing.shares}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Bids Received:</span>
-                        <span className="font-bold text-blue-600">{listing.bids?.length || 0}</span>
-                      </div>
-                    </div>
-                    {listing.bids?.length > 0 && (
-                      <button onClick={() => setSelectedItem(listing)} className="w-full bg-purple-600 text-white py-2 rounded-xl font-bold hover:bg-purple-700 shadow transition">
-                        View Bids
-                      </button>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 bg-white rounded-xl border-2 border-gray-200 shadow-lg">
-                  <p className="text-gray-600 text-lg mb-4">You haven't listed any shares yet</p>
-                  <button onClick={() => setFormType('sell')} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-700 shadow-lg transition">
-                    Create Your First Listing
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+		const onAcceptCounter = (interactionId) => {
+			acceptCounterOffer(item.id, interactionId, type);
+			showNotification('success', 'Counter accepted 🤝', 'Admin will review the final terms.');
+			setSelectedItem(null);
+		};
 
-        {/* My Buy Requests Tab */}
-        {activeTab === 'myRequests' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">My Buy Requests</h2>
-              <button onClick={() => setFormType('buy')} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition">
-                + Post New Request
-              </button>
-            </div>
+		const onRejectCounter = (interactionId) => {
+			rejectCounterOffer(item.id, interactionId, type);
+			showNotification('warning', 'Counter rejected', 'Let them know what price works for you.');
+			setSelectedItem(null);
+		};
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {myRequests.length > 0 ? (
-                myRequests.map(request => (
-                  <div key={request.id} className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-lg hover:shadow-xl transition">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">{request.company}</h3>
-                        <p className="text-gray-600 text-sm">ISIN: {request.isin}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        request.status === 'active' ? 'bg-green-100 text-green-700' :
-                        request.status === 'pending_admin_approval' ? 'bg-orange-100 text-orange-700' :
-                        request.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {request.status}
-                      </span>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Desired Price:</span>
-                        <span className="font-bold text-blue-600">₹{request.price}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Shares Needed:</span>
-                        <span className="font-bold text-gray-900">{request.shares}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Offers Received:</span>
-                        <span className="font-bold text-emerald-600">{request.offers?.length || 0}</span>
-                      </div>
-                    </div>
-                    {request.offers?.length > 0 && (
-                      <button onClick={() => setSelectedItem(request)} className="w-full bg-purple-600 text-white py-2 rounded-xl font-bold hover:bg-purple-700 shadow transition">
-                        View Offers
-                      </button>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 bg-white rounded-xl border-2 border-gray-200 shadow-lg">
-                  <p className="text-gray-600 text-lg mb-4">You haven't posted any buy requests yet</p>
-                  <button onClick={() => setFormType('buy')} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition">
-                    Post Your First Request
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+		return (
+			<div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm px-4 animate-fadeIn">
+				<div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+					<div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+						<div>
+							<p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">{type === 'sell' ? 'Sell listing' : 'Buy request'}</p>
+							<h3 className="text-2xl font-bold text-gray-900 mt-1">{item.company}</h3>
+							<p className="text-sm text-gray-500 mt-1">{formatCurrency(item.price)} • {formatShares(item.shares)}</p>
+						</div>
+						<button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition">
+							<svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
 
-        {/* Browse Market Tab */}
-        {activeTab === 'browse' && (
-          <div>
-            {/* Browse Sub-Tabs */}
-            <div className="bg-white rounded-xl shadow-md mb-6 p-1 flex gap-1 border border-gray-200">
-              <button 
-                onClick={() => setBrowseSubTab('shares')} 
-                className={`flex-1 px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition text-sm ${
-                  browseSubTab === 'shares' 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                📈 Available Shares for Sale
-              </button>
-              <button 
-                onClick={() => setBrowseSubTab('requests')} 
-                className={`flex-1 px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition text-sm ${
-                  browseSubTab === 'requests' 
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                🛒 Active Buy Requests
-              </button>
-            </div>
-            
-            {browseSubTab === 'shares' && (
-            <div className="mb-10">
-              <div className="grid md:grid-cols-3 gap-5">
-                {availableListings.length > 0 ? (
-                  availableListings.map(listing => {
-                    const company = companies.find(c => c.name.toLowerCase() === listing.company.toLowerCase() || c.isin === listing.isin);
-                    const myBid = listing.bids?.find(b => b.bidder === user.name || b.bidder === user.email);
-                    return (
-                    <div key={listing.id} className="bg-white rounded-xl p-5 border border-gray-200 shadow-md hover:shadow-lg transition">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">{listing.company}</h3>
-                          <p className="text-gray-500 text-sm">Seller: {getUserDisplayName(listing.seller, listing.seller)}</p>
-                        </div>
-                        {myBid && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            myBid.status === 'accepted' || myBid.status === 'counter_accepted_by_bidder' ? 'bg-green-100 text-green-700' :
-                            myBid.status === 'counter_offered' ? 'bg-orange-100 text-orange-700' :
-                            myBid.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {myBid.status === 'accepted' ? '✅ Accepted' :
-                             myBid.status === 'counter_offered' ? '🔄 Counter' :
-                             myBid.status === 'counter_accepted_by_bidder' ? '🤝 Agreed' :
-                             myBid.status === 'rejected' ? '❌ Rejected' :
-                             '⏳ Pending'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-100">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm">Price:</span>
-                          <span className="font-bold text-lg text-emerald-600">₹{listing.price}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm">Available:</span>
-                          <span className="font-semibold text-gray-900">{listing.shares} shares</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setSelectedItem(listing); setFormType('placeBid'); }} className="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-emerald-700 transition">
-                          💰 Place Bid
-                        </button>
-                        {company && company.analysisReport && (
-                          <a 
-                            href={company.analysisReport} 
-                            download 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 block bg-indigo-100 text-indigo-700 py-2.5 rounded-lg font-semibold text-sm hover:bg-indigo-200 transition text-center"
-                          >
-                            📄 Report
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-full text-center py-12 bg-white rounded-xl border border-gray-200">
-                    <p className="text-gray-500 text-base">No shares available for sale at the moment</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            )}
+					<div className="overflow-y-auto px-6 py-6 space-y-5">
+						{interactions.length === 0 ? (
+							<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">
+								No negotiations yet. Encourage the other side to respond by sending an offer or bid.
+							</p>
+						) : (
+							interactions.map((interaction) => {
+								const interactionOwner = type === 'sell' ? interaction.bidder : interaction.seller;
+								const canAcceptCounter = ['counter_offered'].includes(interaction.status) && !isOwner;
+								const canCounter = ['pending', 'counter_offered'].includes(interaction.status) && isOwner;
+								const canAccept = ['pending', 'counter_accepted_by_bidder', 'counter_accepted_by_offerer'].includes(interaction.status) && isOwner;
+								const displayPrice = interaction.counterPrice || interaction.price;
+								return (
+									<div key={interaction.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+										<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+											<div>
+												<p className="text-sm font-semibold text-gray-900">
+													{getUserDisplayName(interactionOwner, interactionOwner)}
+												</p>
+												<p className="text-xs text-gray-500 mt-1">Submitted {formatDateTime(interaction.counterAt || interaction.createdAt)}</p>
+											</div>
+											<InteractionBadge status={interaction.status} />
+										</div>
 
-            {browseSubTab === 'requests' && (
-            <div>
-              <div className="grid md:grid-cols-3 gap-5">
-                {availableRequests.length > 0 ? (
-                  availableRequests.map(request => {
-                    const company = companies.find(c => c.name.toLowerCase() === request.company.toLowerCase() || c.isin === request.isin);
-                    const myOffer = request.offers?.find(o => o.seller === user.name || o.seller === user.email);
-                    return (
-                    <div key={request.id} className="bg-white rounded-xl p-5 border border-gray-200 shadow-md hover:shadow-lg transition">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">{request.company}</h3>
-                          <p className="text-gray-500 text-sm">Buyer: {getUserDisplayName(request.buyer, request.buyer)}</p>
-                        </div>
-                        {myOffer && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            myOffer.status === 'accepted' || myOffer.status === 'counter_accepted_by_offerer' ? 'bg-green-100 text-green-700' :
-                            myOffer.status === 'counter_offered' ? 'bg-orange-100 text-orange-700' :
-                            myOffer.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {myOffer.status === 'accepted' ? '✅ Accepted' :
-                             myOffer.status === 'counter_offered' ? '🔄 Counter' :
-                             myOffer.status === 'counter_accepted_by_offerer' ? '🤝 Agreed' :
-                             myOffer.status === 'rejected' ? '❌ Rejected' :
-                             '⏳ Pending'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-100">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm">Desired Price:</span>
-                          <span className="font-bold text-lg text-blue-600">₹{request.price}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm">Needed:</span>
-                          <span className="font-semibold text-gray-900">{request.shares} shares</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setSelectedItem(request); setFormType('makeOffer'); }} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 transition">
-                          📊 Make Offer
-                        </button>
-                        {company && company.analysisReport && (
-                          <a 
-                            href={company.analysisReport} 
-                            download 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 block bg-indigo-100 text-indigo-700 py-2.5 rounded-lg font-semibold text-sm hover:bg-indigo-200 transition text-center"
-                          >
-                            📄 Report
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-full text-center py-12 bg-white rounded-xl border border-gray-200">
-                    <p className="text-gray-500 text-base">No buy requests at the moment</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            )}
-          </div>
-        )}
+										<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+											<div className="rounded-lg bg-white border border-gray-200 p-3">
+												<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Price per share</p>
+												<p className="mt-1 text-base font-semibold text-gray-900">{formatCurrency(displayPrice)}</p>
+											</div>
+											<div className="rounded-lg bg-white border border-gray-200 p-3">
+												<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantity</p>
+												<p className="mt-1 text-base font-semibold text-gray-900">{formatShares(interaction.quantity || interaction.shares)}</p>
+											</div>
+											<div className="rounded-lg bg-white border border-gray-200 p-3">
+												<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</p>
+												<p className="mt-1 text-base font-semibold text-gray-900">{getInteractionMeta(interaction.status).label}</p>
+											</div>
+										</div>
 
-        {/* Create Sell Listing Modal */}
-        {formType === 'sell' && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">List Shares for Sale</h2>
-              <form onSubmit={handleCreateSellListing} className="space-y-4">
-                <div className="relative">
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Company Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Type to search company..." 
-                    value={formData.company} 
-                    onChange={(e) => handleCompanySearch(e.target.value)} 
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" 
-                    required 
-                  />
-                  {companySuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-emerald-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {companySuggestions.map((company) => (
-                        <div
-                          key={company.id}
-                          onClick={() => selectCompany(company)}
-                          className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-semibold text-gray-900">{company.name}</p>
-                              <p className="text-xs text-gray-600">{company.isin}</p>
-                            </div>
-                            <span className="text-xs text-emerald-600 font-bold">₹{company.currentPrice}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">ISIN Number</label>
-                  <input type="text" placeholder="e.g. INE123456789" value={formData.isin} onChange={(e) => setFormData({...formData, isin: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Price per Share (₹)</label>
-                  <input type="number" placeholder="500" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Number of Shares</label>
-                  <input type="number" placeholder="100" value={formData.shares} onChange={(e) => setFormData({...formData, shares: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => { setFormType(null); setFormData({ company: '', isin: '', price: '', shares: '' }); }} className="flex-1 border-2 border-gray-200 rounded-xl py-3 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 bg-emerald-600 text-white rounded-xl py-3 font-semibold hover:bg-emerald-700 shadow-lg transition">
-                    Create Listing
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+										<div className="mt-4 flex flex-wrap gap-3">
+											{isOwner && canAccept && (
+												<button
+													onClick={() => onAccept(interaction.id)}
+													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
+												>
+													<span>✅</span>
+													<span>Accept</span>
+												</button>
+											)}
+											{isOwner && canCounter && (
+												<button
+													onClick={() => onCounter(interaction.id)}
+													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-orange-600 border border-orange-200 bg-orange-50/40 hover:bg-orange-50 transition"
+												>
+													<span>🔄</span>
+													<span>Counter offer</span>
+												</button>
+											)}
+											{!isOwner && canAcceptCounter && (
+												<button
+													onClick={() => onAcceptCounter(interaction.id)}
+													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
+												>
+													<span>🤝</span>
+													<span>Accept counter</span>
+												</button>
+											)}
+											{!isOwner && canAcceptCounter && (
+												<button
+													onClick={() => onRejectCounter(interaction.id)}
+													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-rose-600 border border-rose-200 bg-rose-50/40 hover:bg-rose-50 transition"
+												>
+													<span>✋</span>
+													<span>Reject counter</span>
+												</button>
+											)}
+										</div>
+									</div>
+								);
+							})
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	};
 
-        {/* Create Buy Request Modal */}
-        {formType === 'buy' && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Post Buy Request</h2>
-              <form onSubmit={handleCreateBuyRequest} className="space-y-4">
-                <div className="relative">
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Company Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Type to search company..." 
-                    value={formData.company} 
-                    onChange={(e) => handleCompanySearch(e.target.value)} 
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" 
-                    required 
-                  />
-                  {companySuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {companySuggestions.map((company) => (
-                        <div
-                          key={company.id}
-                          onClick={() => selectCompany(company)}
-                          className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-semibold text-gray-900">{company.name}</p>
-                              <p className="text-xs text-gray-600">{company.isin}</p>
-                            </div>
-                            <span className="text-xs text-blue-600 font-bold">₹{company.currentPrice}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">ISIN Number</label>
-                  <input type="text" placeholder="e.g. INE123456789" value={formData.isin} onChange={(e) => setFormData({...formData, isin: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Desired Price (₹)</label>
-                  <input type="number" placeholder="500" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Number of Shares</label>
-                  <input type="number" placeholder="100" value={formData.shares} onChange={(e) => setFormData({...formData, shares: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" required />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => { setFormType(null); setFormData({ company: '', isin: '', price: '', shares: '' }); }} className="flex-1 border-2 border-gray-200 rounded-xl py-3 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 bg-blue-600 text-white rounded-xl py-3 font-semibold hover:bg-blue-700 shadow-lg transition">
-                    Post Request
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+	const renderFormModal = () => {
+		if (!formType) return null;
 
-        {/* Place Bid Modal */}
-        {formType === 'placeBid' && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Place Your Bid</h2>
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-xl mb-6 border-2 border-emerald-200">
-                <h3 className="font-bold text-gray-900">{selectedItem.company}</h3>
-                <p className="text-sm text-gray-700">Seller: {selectedItem.seller}</p>
-                <p className="text-sm text-gray-700">Asking: ₹{selectedItem.price} per share</p>
-              </div>
-              <form onSubmit={handlePlaceBid} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Your Bid Price (₹)</label>
-                  <input type="number" value={bidOfferData.price} onChange={(e) => setBidOfferData({...bidOfferData, price: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" placeholder={selectedItem.price} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Quantity</label>
-                  <input type="number" value={bidOfferData.quantity} onChange={(e) => setBidOfferData({...bidOfferData, quantity: e.target.value})} max={selectedItem.shares} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 bg-gray-50 text-gray-900 focus:border-emerald-500 focus:bg-white outline-none transition" placeholder={selectedItem.shares} required />
-                </div>
-                {bidOfferData.price && bidOfferData.quantity && (
-                  <div className="bg-gradient-to-br from-emerald-100 to-teal-100 p-4 rounded-xl border-2 border-emerald-300">
-                    <p className="text-sm text-gray-700 font-medium">Total Amount:</p>
-                    <p className="text-2xl font-bold text-emerald-700">₹{(bidOfferData.price * bidOfferData.quantity).toLocaleString()}</p>
-                  </div>
-                )}
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => { setSelectedItem(null); setFormType(null); setBidOfferData({ price: '', quantity: '' }); }} className="flex-1 border-2 border-gray-200 rounded-xl py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 bg-emerald-600 text-white rounded-xl py-2 font-semibold hover:bg-emerald-700 shadow-lg transition">
-                    Submit Bid
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+		const closeModal = () => {
+			setFormType(null);
+			setFormData({ company: '', isin: '', price: '', shares: '' });
+			setCompanySuggestions([]);
+		};
 
-        {/* Make Offer Modal */}
-        {formType === 'makeOffer' && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Make an Offer</h2>
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl mb-6 border-2 border-blue-200">
-                <h3 className="font-bold text-gray-900">{selectedItem.company}</h3>
-                <p className="text-sm text-gray-700">Buyer: {selectedItem.buyer}</p>
-                <p className="text-sm text-gray-700">Desired: ₹{selectedItem.price} per share</p>
-              </div>
-              <form onSubmit={handleMakeOffer} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Your Offer Price (₹)</label>
-                  <input type="number" value={bidOfferData.price} onChange={(e) => setBidOfferData({...bidOfferData, price: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" placeholder={selectedItem.price} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Quantity Available</label>
-                  <input type="number" value={bidOfferData.quantity} onChange={(e) => setBidOfferData({...bidOfferData, quantity: e.target.value})} max={selectedItem.shares} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 bg-gray-50 text-gray-900 focus:border-blue-500 focus:bg-white outline-none transition" placeholder={selectedItem.shares} required />
-                </div>
-                {bidOfferData.price && bidOfferData.quantity && (
-                  <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-4 rounded-xl border-2 border-blue-300">
-                    <p className="text-sm text-gray-700 font-medium">Total Amount:</p>
-                    <p className="text-2xl font-bold text-blue-700">₹{(bidOfferData.price * bidOfferData.quantity).toLocaleString()}</p>
-                  </div>
-                )}
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => { setSelectedItem(null); setFormType(null); setBidOfferData({ price: '', quantity: '' }); }} className="flex-1 border-2 border-gray-200 rounded-xl py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 bg-blue-600 text-white rounded-xl py-2 font-semibold hover:bg-blue-700 shadow-lg transition">
-                    Submit Offer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+		const isSell = formType === 'sell';
+		const title = isSell ? 'List Shares for Sale' : 'Post Buy Request';
+		const onSubmit = isSell ? handleCreateSellListing : handleCreateBuyRequest;
 
-        {/* View Bids/Offers Modal */}
-        {selectedItem && !formType && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedItem.company}</h2>
-                  <p className="text-gray-600">ISIN: {selectedItem.isin}</p>
-                </div>
-                <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-900 text-2xl transition">✕</button>
-              </div>
+		return (
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm px-4 animate-fadeIn">
+				<div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden animate-slideUp">
+					<div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+						<h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+						<button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition">
+							<svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">
-                  {selectedItem.type === 'sell' ? '💰 Received Bids' : '📊 Received Offers'}
-                </h3>
-                {((selectedItem.type === 'sell' && selectedItem.bids?.length > 0) || 
-                  (selectedItem.type === 'buy' && selectedItem.offers?.length > 0)) ? (
-                  <div className="space-y-3">
-                    {(selectedItem.type === 'sell' ? selectedItem.bids : selectedItem.offers).map((item, index) => (
-                      <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-bold text-gray-900">
-                              {selectedItem.type === 'sell' ? item.bidder : item.seller}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {new Date(item.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            item.status === 'accepted' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
-                          }`}>
-                            {item.status || 'pending'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm mb-3">
-                          <div>
-                            <p className="text-gray-600 font-medium">
-                              {item.counterPrice ? 'Current Price' : 'Price'}
-                            </p>
-                            <p className="font-bold text-emerald-600">
-                              ₹{item.counterPrice || item.price}
-                            </p>
-                            {item.counterPrice && (
-                              <p className="text-xs text-gray-500 line-through">₹{item.price}</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-gray-600 font-medium">Quantity</p>
-                            <p className="font-bold text-gray-900">{item.quantity} shares</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600 font-medium">Total</p>
-                            <p className="font-bold text-blue-600">
-                              ₹{((item.counterPrice || item.price) * item.quantity).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Negotiation History */}
-                        {item.counterPrice && (
-                          <div className="bg-blue-50 p-2 rounded-lg mb-2 text-xs">
-                            <p className="text-blue-700 font-semibold">📝 Negotiation:</p>
-                            <p className="text-blue-600">Original: ₹{item.price} → Counter: ₹{item.counterPrice}</p>
-                          </div>
-                        )}
-                        {item.status === 'pending' && selectedItem.status === 'active' && (
-                          <div className="space-y-2">
-                            <div className="flex gap-2">
-                              <button 
-                                onClick={() => {
-                                  if (selectedItem.type === 'sell') {
-                                    acceptBid(selectedItem.id, item.id);
-                                    showNotification('success', 'Bid Accepted! ✅', 'Transaction sent to admin for approval. You will be notified once verified.');
-                                  } else {
-                                    acceptOffer(selectedItem.id, item.id);
-                                    showNotification('success', 'Offer Accepted! ✅', 'Transaction sent to admin for approval. You will be notified once verified.');
-                                  }
-                                  setSelectedItem(null);
-                                }}
-                                className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition"
-                              >
-                                ✅ Accept
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  const counterPrice = prompt('Enter your counter price:');
-                                  if (counterPrice) {
-                                    counterOffer(selectedItem.id, item.id, counterPrice, selectedItem.type);
-                                    showNotification('info', 'Counter Offer Sent! 🔄', `New price proposed: ₹${counterPrice}. Waiting for response.`);
-                                  }
-                                  setSelectedItem(null);
-                                }}
-                                className="flex-1 bg-orange-600 text-white py-2 rounded-lg font-bold hover:bg-orange-700 transition"
-                              >
-                                🔄 Counter
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                        {item.status === 'counter_offered' && (
-                          <div className="bg-orange-50 p-3 rounded-lg border-2 border-orange-200 mt-2">
-                            <p className="text-sm text-orange-700 font-semibold mb-2">
-                              🔄 Counter Price: ₹{item.counterPrice} 
-                              <span className="text-xs ml-2">(Original: ₹{item.price})</span>
-                            </p>
-                            {/* Check if current user is the one who needs to respond */}
-                            {((selectedItem.type === 'sell' && item.bidder !== user.name) || 
-                              (selectedItem.type === 'buy' && item.seller !== user.name)) && (
-                              <div className="text-xs text-orange-600 mb-2">You sent this counter offer. Waiting for response...</div>
-                            )}
-                            {((selectedItem.type === 'sell' && item.bidder === user.name) || 
-                              (selectedItem.type === 'buy' && item.seller === user.name)) && (
-                              <div className="space-y-2">
-                                <p className="text-xs text-orange-700 font-semibold mb-2">Counter offer received! Your response:</p>
-                                <div className="flex gap-2">
-                                  <button 
-                                    onClick={() => {
-                                      acceptCounterOffer(selectedItem.id, item.id, selectedItem.type);
-                                      showNotification('success', 'Deal Agreed! 🤝', 'Counter price accepted. Transaction sent to admin for approval.');
-                                      setSelectedItem(null);
-                                    }}
-                                    className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition text-sm"
-                                  >
-                                    ✅ Accept ₹{item.counterPrice}
-                                  </button>
-                                  <button 
-                                    onClick={() => {
-                                      const newCounter = prompt(`Current counter: ₹${item.counterPrice}\nEnter your counter price:`);
-                                      if (newCounter) {
-                                        counterOffer(selectedItem.id, item.id, newCounter, selectedItem.type);
-                                        showNotification('info', 'New Counter Sent! 🔄', `Counter price: ₹${newCounter}. Negotiation continues...`);
-                                      }
-                                      setSelectedItem(null);
-                                    }}
-                                    className="flex-1 bg-orange-600 text-white py-2 rounded-lg font-bold hover:bg-orange-700 transition text-sm"
-                                  >
-                                    🔄 Counter Again
-                                  </button>
-                                  <button 
-                                    onClick={() => {
-                                      rejectCounterOffer(selectedItem.id, item.id, selectedItem.type);
-                                      showNotification('warning', 'Counter Rejected ❌', 'You declined the counter offer. Negotiation ended.');
-                                      setSelectedItem(null);
-                                    }}
-                                    className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 transition text-sm"
-                                  >
-                                    ❌ Reject
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 text-center py-4">
-                    No {selectedItem.type === 'sell' ? 'bids' : 'offers'} received yet
-                  </p>
-                )}
-              </div>
+					<form onSubmit={onSubmit} className="px-6 py-6 space-y-4">
+						<div className="relative">
+							<label className="block text-sm font-semibold mb-2 text-gray-700">Company Name</label>
+							<input
+								type="text"
+								value={formData.company}
+								onChange={(e) => handleCompanySearch(e.target.value)}
+								placeholder="Type to search company..."
+								className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+								required
+							/>
+							{companySuggestions.length > 0 && (
+								<div className="absolute z-10 w-full mt-1 bg-white border-2 border-purple-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+									{companySuggestions.map((company) => (
+										<button
+											type="button"
+											key={company.id}
+											onClick={() => selectCompany(company)}
+											className="w-full px-4 py-3 text-left hover:bg-purple-50 transition border-b border-gray-100 last:border-b-0"
+										>
+											<div className="flex items-center justify-between">
+												<div>
+													<p className="font-semibold text-gray-900">{company.name}</p>
+													<p className="text-xs text-gray-500">ISIN: {company.isin}</p>
+												</div>
+												{company.currentPrice && (
+													<span className="text-xs font-semibold text-purple-600">{formatCurrency(company.currentPrice)}</span>
+												)}
+											</div>
+										</button>
+									))}
+								</div>
+							)}
+						</div>
 
-              <button onClick={() => setSelectedItem(null)} className="w-full border-2 border-gray-200 rounded-xl py-3 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+						<div>
+							<label className="block text-sm font-semibold mb-2 text-gray-700">ISIN</label>
+							<input
+								type="text"
+								value={formData.isin}
+								onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
+								placeholder="e.g. INE123456789"
+								className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+								required
+							/>
+						</div>
 
-      {/* Profile Modal */}
-      {showProfileModal && <UserProfile onClose={() => setShowProfileModal(false)} />}
-      
-      {/* Change Password Modal */}
-      {showPasswordModal && <ChangePassword onClose={() => setShowPasswordModal(false)} />}
-      
-      {/* Notification */}
-      <Notification 
-        show={notification.show}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-        onClose={() => setNotification({ ...notification, show: false })}
-      />
-    </div>
-  );
+						<div className="grid sm:grid-cols-2 gap-4">
+							<div>
+								<label className="block text-sm font-semibold mb-2 text-gray-700">Price per share (₹)</label>
+								<input
+									type="number"
+									value={formData.price}
+									onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+									min="1"
+									className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+									required
+								/>
+							</div>
+							<div>
+								<label className="block text-sm font-semibold mb-2 text-gray-700">Number of shares</label>
+								<input
+									type="number"
+									value={formData.shares}
+									onChange={(e) => setFormData({ ...formData, shares: e.target.value })}
+									min="1"
+									className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+									required
+								/>
+							</div>
+						</div>
+
+						<div className="flex flex-wrap gap-3 pt-4">
+							<button
+								type="button"
+								onClick={closeModal}
+								className="flex-1 border-2 border-gray-200 rounded-xl py-3 font-semibold text-gray-700 hover:bg-gray-50 transition"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 font-semibold shadow-lg hover:shadow-xl transition"
+							>
+								{isSell ? 'Create listing' : 'Post request'}
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		);
+	};
+
+	const renderTradeModal = () => {
+		if (!tradeContext) return null;
+		const isBid = tradeContext.type === 'bid';
+		const title = isBid ? 'Place bid' : 'Make offer';
+		const submitHandler = isBid ? handlePlaceBid : handleMakeOffer;
+
+		return (
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm px-4 animate-fadeIn">
+				<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp">
+					<div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+						<div>
+							<h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+							<p className="text-sm text-gray-500 mt-1">{tradeContext.item.company}</p>
+						</div>
+						<button onClick={() => { setTradeContext(null); setBidOfferData({ price: '', quantity: '' }); }} className="text-gray-400 hover:text-gray-600 transition">
+							<svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+
+					<form onSubmit={submitHandler} className="px-6 py-6 space-y-4">
+						<div>
+							<label className="block text-sm font-semibold mb-2 text-gray-700">Price per share (₹)</label>
+							<input
+								type="number"
+								value={bidOfferData.price}
+								onChange={(e) => setBidOfferData({ ...bidOfferData, price: e.target.value })}
+								min="1"
+								className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+								required
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-semibold mb-2 text-gray-700">Quantity</label>
+							<input
+								type="number"
+								value={bidOfferData.quantity}
+								onChange={(e) => setBidOfferData({ ...bidOfferData, quantity: e.target.value })}
+								min="1"
+								className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white outline-none transition"
+								required
+							/>
+						</div>
+						<div className="flex flex-wrap gap-3 pt-4">
+							<button
+								type="button"
+								onClick={() => { setTradeContext(null); setBidOfferData({ price: '', quantity: '' }); }}
+								className="flex-1 border-2 border-gray-200 rounded-xl py-3 font-semibold text-gray-700 hover:bg-gray-50 transition"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 font-semibold shadow-lg hover:shadow-xl transition"
+							>
+								{isBid ? 'Submit bid' : 'Submit offer'}
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		);
+	};
+
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100">
+			<Notification
+				show={notification.show}
+				type={notification.type}
+				title={notification.title}
+				message={notification.message}
+				onClose={() => setNotification({ ...notification, show: false })}
+			/>
+
+			<header className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white shadow-lg">
+				<div className="max-w-6xl mx-auto px-6 py-10">
+					<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+						<div>
+							<p className="text-sm uppercase tracking-[0.3em] text-white/70">Dashboard</p>
+							<h1 className="text-3xl font-bold mt-2">{getGreeting()}, {user.name.split(' ')[0]}</h1>
+							<p className="mt-3 text-sm text-white/80 max-w-2xl">{getDailyQuote()}</p>
+						</div>
+						<div className="flex flex-col sm:flex-row sm:items-center gap-3">
+							<button
+								onClick={() => setShowProfileModal(true)}
+								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 bg-white shadow hover:shadow-lg transition"
+							>
+								<span>👤</span>
+								<span>Profile</span>
+							</button>
+							<button
+								onClick={() => setShowPasswordModal(true)}
+								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-white/10 border border-white/30 hover:bg-white/20 transition"
+							>
+								<span>🔒</span>
+								<span>Change password</span>
+							</button>
+							<button
+								onClick={logout}
+								className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-white/10 border border-white/30 hover:bg-red-500/90 transition"
+							>
+								<span>🚪</span>
+								<span>Logout</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</header>
+
+			<main className="max-w-6xl mx-auto px-6 -mt-10 pb-20 relative z-10">
+				<div className="bg-white border border-gray-200 rounded-2xl shadow-xl">
+					<nav className="flex flex-wrap gap-2 border-b border-gray-100 px-6 py-4 bg-gray-50 rounded-t-2xl">
+						{navItems.map((nav) => (
+							<button
+								key={nav.id}
+								onClick={() => setActiveTab(nav.id)}
+								className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+									activeTab === nav.id
+										? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow'
+										: 'bg-white border border-gray-200 text-gray-600 hover:border-purple-200 hover:text-purple-600'
+								}`}
+							>
+								<span>{nav.icon}</span>
+								<span>{nav.label}</span>
+								{typeof nav.counter === 'number' && nav.counter > 0 && (
+									<span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-white/20 border border-white/50">
+										{nav.counter}
+									</span>
+								)}
+							</button>
+						))}
+					</nav>
+
+					<section className="px-6 py-8">
+						{renderActiveTab()}
+					</section>
+				</div>
+			</main>
+
+			{renderFormModal()}
+			{renderTradeModal()}
+			{renderNegotiationModal()}
+
+			{showProfileModal && (
+				<UserProfile onClose={() => setShowProfileModal(false)} />
+			)}
+
+			{showPasswordModal && (
+				<ChangePassword onClose={() => setShowPasswordModal(false)} />
+			)}
+		</div>
+	);
 }
