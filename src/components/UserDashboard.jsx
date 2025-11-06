@@ -167,7 +167,7 @@ const formatDateTime = (iso) => {
 };
 
 export default function UserDashboard({ setPage }) {
-	const { user, logout, getUserDisplayName } = useAuth();
+	const { user, logout, getUserDisplayName, updateUserProfile } = useAuth();
 	const {
 		sellListings,
 		buyRequests,
@@ -243,13 +243,17 @@ export default function UserDashboard({ setPage }) {
 		return `@${randomPrefix}_${randomSuffix}`;
 	};
 
-	const handleUsernameChange = () => {
+	const handleUsernameChange = async () => {
 		const newUsername = generateFunnyUsername();
-		setCurrentUsername(newUsername);
-		// Update user object in localStorage
-		const updatedUser = { ...user, username: newUsername };
-		localStorage.setItem('user', JSON.stringify(updatedUser));
-		showNotification('success', 'Username Updated! 🎉', `Your new username is ${newUsername}`);
+		
+		try {
+			// Update username in backend MongoDB
+			await updateUserProfile({ username: newUsername });
+			setCurrentUsername(newUsername);
+			showNotification('success', 'Username Updated! 🎉', `Your new username is ${newUsername}`);
+		} catch (error) {
+			showNotification('error', 'Update Failed', error.message || 'Could not update username');
+		}
 	};
 
 	const motivationalQuotes = useMemo(

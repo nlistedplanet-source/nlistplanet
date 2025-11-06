@@ -40,7 +40,8 @@ export const authAPI = {
 // User APIs
 export const userAPI = {
   getAllUsers: () => api.get('/users'),
-  getUserById: (id) => api.get(`/users/${id}`)
+  getUserById: (id) => api.get(`/users/${id}`),
+  updateProfile: (userId, updates) => api.patch(`/users/${userId}`, updates)
 };
 
 // Listing APIs

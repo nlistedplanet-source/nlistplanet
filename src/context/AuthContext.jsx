@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, userAPI } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -191,6 +191,31 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUserProfile = async (updates) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Call backend API to update user profile
+      const response = await userAPI.updateProfile(user._id || user.id, updates);
+      
+      if (response.data.success) {
+        // Update local user state with new data
+        const updatedUser = { ...user, ...response.data.user };
+        setUser(updatedUser);
+        return { success: true, user: updatedUser };
+      }
+      
+      return { success: false };
+    } catch (err) {
+      const apiMessage = err.response?.data?.message || err.message || 'Failed to update profile';
+      setError(apiMessage);
+      throw new Error(apiMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get user display name (User ID for normal users, Name for admin)
   const getUserDisplayName = (userName, userEmail, isAdminView = false) => {
     if (isAdminView || user?.roles?.includes('admin')) {
@@ -208,6 +233,7 @@ export function AuthProvider({ children }) {
       signup, 
       signin, 
       logout, 
+      updateUserProfile,
       getUserDisplayName,
       sendEmailOTP,
       verifyEmailOTP,
