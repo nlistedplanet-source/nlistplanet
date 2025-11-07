@@ -126,163 +126,166 @@ export default function AdminDashboard({ setPage }) {
   const filteredItems = getFilteredItems();
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-white">
-      {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 shadow-2xl fixed top-0 left-0 h-full overflow-y-auto">
-        {/* Logo Section */}
-        <div className="p-6 border-b border-purple-700/50 flex justify-center items-center gap-3">
-          <div className="bg-white p-3 rounded-2xl shadow-lg">
-            <svg className="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-            </svg>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Left Sidebar Navigation */}
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto">
+        {/* Logo & User Info */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-3xl shadow-lg">
+              ⚙️
+            </div>
+            <div className="flex-1">
+              <h3 className="text-white font-bold text-base truncate">{user.name}</h3>
+              <p className="text-purple-200 text-xs truncate">Admin Panel</p>
+              <p className="text-purple-300 text-xs mt-1">ID: {user.userId || 'N/A'}</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col h-full px-6 pb-6 pt-4">
-          <nav className="space-y-6 flex-1">
-            {/* Trading Section */}
-            <div>
-              <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-3 px-4">Trading</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'overview'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                  </svg>
-                  <span>My Dashboard</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('browse')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'browse'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                  </svg>
-                  <span>Browse Market</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('post')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'post'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  <span>Post Listing</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('mybids')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'mybids'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                  </svg>
-                  <span>My Bids/Offers</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Admin Rights Section */}
-            <div>
-              <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-3 px-4">Admin Controls</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setActiveTab('sell')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'sell'
-                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                  </svg>
-                  <span>Manage Sell Listings</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('buy')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'buy'
-                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 1a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm4-4a1 1 0 100 2h.01a1 1 0 100-2H13zM9 9a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM7 8a1 1 0 000 2h.01a1 1 0 000-2H7z" clipRule="evenodd" />
-                  </svg>
-                  <span>Manage Buy Requests</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('companies')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
-                    activeTab === 'companies'
-                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
-                      : 'text-white hover:bg-purple-700/50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
-                  </svg>
-                  <span>Company Database</span>
-                </button>
-              </div>
-            </div>
-          </nav>
-
-          {/* Admin Options at Bottom */}
-          <div className="pt-4 mt-4 border-t border-purple-700/50">
+        {/* Navigation Menu */}
+        <nav className="flex-1 p-4 space-y-2">
+          <div className="mb-4">
+            <p className="text-xs font-bold text-purple-300 uppercase tracking-wider px-4 mb-2">Trading</p>
             <button
-              onClick={() => { logout(); setPage('home'); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 rounded-xl transition font-medium"
+              onClick={() => setActiveTab('overview')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'overview'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
               </svg>
-              <span>Logout</span>
+              <span className="flex-1 text-left">My Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('browse')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'browse'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Browse Market</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('post')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'post'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Post Listing</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('mybids')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'mybids'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">My Bids/Offers</span>
             </button>
           </div>
+
+          <div>
+            <p className="text-xs font-bold text-purple-300 uppercase tracking-wider px-4 mb-2">Admin Controls</p>
+            <button
+              onClick={() => setActiveTab('sell')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'sell'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+              </svg>
+              <span className="flex-1 text-left">Manage Sell</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('buy')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'buy'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 1a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm4-4a1 1 0 100 2h.01a1 1 0 100-2H13zM9 9a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM7 8a1 1 0 000 2h.01a1 1 0 000-2H7z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Manage Buy</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('companies')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'companies'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Company DB</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <button
+            onClick={() => { logout(); setPage('home'); }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-red-500/20 hover:bg-red-500 transition-all border border-red-400/30"
+          >
+            <span className="text-lg">🚪</span>
+            <span>Logout</span>
+          </button>
         </div>
+      </aside>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 ml-64 p-8">
-        {/* Admin Welcome Header */}
-        <div className="mb-8 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 rounded-2xl shadow-2xl p-8 text-white">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">⚙️ Welcome, Admin!</h1>
-              <p className="text-purple-100 text-lg mt-1">Manage all listings, approvals, and platform transactions</p>
+      <div className="flex-1 lg:ml-64">
+        {/* Top Header Bar */}
+        <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  ⚙️ Welcome, Admin!
+                </h1>
+                <p className="text-sm text-purple-600 font-medium mt-1">
+                  Manage all listings, approvals, and platform transactions
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="p-6">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+            <div className="p-6">
 
         {/* OVERVIEW TAB - Admin's own trading overview */}
         {activeTab === 'overview' && (
@@ -1409,7 +1412,14 @@ export default function AdminDashboard({ setPage }) {
               )}
             </div>
           </div>
-        )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              ⚙️ Admin Control Panel - Manage platform with confidence
+            </p>
+          </div>
+        </main>
       </div>
       
       {/* Notification */}
