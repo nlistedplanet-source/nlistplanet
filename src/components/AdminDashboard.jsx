@@ -126,30 +126,30 @@ export default function AdminDashboard({ setPage }) {
   const filteredItems = getFilteredItems();
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-white">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-xl fixed top-0 left-0 h-full border-r border-gray-200 overflow-y-auto">
+      <div className="w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 shadow-2xl fixed top-0 left-0 h-full overflow-y-auto">
         {/* Logo Section */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50 flex justify-center">
-          <img 
-            src="/images/logos/logo.png" 
-            alt="Nlisted Logo" 
-            className="h-16 w-16 object-contain"
-          />
+        <div className="p-6 border-b border-purple-700/50 flex justify-center items-center gap-3">
+          <div className="bg-white p-3 rounded-2xl shadow-lg">
+            <svg className="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+          </div>
         </div>
 
         <div className="flex flex-col h-full px-6 pb-6 pt-4">
           <nav className="space-y-6 flex-1">
             {/* Trading Section */}
             <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-4">Trading</h3>
+              <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-3 px-4">Trading</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setActiveTab('overview')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'overview'
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -162,8 +162,8 @@ export default function AdminDashboard({ setPage }) {
                   onClick={() => setActiveTab('browse')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'browse'
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -176,8 +176,8 @@ export default function AdminDashboard({ setPage }) {
                   onClick={() => setActiveTab('post')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'post'
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -190,8 +190,8 @@ export default function AdminDashboard({ setPage }) {
                   onClick={() => setActiveTab('mybids')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'mybids'
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -205,14 +205,14 @@ export default function AdminDashboard({ setPage }) {
 
             {/* Admin Rights Section */}
             <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-4">Admin Controls</h3>
+              <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-3 px-4">Admin Controls</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setActiveTab('sell')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'sell'
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -225,8 +225,8 @@ export default function AdminDashboard({ setPage }) {
                   onClick={() => setActiveTab('buy')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'buy'
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -239,8 +239,8 @@ export default function AdminDashboard({ setPage }) {
                   onClick={() => setActiveTab('companies')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     activeTab === 'companies'
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg'
+                      : 'text-white hover:bg-purple-700/50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -253,10 +253,10 @@ export default function AdminDashboard({ setPage }) {
           </nav>
 
           {/* Admin Options at Bottom */}
-          <div className="pt-4 mt-4 border-t border-gray-200">
+          <div className="pt-4 mt-4 border-t border-purple-700/50">
             <button
               onClick={() => { logout(); setPage('home'); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition font-medium"
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 rounded-xl transition font-medium"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
@@ -270,9 +270,18 @@ export default function AdminDashboard({ setPage }) {
       {/* Main Content Area */}
       <div className="flex-1 ml-64 p-8">
         {/* Admin Welcome Header */}
-        <div className="mb-8 bg-gradient-to-r from-emerald-50 to-teal-100 rounded-2xl shadow-lg p-8 border border-emerald-200">
-          <h1 className="text-3xl font-bold mb-2 text-gray-800">⚙️ Welcome, Admin!</h1>
-          <p className="text-gray-700 text-lg">Manage all listings, approvals, and platform transactions</p>
+        <div className="mb-8 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 rounded-2xl shadow-2xl p-8 text-white">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">⚙️ Welcome, Admin!</h1>
+              <p className="text-purple-100 text-lg mt-1">Manage all listings, approvals, and platform transactions</p>
+            </div>
+          </div>
         </div>
 
         {/* OVERVIEW TAB - Admin's own trading overview */}
@@ -280,21 +289,21 @@ export default function AdminDashboard({ setPage }) {
           <>
             {/* Stats Section */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-emerald-500 mb-2">{myListings.length}</div>
-                <p className="text-gray-600 font-medium">My Sell Listings</p>
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{myListings.length}</div>
+                <p className="text-emerald-100 font-medium">My Sell Listings</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-blue-500 mb-2">{myRequests.length}</div>
-                <p className="text-gray-600 font-medium">My Buy Requests</p>
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{myRequests.length}</div>
+                <p className="text-blue-100 font-medium">My Buy Requests</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-purple-500 mb-2">{myBids.length}</div>
-                <p className="text-gray-600 font-medium">Active Bids</p>
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{myBids.length}</div>
+                <p className="text-purple-100 font-medium">Active Bids</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-orange-500 mb-2">{myOffers.length}</div>
-                <p className="text-gray-600 font-medium">Active Offers</p>
+              <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{myOffers.length}</div>
+                <p className="text-orange-100 font-medium">Active Offers</p>
               </div>
             </div>
 
@@ -621,21 +630,21 @@ export default function AdminDashboard({ setPage }) {
           <>
             {/* Stats Section */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-yellow-500 mb-2">{allListings.length}</div>
-                <p className="text-gray-600 font-medium">Total Listings</p>
+              <div className="bg-gradient-to-br from-yellow-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{allListings.length}</div>
+                <p className="text-yellow-100 font-medium">Total Listings</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-orange-500 mb-2">{pendingApprovals.length}</div>
-                <p className="text-gray-600 font-medium">Pending Approval</p>
+              <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{pendingApprovals.length}</div>
+                <p className="text-orange-100 font-medium">Pending Approval</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-green-500 mb-2">{approvedItems.length}</div>
-                <p className="text-gray-600 font-medium">Approved</p>
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{approvedItems.length}</div>
+                <p className="text-emerald-100 font-medium">Approved</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-blue-500 mb-2">{closedItems.length}</div>
-                <p className="text-gray-600 font-medium">Closed</p>
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{closedItems.length}</div>
+                <p className="text-blue-100 font-medium">Closed</p>
               </div>
             </div>
 
@@ -749,21 +758,21 @@ export default function AdminDashboard({ setPage }) {
           <>
             {/* Stats Section */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-yellow-500 mb-2">{allListings.length}</div>
-                <p className="text-gray-600 font-medium">Total Listings</p>
+              <div className="bg-gradient-to-br from-yellow-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{allListings.length}</div>
+                <p className="text-yellow-100 font-medium">Total Listings</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-orange-500 mb-2">{pendingApprovals.length}</div>
-                <p className="text-gray-600 font-medium">Pending Approval</p>
+              <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{pendingApprovals.length}</div>
+                <p className="text-orange-100 font-medium">Pending Approval</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-green-500 mb-2">{approvedItems.length}</div>
-                <p className="text-gray-600 font-medium">Approved</p>
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{approvedItems.length}</div>
+                <p className="text-emerald-100 font-medium">Approved</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition">
-                <div className="text-3xl font-bold text-blue-500 mb-2">{closedItems.length}</div>
-                <p className="text-gray-600 font-medium">Closed</p>
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                <div className="text-3xl font-bold mb-2">{closedItems.length}</div>
+                <p className="text-blue-100 font-medium">Closed</p>
               </div>
             </div>
 
