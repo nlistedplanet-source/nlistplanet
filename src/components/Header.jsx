@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UserProfile from './UserProfile';
 import ChangePassword from './ChangePassword';
@@ -7,76 +7,85 @@ import LoginModal from './LoginModal';
 export default function Header({ setPage, currentPage }) {
   const { user, logout, currentRole, switchRole } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Hide navigation on dashboard and admin pages
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
 
   return (
-    <header className={`w-full ${isDashboardPage ? 'bg-transparent' : 'bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 shadow-lg'} sticky top-0 z-50 backdrop-blur-sm`}>
+    <header
+      className={`w-full sticky top-0 z-50 transition-all duration-300 backdrop-blur-md ${
+        isDashboardPage
+          ? scrolled
+            ? 'bg-white/80 border-b border-gray-200 shadow-sm'
+            : 'bg-transparent'
+          : scrolled
+            ? 'bg-white/85 border-b border-gray-200 shadow-sm'
+            : 'bg-white/60'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
-            className="flex items-center space-x-2 group cursor-pointer"
+            className="flex items-center gap-2 group cursor-pointer"
           >
-            <div className="relative">
-              <div className="absolute inset-0 bg-white rounded-full blur-md opacity-50 group-hover:opacity-75 transition"></div>
-              <img 
-                src="/images/logos/logo.png" 
-                alt="Nlist Logo" 
-                className="relative h-12 w-12 object-contain transform group-hover:scale-110 transition-transform duration-300"
-              />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-2xl font-black text-white tracking-tight group-hover:tracking-wide transition-all duration-300">
-                Nlist
-              </span>
-              <span className="text-xs text-white/90 font-medium -mt-1">
-                Unlisted Shares
-              </span>
-            </div>
+            <img
+              src="/images/logos/logo.png"
+              alt="Nlist Logo"
+              className="h-10 w-10 object-contain rounded-lg shadow-sm"
+            />
+            <span className="text-xl font-bold tracking-tight text-gray-900">Nlist</span>
           </button>
 
           {/* Navigation Links */}
           {!isDashboardPage && (
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center gap-1">
               <button
                 onClick={() => setPage('home')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   currentPage === 'home'
-                    ? 'bg-white text-purple-600 shadow-md'
-                    : 'text-white hover:bg-white/20'
+                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                🏠 Home
+                Home
               </button>
               <button
                 onClick={() => setPage('about')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   currentPage === 'about'
-                    ? 'bg-white text-purple-600 shadow-md'
-                    : 'text-white hover:bg-white/20'
+                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                ℹ️ About
+                About
               </button>
             </nav>
           )}
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
             {user ? (
               <>
                 {/* User Avatar & Name */}
-                <div className="hidden sm:flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 border border-white/30">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                <div className="hidden sm:flex items-center gap-2 bg-white/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-gray-200">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                     {user.name?.charAt(0).toUpperCase() || '👤'}
                   </div>
-                  <span className="text-white font-semibold text-sm max-w-[100px] truncate">
+                  <span className="text-gray-800 font-medium text-sm max-w-[120px] truncate">
                     {user.name}
                   </span>
                 </div>
@@ -84,27 +93,26 @@ export default function Header({ setPage, currentPage }) {
                 {/* Dashboard Button */}
                 <button
                   onClick={() => setPage(currentRole === 'admin' ? 'admin' : 'user')}
-                  className="bg-white text-purple-600 px-5 py-2.5 rounded-full font-bold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-sm hover:bg-purple-700 transition"
                 >
-                  <span>📊</span>
-                  <span>Dashboard</span>
+                  Dashboard
                 </button>
 
                 {/* Menu Button */}
                 <div className="relative">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all duration-300"
+                    className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-white transition"
                   >
                     {showMenu ? '✕' : '☰'}
                   </button>
 
                   {/* Dropdown Menu */}
                   {showMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slideDown">
-                      <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3">
-                        <p className="text-white font-bold text-sm">{user.name}</p>
-                        <p className="text-white/80 text-xs">{user.email}</p>
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden animate-slideDown">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-gray-900 font-semibold text-sm">{user.name}</p>
+                        <p className="text-gray-500 text-xs">{user.email}</p>
                       </div>
                       
                       <div className="py-2">
@@ -113,10 +121,9 @@ export default function Header({ setPage, currentPage }) {
                             setShowProfileModal(true);
                             setShowMenu(false);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors flex items-center space-x-3 text-gray-700 hover:text-purple-600"
+                          className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
                         >
-                          <span>👤</span>
-                          <span className="font-semibold text-sm">Profile</span>
+                          <span className="font-medium text-sm">Profile</span>
                         </button>
                         
                         <button
@@ -124,10 +131,9 @@ export default function Header({ setPage, currentPage }) {
                             setShowPasswordModal(true);
                             setShowMenu(false);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors flex items-center space-x-3 text-gray-700 hover:text-purple-600"
+                          className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
                         >
-                          <span>🔒</span>
-                          <span className="font-semibold text-sm">Change Password</span>
+                          <span className="font-medium text-sm">Change Password</span>
                         </button>
 
                         {user.roles?.length > 1 && (
@@ -136,16 +142,15 @@ export default function Header({ setPage, currentPage }) {
                               switchRole();
                               setShowMenu(false);
                             }}
-                            className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors flex items-center space-x-3 text-gray-700 hover:text-purple-600"
+                            className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
                           >
-                            <span>🔄</span>
-                            <span className="font-semibold text-sm">
+                            <span className="font-medium text-sm">
                               Switch to {currentRole === 'admin' ? 'User' : 'Admin'}
                             </span>
                           </button>
                         )}
 
-                        <div className="border-t border-gray-100 my-2"></div>
+                        <div className="border-t border-gray-100 my-1"></div>
 
                         <button
                           onClick={() => {
@@ -153,9 +158,8 @@ export default function Header({ setPage, currentPage }) {
                             setShowMenu(false);
                             setPage('home');
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-red-50 transition-colors flex items-center space-x-3 text-red-600 font-semibold"
+                          className="w-full px-4 py-2.5 text-left hover:bg-red-50 transition-colors flex items-center gap-3 text-red-600 font-medium"
                         >
-                          <span>🚪</span>
                           <span className="text-sm">Logout</span>
                         </button>
                       </div>
@@ -164,17 +168,62 @@ export default function Header({ setPage, currentPage }) {
                 </div>
               </>
             ) : (
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="bg-white text-purple-600 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>🔐</span>
-                <span>Login / Sign Up</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Mobile nav toggle */}
+                {!isDashboardPage && (
+                  <button
+                    className="md:hidden w-10 h-10 rounded-full bg-white/70 border border-gray-200 text-gray-700"
+                    onClick={() => setShowMobileNav((s) => !s)}
+                    aria-label="Toggle navigation"
+                  >
+                    {showMobileNav ? '✕' : '☰'}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-sm hover:bg-purple-700 transition"
+                >
+                  Login / Sign Up
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
+        {/* Mobile Navigation Panel */}
+        {!isDashboardPage && showMobileNav && (
+          <div className="md:hidden pb-3 animate-slideDown">
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <button
+                onClick={() => {
+                  setPage('home');
+                  setShowMobileNav(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg font-medium text-sm ${
+                  currentPage === 'home'
+                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => {
+                  setPage('about');
+                  setShowMobileNav(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg font-medium text-sm ${
+                  currentPage === 'about'
+                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                About
+              </button>
+            </div>
+          </div>
+        )}
 
       {/* Profile Modal */}
       {showProfileModal && <UserProfile onClose={() => setShowProfileModal(false)} />}
