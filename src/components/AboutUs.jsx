@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Header from './Header';
 import LoginModal from './LoginModal';
 
 export default function AboutUs({ setPage }) {
@@ -6,6 +7,9 @@ export default function AboutUs({ setPage }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      {/* Header */}
+      <Header setPage={setPage} currentPage="about" />
+      
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4">
