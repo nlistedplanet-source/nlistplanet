@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
 import AdminDashboard from './components/AdminDashboard';
@@ -38,6 +39,7 @@ export default function App() {
                 {page !== 'user' && page !== 'admin' && page !== 'about' && <Header setPage={setPage} currentPage={page} />}
                 {renderPage()}
               </div>
+              <Analytics />
             </PortfolioProvider>
           </CompanyProvider>
         </ListingProvider>

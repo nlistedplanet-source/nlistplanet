@@ -1,10 +1,11 @@
 {
   "name": "unlisted-hub",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "P2P Marketplace for Unlisted Shares - ONE Account, Multiple Roles",
   "private": true,
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.13.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
