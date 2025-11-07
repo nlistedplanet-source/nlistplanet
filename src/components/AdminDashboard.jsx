@@ -262,7 +262,6 @@ export default function AdminDashboard({ setPage }) {
           </button>
         </div>
       </aside>
-      </div>
 
       {/* Main Content Area */}
       <div className="flex-1 lg:ml-64">
@@ -286,31 +285,30 @@ export default function AdminDashboard({ setPage }) {
         <main className="p-6">
           <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
             <div className="p-6">
+              {/* OVERVIEW TAB - Admin's own trading overview */}
+              {activeTab === 'overview' && (
+                <>
+                  {/* Stats Section */}
+                  <div className="grid md:grid-cols-4 gap-6 mb-8">
+                    <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                      <div className="text-3xl font-bold mb-2">{myListings.length}</div>
+                      <p className="text-emerald-100 font-medium">My Sell Listings</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                      <div className="text-3xl font-bold mb-2">{myRequests.length}</div>
+                      <p className="text-blue-100 font-medium">My Buy Requests</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl shadow-lg text-white">
+                      <div className="text-3xl font-bold mb-2">{myBids.length}</div>
+                      <p className="text-purple-100 font-medium">Active Bids</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
+                      <div className="text-3xl font-bold mb-2">{myOffers.length}</div>
+                      <p className="text-orange-100 font-medium">Active Offers</p>
+                    </div>
+                  </div>
 
-        {/* OVERVIEW TAB - Admin's own trading overview */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Stats Section */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
-                <div className="text-3xl font-bold mb-2">{myListings.length}</div>
-                <p className="text-emerald-100 font-medium">My Sell Listings</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
-                <div className="text-3xl font-bold mb-2">{myRequests.length}</div>
-                <p className="text-blue-100 font-medium">My Buy Requests</p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl shadow-lg text-white">
-                <div className="text-3xl font-bold mb-2">{myBids.length}</div>
-                <p className="text-purple-100 font-medium">Active Bids</p>
-              </div>
-              <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
-                <div className="text-3xl font-bold mb-2">{myOffers.length}</div>
-                <p className="text-orange-100 font-medium">Active Offers</p>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 gap-6">
               {/* My Sell Listings */}
               <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">📈 My Sell Listings</h3>
@@ -353,15 +351,15 @@ export default function AdminDashboard({ setPage }) {
                 ) : (
                   <p className="text-gray-500 text-center py-6">No buy requests yet</p>
                 )}
-              </div>
-            </div>
-          </>
-        )}
+                  </div>
+                </div>
+              </>
+            )}
 
-        {/* BROWSE TAB - Browse market */}
-        {activeTab === 'browse' && (
-          <>
-            <div className="flex gap-4 mb-6">
+            {/* BROWSE TAB - Browse market */}
+            {activeTab === 'browse' && (
+              <>
+                <div className="flex gap-4 mb-6">
               <button
                 onClick={() => setBrowseSubTab('shares')}
                 className={`px-6 py-3 rounded-lg font-semibold transition ${
@@ -449,11 +447,11 @@ export default function AdminDashboard({ setPage }) {
                 )}
               </div>
             )}
-          </>
-        )}
+              </>
+            )}
 
-        {/* POST TAB - Create new listing */}
-        {activeTab === 'post' && (
+            {/* POST TAB - Create new listing */}
+            {activeTab === 'post' && (
           <div className="max-w-2xl mx-auto">
             <div className="flex gap-4 mb-6">
               <button
@@ -567,10 +565,10 @@ export default function AdminDashboard({ setPage }) {
           </div>
         )}
 
-        {/* MYBIDS TAB - My bids and offers */}
-        {activeTab === 'mybids' && (
-          <>
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* MYBIDS TAB - My bids and offers */}
+            {activeTab === 'mybids' && (
+              <>
+                <div className="grid md:grid-cols-2 gap-6">
               {/* My Bids */}
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-4">💰 My Bids on Shares</h3>
@@ -625,14 +623,14 @@ export default function AdminDashboard({ setPage }) {
                 )}
               </div>
             </div>
-          </>
-        )}
+              </>
+            )}
 
-        {/* ADMIN RIGHTS - Manage Sell Listings */}
-        {activeTab === 'sell' && (
-          <>
-            {/* Stats Section */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
+            {/* ADMIN RIGHTS - Manage Sell Listings */}
+            {activeTab === 'sell' && (
+              <>
+                {/* Stats Section */}
+                <div className="grid md:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-yellow-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
                 <div className="text-3xl font-bold mb-2">{allListings.length}</div>
                 <p className="text-yellow-100 font-medium">Total Listings</p>
@@ -753,14 +751,14 @@ export default function AdminDashboard({ setPage }) {
                 </div>
               )}
             </div>
-          </>
-        )}
+              </>
+            )}
 
-        {/* ADMIN RIGHTS - Manage Buy Requests */}
-        {activeTab === 'buy' && (
-          <>
-            {/* Stats Section */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
+            {/* ADMIN RIGHTS - Manage Buy Requests */}
+            {activeTab === 'buy' && (
+              <>
+                {/* Stats Section */}
+                <div className="grid md:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-yellow-500 to-amber-500 p-6 rounded-2xl shadow-lg text-white">
                 <div className="text-3xl font-bold mb-2">{allListings.length}</div>
                 <p className="text-yellow-100 font-medium">Total Listings</p>
@@ -867,14 +865,14 @@ export default function AdminDashboard({ setPage }) {
                 </div>
               )}
             </div>
-          </>
-        )}
+              </>
+            )}
 
-        {/* ADMIN RIGHTS - Company Database Management */}
-        {activeTab === 'companies' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-4">🏢 Company Database</h1>
+            {/* ADMIN RIGHTS - Company Database Management */}
+            {activeTab === 'companies' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-4xl font-bold text-gray-800 mb-4">🏢 Company Database</h1>
               <p className="text-gray-600">Manage unlisted companies data - logos, ISIN, analysis reports</p>
             </div>
 
@@ -1229,8 +1227,10 @@ export default function AdminDashboard({ setPage }) {
                 )}
               </div>
             )}
-          </>
-        )}
+              </>
+            )}
+            </div>
+          </div>
 
         {/* Details Modal - For Admin Rights and Trading */}
         {selectedItem && (
@@ -1412,6 +1412,7 @@ export default function AdminDashboard({ setPage }) {
               )}
             </div>
           </div>
+        )}
 
           {/* Footer */}
           <div className="mt-8 text-center">
