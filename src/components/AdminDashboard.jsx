@@ -29,6 +29,14 @@ export default function AdminDashboard({ setPage }) {
   });
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySuggestions, setCompanySuggestions] = useState([]);
+  // Mock Users/KYC data for admin tab scaffold
+  const [kycUsers, setKycUsers] = useState([
+    { id: 'U1001', name: 'Aarav Sharma', email: 'aarav@example.com', joinedAt: Date.now() - 86400000 * 12, kycStatus: 'under_review', docs: { pan: true, address: true, cml: false, bank: true } },
+    { id: 'U1002', name: 'Priya Singh', email: 'priya@example.com', joinedAt: Date.now() - 86400000 * 45, kycStatus: 'verified', docs: { pan: true, address: true, cml: true, bank: true } },
+    { id: 'U1003', name: 'Rohit Verma', email: 'rohit@example.com', joinedAt: Date.now() - 86400000 * 5, kycStatus: 'incomplete', docs: { pan: false, address: false, cml: false, bank: false } },
+    { id: 'U1004', name: 'Neha Gupta', email: 'neha@example.com', joinedAt: Date.now() - 86400000 * 90, kycStatus: 'under_review', docs: { pan: true, address: true, cml: true, bank: true } },
+  ]);
+  const [selectedKycUser, setSelectedKycUser] = useState(null);
 
   // Show notification helper
   const showNotification = (type, title, message) => {
@@ -124,6 +132,21 @@ export default function AdminDashboard({ setPage }) {
   };
 
   const filteredItems = getFilteredItems();
+
+  // KYC admin actions (local state only for scaffold)
+  const approveKyc = (userId) => {
+    setKycUsers(prev => prev.map(u => u.id === userId ? { ...u, kycStatus: 'verified' } : u));
+    const u = kycUsers.find(x => x.id === userId);
+    showNotification('success', 'KYC Verified ✅', `${u?.name || 'User'} is now verified`);
+  };
+  const rejectKyc = (userId) => {
+    setKycUsers(prev => prev.map(u => u.id === userId ? { ...u, kycStatus: 'incomplete' } : u));
+    const u = kycUsers.find(x => x.id === userId);
+    showNotification('warning', 'KYC Set to Incomplete ⚠️', `${u?.name || 'User'} needs re-submission`);
+  };
+
+  const pendingKycUsers = kycUsers.filter(u => u.kycStatus === 'under_review' || u.kycStatus === 'incomplete');
+  const verifiedKycUsers = kycUsers.filter(u => u.kycStatus === 'verified');
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -247,6 +270,20 @@ export default function AdminDashboard({ setPage }) {
                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
               </svg>
               <span className="flex-1 text-left">Company DB</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('usersKyc')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'usersKyc'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 4a3 3 0 100 6 3 3 0 000-6zM2 16a8 8 0 1116 0v1H2v-1z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Users/KYC</span>
             </button>
           </div>
         </nav>
@@ -968,6 +1005,94 @@ export default function AdminDashboard({ setPage }) {
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* ADMIN RIGHTS - Users/KYC Management (scaffold) */}
+            {activeTab === 'usersKyc' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">👥 Users & KYC</h1>
+                  <p className="text-gray-600">Review and update user KYC status. This section uses mock data and is ready to connect to backend APIs.</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{kycUsers.length}</div>
+                    <p className="text-indigo-100 font-medium">Total Users</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{pendingKycUsers.length}</div>
+                    <p className="text-amber-100 font-medium">Pending / Incomplete</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{verifiedKycUsers.length}</div>
+                    <p className="text-emerald-100 font-medium">Verified</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Pending/Incomplete */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">⏳ Pending Review</h3>
+                      <span className="text-sm text-gray-500">{pendingKycUsers.length} user(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {pendingKycUsers.length > 0 ? pendingKycUsers.map(u => (
+                        <div key={u.id} className="p-5 flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800">{u.name}</p>
+                            <p className="text-sm text-gray-600">{u.email}</p>
+                            <div className="mt-2 flex items-center gap-2 text-xs">
+                              <span className={`px-2 py-1 rounded-full font-bold ${u.kycStatus === 'under_review' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}`}>{u.kycStatus}</span>
+                              <span className="text-gray-500">Joined: {new Date(u.joinedAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-600">
+                              Docs: PAN {u.docs.pan ? '✅' : '—'}, Address {u.docs.address ? '✅' : '—'}, CML {u.docs.cml ? '✅' : '—'}, Bank {u.docs.bank ? '✅' : '—'}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 min-w-[160px]">
+                            <button onClick={() => approveKyc(u.id)} className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">✅ Approve</button>
+                            <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">↺ Mark Incomplete</button>
+                            <button onClick={() => setSelectedKycUser(u)} className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition">View</button>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No users pending review</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Verified */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">✅ Verified Users</h3>
+                      <span className="text-sm text-gray-500">{verifiedKycUsers.length} user(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {verifiedKycUsers.length > 0 ? verifiedKycUsers.map(u => (
+                        <div key={u.id} className="p-5 flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800">{u.name}</p>
+                            <p className="text-sm text-gray-600">{u.email}</p>
+                            <div className="mt-2 flex items-center gap-2 text-xs">
+                              <span className="px-2 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700">verified</span>
+                              <span className="text-gray-500">Joined: {new Date(u.joinedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 min-w-[160px]">
+                            <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 transition">↺ Revoke (Incomplete)</button>
+                            <button onClick={() => setSelectedKycUser(u)} className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition">View</button>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No verified users yet</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Add New Company */}
