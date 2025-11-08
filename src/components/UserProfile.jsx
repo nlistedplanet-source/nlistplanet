@@ -8,7 +8,8 @@ export default function UserProfile({ onClose }) {
     name: user?.name || '',
     email: user?.email || '',
     mobile: user?.mobile || '',
-    profilePhoto: user?.profilePhoto || ''
+    profilePhoto: user?.profilePhoto || '',
+    hideContactInfo: user?.hideContactInfo || false
   });
   const [verificationStep, setVerificationStep] = useState(null); // 'email' or 'mobile'
   const [emailOTP, setEmailOTP] = useState('');
@@ -248,6 +249,25 @@ export default function UserProfile({ onClose }) {
                         : 'border-gray-100 bg-gray-100 cursor-not-allowed'
                     }`}
                   />
+                </div>
+                
+                {/* Privacy Settings */}
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.hideContactInfo}
+                      onChange={(e) => setFormData({ ...formData, hideContactInfo: e.target.checked })}
+                      disabled={!isEditing}
+                      className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">🔒 Hide Contact Information</p>
+                      <p className="text-xs text-gray-600">
+                        When enabled, your email and mobile number will be hidden from other users. They will only see your username.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </>
             )}
