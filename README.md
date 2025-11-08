@@ -145,6 +145,44 @@ REACT_APP_API_URL=your_api_url
 REACT_APP_ENV=production
 ```
 
+## Branching Strategy
+
+We now use a two-branch lightweight workflow:
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable, deployable production state. Only fast-forward or reviewed merges from `development`. |
+| `development` | Active integration branch for new features, UI changes, refactors. CI/previews build from here before promoting to `main`. |
+
+### Typical Flow
+1. Create a feature branch from `development`: `feat/header-redesign`, `fix/auth-timeout` etc.
+2. Implement changes and open a PR into `development` (or merge directly if very small and low-risk).
+3. After testing/staging validation, merge `development` -> `main` (squash or FF).
+4. Tag release if needed (`v1.x.x`).
+
+### Quick Commands
+```bash
+git checkout development
+git pull origin development
+git checkout -b feat/my-feature
+# work, commit
+git push -u origin feat/my-feature
+```
+
+### Guidelines
+- Keep `main` always deployable.
+- Avoid long-lived large divergence; sync `development` frequently.
+- Rebase feature branches if they fall behind.
+- Small, focused commits with clear messages.
+
+### Release Promotion Checklist
+- [ ] All lint/tests green
+- [ ] Smoke test dashboards & auth flows
+- [ ] Company data integrity confirmed
+- [ ] PWA assets valid (manifest, service worker)
+- [ ] No console errors in critical pages
+
+---
 ## 🚀 Build for Production
 
 ```bash
