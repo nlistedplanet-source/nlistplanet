@@ -8,6 +8,8 @@ export function AuthProvider({ children }) {
   const [currentRole, setCurrentRole] = useState('buyer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Lightweight KYC state derived from user record; defaults to 'incomplete'
+  const getKycStatus = (u) => (u?.kycStatus ? u.kycStatus : 'incomplete');
 
   // Restore user from localStorage on page load (for JWT persistence only)
   useEffect(() => {
@@ -32,10 +34,15 @@ export function AuthProvider({ children }) {
       if (response.data.success) {
         const token = response.data.token;
         localStorage.setItem('authToken', token);
-        setUser(response.data.user);
+        // Ensure KYC defaults on fresh signups
+        const normalizedUser = {
+          ...response.data.user,
+          kycStatus: response.data.user.kycStatus || 'incomplete',
+        };
+        setUser(normalizedUser);
         
         // Set default role based on user type
-        const defaultRole = response.data.user.roles?.includes('admin') ? 'admin' : 'buyer';
+  const defaultRole = normalizedUser.roles?.includes('admin') ? 'admin' : 'buyer';
         setCurrentRole(defaultRole);
         localStorage.setItem('currentRole', defaultRole);
         
@@ -84,10 +91,14 @@ export function AuthProvider({ children }) {
       if (response.data.success) {
         const token = response.data.token;
         localStorage.setItem('authToken', token);
-        setUser(response.data.user);
+        const normalizedUser = {
+          ...response.data.user,
+          kycStatus: response.data.user.kycStatus || 'incomplete',
+        };
+        setUser(normalizedUser);
         
         // Set default role based on user type
-        const defaultRole = response.data.user.roles?.includes('admin') ? 'admin' : 'buyer';
+  const defaultRole = normalizedUser.roles?.includes('admin') ? 'admin' : 'buyer';
         setCurrentRole(defaultRole);
         localStorage.setItem('currentRole', defaultRole);
         
@@ -239,11 +250,11 @@ export function AuthProvider({ children }) {
       setError(null);
 
       // Call backend API to update user profile
-      const response = await userAPI.updateProfile(user._id || user.id, updates);
+  const response = await userAPI.updateProfile(user?._id || user?.id, updates);
       
       if (response.data.success) {
         // Update local user state with new data
-        const updatedUser = { ...user, ...response.data.user };
+  const updatedUser = { ...user, ...response.data.user };
         setUser(updatedUser);
         return { success: true, user: updatedUser };
       }
@@ -279,6 +290,52 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // KYC: submit documents (stubbed client action)
+  const submitKycDocuments = async (docs) => {
+    try {
+      setLoading(true);
+      setError(null);
+      // In a real app, upload docs to backend and set status to 'under_review'
+      const response = await userAPI.updateProfile(user?._id || user?.id, {
+        kycStatus: 'under_review',
+        kycDocuments: docs,
+      });
+      if (response.data?.success) {
+        const updatedUser = { ...user, kycStatus: 'under_review', kycDocuments: docs };
+        setUser(updatedUser);
+        return { success: true };
+      }
+      return { success: false };
+    } catch (err) {
+      const apiMessage = err.response?.data?.message || err.message || 'Failed to submit KYC';
+      setError(apiMessage);
+      throw new Error(apiMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Admin or system can update KYC status
+  const updateKycStatus = async (status) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await userAPI.updateProfile(user?._id || user?.id, { kycStatus: status });
+      if (response.data?.success) {
+        const updatedUser = { ...user, kycStatus: status };
+        setUser(updatedUser);
+        return { success: true };
+      }
+      return { success: false };
+    } catch (err) {
+      const apiMessage = err.response?.data?.message || err.message || 'Failed to update KYC status';
+      setError(apiMessage);
+      throw new Error(apiMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get user display name (User ID for normal users, Name for admin)
   const getUserDisplayName = (userName, userEmail, isAdminView = false) => {
     if (isAdminView || user?.roles?.includes('admin')) {
@@ -298,6 +355,9 @@ export function AuthProvider({ children }) {
       logout, 
       updateUserProfile,
       getUserDisplayName,
+      getKycStatus,
+      submitKycDocuments,
+      updateKycStatus,
       sendEmailOTP,
       verifyEmailOTP,
       sendMobileOTP,

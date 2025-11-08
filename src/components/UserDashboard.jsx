@@ -167,7 +167,7 @@ const formatDateTime = (iso) => {
 };
 
 export default function UserDashboard({ setPage }) {
-	const { user, logout, getUserDisplayName, updateUserProfile } = useAuth();
+	const { user, logout, getUserDisplayName, updateUserProfile, getKycStatus, submitKycDocuments } = useAuth();
 	const {
 		sellListings,
 		buyRequests,
@@ -197,6 +197,10 @@ export default function UserDashboard({ setPage }) {
 	const [showProfileModal, setShowProfileModal] = useState(false);
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
+	// KYC banner state
+	const kycStatus = getKycStatus(user);
+	const [showKycForm, setShowKycForm] = useState(false);
+	const [kycDocs, setKycDocs] = useState({ pan: '', addressProof: '', cmlCopy: '', bankDetails: '' });
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -350,6 +354,17 @@ export default function UserDashboard({ setPage }) {
 	if (!user) {
 		return null;
 	}
+
+	const handleKycSubmit = async (e) => {
+		e.preventDefault();
+		try {
+			await submitKycDocuments(kycDocs);
+			showNotification('success', 'KYC Submitted', 'Your KYC is now under review.');
+			setShowKycForm(false);
+		} catch (err) {
+			showNotification('error', 'Submission Failed', err.message || 'Please try again later');
+		}
+	};
 
 	const handleCompanySearch = (value) => {
 		setFormData({ ...formData, company: value });
@@ -2376,6 +2391,34 @@ Report ID: ${listing._id || listing.id}
 
 				{/* Main Content */}
 				<main className="p-6">
+					{/* KYC Banner */}
+					{kycStatus !== 'verified' && (
+						<div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+							<div className="flex items-start justify-between gap-4">
+								<div>
+									<p className="text-sm font-semibold text-amber-800">KYC Status: {kycStatus.replace(/_/g, ' ')}</p>
+									<p className="text-xs text-amber-700 mt-1">Please complete your KYC to get a verified badge and faster approvals.</p>
+								</div>
+								<div className="flex items-center gap-2">
+									{!showKycForm && (
+										<button onClick={() => setShowKycForm(true)} className="px-3 py-2 rounded-lg text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700">Upload KYC</button>
+									)}
+								</div>
+							</div>
+							{showKycForm && (
+								<form onSubmit={handleKycSubmit} className="mt-3 grid md:grid-cols-2 gap-3">
+									<input type="text" placeholder="PAN" value={kycDocs.pan} onChange={(e) => setKycDocs({ ...kycDocs, pan: e.target.value })} className="px-3 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white" required />
+									<input type="text" placeholder="Address Proof" value={kycDocs.addressProof} onChange={(e) => setKycDocs({ ...kycDocs, addressProof: e.target.value })} className="px-3 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white" required />
+									<input type="text" placeholder="CML Copy" value={kycDocs.cmlCopy} onChange={(e) => setKycDocs({ ...kycDocs, cmlCopy: e.target.value })} className="px-3 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white" required />
+									<input type="text" placeholder="Bank Details" value={kycDocs.bankDetails} onChange={(e) => setKycDocs({ ...kycDocs, bankDetails: e.target.value })} className="px-3 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white" required />
+									<div className="md:col-span-2 flex items-center gap-2">
+										<button type="submit" className="px-4 py-2 rounded-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700">Submit</button>
+										<button type="button" className="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50" onClick={() => setShowKycForm(false)}>Cancel</button>
+									</div>
+								</form>
+							)}
+						</div>
+					)}
 					<div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
 						<div className="p-6">
 							<div className="animate-fadeIn">
