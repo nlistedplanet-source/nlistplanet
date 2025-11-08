@@ -54,26 +54,6 @@ const InteractionBadge = ({ status }) => {
 	);
 };
 
-const SummaryTile = ({ icon, label, value, helper, tone = 'emerald' }) => {
-	const toneMap = {
-		emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-		blue: 'bg-blue-50 text-blue-600 border-blue-100',
-		purple: 'bg-purple-50 text-purple-600 border-purple-100',
-		amber: 'bg-amber-50 text-amber-600 border-amber-100'
-	};
-
-	return (
-		<div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-			<div className={`inline-flex items-center gap-2 rounded-xl px-3 py-1 text-sm font-semibold border ${toneMap[tone] || toneMap.emerald}`}>
-				<span>{icon}</span>
-				<span>{label}</span>
-			</div>
-			<div className="mt-4 text-3xl font-bold text-gray-900">{value}</div>
-			{helper && <p className="mt-2 text-sm text-gray-500">{helper}</p>}
-		</div>
-	);
-};
-
 const EmptyState = ({ icon = '?', title, description, actionLabel, onAction }) => (
 	<div className="flex flex-col items-center justify-center text-center bg-white border border-dashed border-gray-300 rounded-2xl py-12 px-6">
 		<div className="text-4xl mb-4">{icon}</div>
@@ -90,29 +70,6 @@ const EmptyState = ({ icon = '?', title, description, actionLabel, onAction }) =
 		)}
 	</div>
 );
-
-const QuickActionCard = ({ icon, title, description, tone = 'emerald', onClick }) => {
-	const toneMap = {
-		emerald: 'from-emerald-500 to-teal-500 text-white',
-		blue: 'from-blue-500 to-cyan-500 text-white'
-	};
-
-	return (
-		<button onClick={onClick} className="group w-full text-left">
-			<div className="bg-white border border-gray-200 rounded-2xl px-5 py-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-				<div className={`inline-flex items-center justify-center rounded-2xl px-3 py-3 bg-gradient-to-br ${toneMap[tone] || toneMap.emerald} text-2xl shadow-md`}>{icon}</div>
-				<h3 className="mt-4 text-lg font-semibold text-gray-900">{title}</h3>
-				<p className="mt-2 text-sm text-gray-500">{description}</p>
-				<span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-purple-600 group-hover:text-purple-700">
-					Start now
-					<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-						<path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" />
-					</svg>
-				</span>
-			</div>
-		</button>
-	);
-};
 
 const SectionHeader = ({ title, subtitle, actionLabel, onAction, actionTone = 'primary' }) => (
 	<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -332,18 +289,6 @@ export default function UserDashboard({ setPage }) {
 		) : [],
 		[buyRequests, user]
 	);
-	const myBids = useMemo(
-		() => user ? sellListings.filter((listing) => listing.bids?.some((bid) => 
-			bid.bidder === user.name || bid.bidder === user.email || bid.bidderName === user.name
-		)) : [],
-		[sellListings, user]
-	);
-	const myOffers = useMemo(
-		() => user ? buyRequests.filter((request) => request.offers?.some((offer) => 
-			offer.seller === user.name || offer.seller === user.email || offer.sellerName === user.name
-		)) : [],
-		[buyRequests, user]
-	);
 
 	useEffect(() => {
 		if (!user) {
@@ -451,149 +396,6 @@ export default function UserDashboard({ setPage }) {
 		{ id: 'faq', label: 'FAQ', icon: '❓' },
 		{ id: 'support', label: 'Support', icon: '💬' }
 	];
-
-	const renderOverview = () => (
-		<div className="space-y-10">
-			<section className="space-y-6">
-				<SectionHeader
-					title="Trading Snapshot"
-					subtitle="Monitor everything you are selling, buying, and negotiating in one glance."
-				/>
-				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-				<SummaryTile icon="📊" label="Sell Listings" value={myListings.length} helper="Listed by you" tone="emerald" />
-				<SummaryTile icon="💰" label="Buy Requests" value={myRequests.length} helper="Requests you posted" tone="blue" />
-				<SummaryTile icon="🎯" label="Active Bids" value={myBids.length} helper="Listings you bid on" tone="amber" />
-				<SummaryTile icon="✨" label="Active Offers" value={myOffers.length} helper="Requests you offered on" tone="purple" />
-			</div>
-		</section>			<section className="space-y-6">
-				<SectionHeader
-					title="Your Pipeline"
-					subtitle="Track everything you are selling and buying with real-time status."
-					actionLabel="Go to marketplace"
-					actionTone="secondary"
-					onAction={() => setActiveTab('browse')}
-				/>
-				<div className="grid gap-6 md:grid-cols-2">
-					<div className="bg-white border border-gray-200 rounded-2xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h3 className="text-lg font-semibold text-gray-900">You are selling</h3>
-								<p className="text-sm text-gray-500">Incoming bids, approvals, and next steps.</p>
-							</div>
-							<span className="text-sm font-semibold text-gray-600">{myListings.length} listings</span>
-						</div>
-						{myListings.length > 0 ? (
-							<div className="space-y-3">
-								{myListings.slice(0, 3).map((listing) => (
-									<button
-										key={listing.id}
-										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
-												<p className="text-xs text-gray-500 mt-1">Listed {formatDate(listing.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} � {formatShares(listing.shares)}</p>
-											</div>
-											<StatusBadge status={listing.status} />
-										</div>
-										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-											<span>{listing.bids?.length || 0} bids</span>
-											{listing.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
-										</div>
-									</button>
-								))}
-								{myListings.length > 3 && (
-									<button onClick={() => setActiveTab('myListings')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
-										View all listings ?
-									</button>
-								)}
-							</div>
-						) : (
-							<EmptyState
-								icon=""
-								title="No listings yet"
-								description="List your unlisted shares to invite bids from verified buyers."
-								actionLabel="Create listing"
-								onAction={() => setFormType('sell')}
-							/>
-						)}
-					</div>
-
-					<div className="bg-white border border-gray-200 rounded-2xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h3 className="text-lg font-semibold text-gray-900">You want to buy</h3>
-								<p className="text-sm text-gray-500">Offers from sellers and negotiation status.</p>
-							</div>
-							<span className="text-sm font-semibold text-gray-600">{myRequests.length} requests</span>
-						</div>
-						{myRequests.length > 0 ? (
-							<div className="space-y-3">
-								{myRequests.slice(0, 3).map((request) => (
-									<button
-										key={request.id}
-										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
-												<p className="text-xs text-gray-500 mt-1">Posted {formatDate(request.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} � {formatShares(request.shares)}</p>
-											</div>
-											<StatusBadge status={request.status} />
-										</div>
-										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-											<span>{request.offers?.length || 0} offers</span>
-											{request.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
-										</div>
-									</button>
-								))}
-								{myRequests.length > 3 && (
-									<button onClick={() => setActiveTab('myRequests')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
-										View all requests ?
-									</button>
-								)}
-							</div>
-						) : (
-							<EmptyState
-								icon=""
-								title="No buy requests yet"
-								description="Tell sellers what you need so they can respond quickly."
-								actionLabel="Post request"
-								onAction={() => setFormType('buy')}
-							/>
-						)}
-					</div>
-				</div>
-			</section>
-
-			<section className="space-y-6">
-				<SectionHeader
-					title="Action Center"
-					subtitle="Launch a new listing or request in just a few clicks."
-				/>
-				<div className="grid gap-5 md:grid-cols-2">
-					<QuickActionCard
-						icon=""
-						title="List shares for sale"
-						description="Create a polished listing so buyers can bid instantly."
-						tone="emerald"
-						onClick={() => setFormType('sell')}
-					/>
-					<QuickActionCard
-						icon=""
-						title="Request shares to buy"
-						description="Set your desired price and quantity to attract sellers."
-						tone="blue"
-						onClick={() => setFormType('buy')}
-					/>
-				</div>
-			</section>
-		</div>
-	);
 
 	const renderMyListings = () => {
 		// Filter sell listings based on sub-tab  
@@ -1169,99 +971,6 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
-	const renderActivity = () => (
-		<div className="space-y-8">
-			<SectionHeader title="Your Bids & Offers" subtitle="Follow up on every negotiation you started." />
-			<div className="grid gap-6 md:grid-cols-2">
-				<div className="bg-white border border-gray-200 rounded-2xl p-6">
-					<div className="flex items-center justify-between mb-4">
-						<div>
-							<h3 className="text-lg font-semibold text-gray-900">Bids on other sellers</h3>
-							<p className="text-sm text-gray-500">Respond to counters or check acceptance status.</p>
-						</div>
-						<span className="text-sm font-semibold text-gray-600">{myBids.length} listings</span>
-					</div>
-					{myBids.length === 0 ? (
-						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't placed any bids yet.</p>
-					) : (
-						<div className="space-y-3">
-							{myBids.map((listing) => {
-								const myInteractions = listing.bids?.filter((bid) => 
-									bid.bidder === user.name || bid.bidder === user.email || bid.bidderName === user.name
-								) || [];
-								const latestInteraction = myInteractions[myInteractions.length - 1];
-								return (
-									<button
-										key={listing.id}
-										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ask � {formatShares(listing.shares)}</p>
-												{latestInteraction && (
-													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
-												)}
-											</div>
-											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
-										</div>
-										<div className="mt-2 text-xs text-gray-500">
-											{myInteractions.length} bid{myInteractions.length > 1 ? 's' : ''} placed by you
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					)}
-				</div>
-
-				<div className="bg-white border border-gray-200 rounded-2xl p-6">
-					<div className="flex items-center justify-between mb-4">
-						<div>
-							<h3 className="text-lg font-semibold text-gray-900">Offers to active buyers</h3>
-							<p className="text-sm text-gray-500">See which buyers have responded to your offers.</p>
-						</div>
-						<span className="text-sm font-semibold text-gray-600">{myOffers.length} requests</span>
-					</div>
-					{myOffers.length === 0 ? (
-						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't made any offers yet.</p>
-					) : (
-						<div className="space-y-3">
-							{myOffers.map((request) => {
-								const myInteractions = request.offers?.filter((offer) => 
-									offer.seller === user.name || offer.seller === user.email || offer.sellerName === user.name
-								) || [];
-								const latestInteraction = myInteractions[myInteractions.length - 1];
-								return (
-									<button
-										key={request.id}
-										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} target � {formatShares(request.shares)}</p>
-												{latestInteraction && (
-													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
-												)}
-											</div>
-											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
-										</div>
-										<div className="mt-2 text-xs text-gray-500">
-											{myInteractions.length} offer{myInteractions.length > 1 ? 's' : ''} submitted by you
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					)}
-				</div>
-			</div>
-		</div>
-	);
-
 	const renderBrowse = () => (
 		<div className="space-y-8">
 			<SectionHeader
@@ -1511,7 +1220,6 @@ Report ID: ${listing._id || listing.id}
 						<div className="space-y-3">
 							{activeOrders.map((order) => {
 								const isSell = 'seller' in order || 'bids' in order;
-								const isBuy = 'buyer' in order || 'offers' in order;
 								
 								return (
 									<div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
