@@ -6,7 +6,7 @@ import Notification from './Notification';
 
 export default function AdminDashboard({ setPage }) {
   const { user, logout } = useAuth();
-  const { sellListings, buyRequests, createSellListing, createBuyRequest, placeBid, makeOffer, acceptBid, acceptOffer, adminApprove, adminClose } = useListing();
+  const { sellListings, buyRequests, createSellListing, createBuyRequest, placeBid, makeOffer, adminApprove, adminClose } = useListing();
   const { companies, addCompany, updateCompany, deleteCompany, searchCompany } = useCompany();
   const [activeTab, setActiveTab] = useState('overview');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -36,7 +36,6 @@ export default function AdminDashboard({ setPage }) {
     { id: 'U1003', name: 'Rohit Verma', email: 'rohit@example.com', joinedAt: Date.now() - 86400000 * 5, kycStatus: 'incomplete', docs: { pan: false, address: false, cml: false, bank: false } },
     { id: 'U1004', name: 'Neha Gupta', email: 'neha@example.com', joinedAt: Date.now() - 86400000 * 90, kycStatus: 'under_review', docs: { pan: true, address: true, cml: true, bank: true } },
   ]);
-  const [selectedKycUser, setSelectedKycUser] = useState(null);
   
   // Mock Support Requests data
   const [supportRequests, setSupportRequests] = useState([
@@ -1127,7 +1126,6 @@ export default function AdminDashboard({ setPage }) {
                           <div className="flex flex-col gap-2 min-w-[160px]">
                             <button onClick={() => approveKyc(u.id)} className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">✅ Approve</button>
                             <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">↺ Mark Incomplete</button>
-                            <button onClick={() => setSelectedKycUser(u)} className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition">View</button>
                           </div>
                         </div>
                       )) : (
@@ -1155,7 +1153,6 @@ export default function AdminDashboard({ setPage }) {
                           </div>
                           <div className="flex flex-col gap-2 min-w-[160px]">
                             <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 transition">↺ Revoke (Incomplete)</button>
-                            <button onClick={() => setSelectedKycUser(u)} className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition">View</button>
                           </div>
                         </div>
                       )) : (
