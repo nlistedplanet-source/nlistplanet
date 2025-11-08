@@ -38,6 +38,14 @@ export default function AdminDashboard({ setPage }) {
   ]);
   const [selectedKycUser, setSelectedKycUser] = useState(null);
 
+  // Mock Support Requests (scaffold for future API)
+  const [supportRequests, setSupportRequests] = useState([
+    { id: 'SR001', userId: 'U1001', userName: 'Aarav Sharma', email: 'aarav@example.com', subject: 'KYC Document Upload Issue', message: 'I am unable to upload my PAN card. Getting error "File too large". Please help.', status: 'open', createdAt: Date.now() - 86400000 * 2, replies: [] },
+    { id: 'SR002', userId: 'U1003', userName: 'Rohit Verma', email: 'rohit@example.com', subject: 'Payment Not Reflected', message: 'I made payment 3 days ago but my order status still shows pending. Transaction ID: TXN123456.', status: 'open', createdAt: Date.now() - 86400000 * 3, replies: [] },
+    { id: 'SR003', userId: 'U1002', userName: 'Priya Singh', email: 'priya@example.com', subject: 'How to sell shares?', message: 'I want to sell my unlisted shares. What is the process?', status: 'resolved', createdAt: Date.now() - 86400000 * 15, replies: [{ admin: 'Admin', message: 'Go to Sell tab, click Post Listing, fill details and submit.', timestamp: Date.now() - 86400000 * 14 }] },
+  ]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   // Show notification helper
   const showNotification = (type, title, message) => {
     setNotification({ show: true, type, title, message });
@@ -148,6 +156,58 @@ export default function AdminDashboard({ setPage }) {
   const pendingKycUsers = kycUsers.filter(u => u.kycStatus === 'under_review' || u.kycStatus === 'incomplete');
   const verifiedKycUsers = kycUsers.filter(u => u.kycStatus === 'verified');
 
+  // Deal Closure Queue: accepted deals awaiting admin offline closure
+  const getAcceptedDeals = () => {
+    const deals = [];
+    // Sell listings with accepted bids
+    sellListings.forEach(listing => {
+      if (listing.bids) {
+        listing.bids.forEach(bid => {
+          if (bid.status === 'accepted' && listing.status !== 'closed') {
+            deals.push({
+              id: `sell-${listing.id}-${bid.bidder}`,
+              type: 'sell',
+              company: listing.company,
+              isin: listing.isin,
+              seller: listing.seller,
+              buyer: bid.bidder,
+              price: bid.price,
+              quantity: bid.quantity,
+              total: bid.price * bid.quantity,
+              acceptedAt: bid.timestamp,
+              listingId: listing.id
+            });
+          }
+        });
+      }
+    });
+    // Buy requests with accepted offers
+    buyRequests.forEach(request => {
+      if (request.offers) {
+        request.offers.forEach(offer => {
+          if (offer.status === 'accepted' && request.status !== 'closed') {
+            deals.push({
+              id: `buy-${request.id}-${offer.seller}`,
+              type: 'buy',
+              company: request.company,
+              isin: request.isin,
+              buyer: request.buyer,
+              seller: offer.seller,
+              price: offer.price,
+              quantity: offer.quantity,
+              total: offer.price * offer.quantity,
+              acceptedAt: offer.timestamp,
+              listingId: request.id
+            });
+          }
+        });
+      }
+    });
+    return deals;
+  };
+
+  const acceptedDeals = getAcceptedDeals();
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Left Sidebar Navigation */}
@@ -231,6 +291,23 @@ export default function AdminDashboard({ setPage }) {
           <div>
             <p className="text-xs font-bold text-purple-300 uppercase tracking-wider px-4 mb-2">Admin Controls</p>
             <button
+              onClick={() => setActiveTab('dealQueue')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'dealQueue'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Deal Closure Queue</span>
+              {acceptedDeals.length > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{acceptedDeals.length}</span>
+              )}
+            </button>
+
+            <button
               onClick={() => setActiveTab('sell')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 activeTab === 'sell'
@@ -284,6 +361,23 @@ export default function AdminDashboard({ setPage }) {
                 <path fillRule="evenodd" d="M10 4a3 3 0 100 6 3 3 0 000-6zM2 16a8 8 0 1116 0v1H2v-1z" clipRule="evenodd" />
               </svg>
               <span className="flex-1 text-left">Users/KYC</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('supportRequests')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'supportRequests'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Support Requests</span>
+              {supportRequests.filter(r => r.status === 'open').length > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{supportRequests.filter(r => r.status === 'open').length}</span>
+              )}
             </button>
           </div>
         </nav>
@@ -905,6 +999,110 @@ export default function AdminDashboard({ setPage }) {
               </>
             )}
 
+            {/* ADMIN RIGHTS - Deal Closure Queue */}
+            {activeTab === 'dealQueue' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">🤝 Deal Closure Queue</h1>
+                  <p className="text-gray-600">Accepted deals awaiting offline verification and closure. Close these after confirming payment/transfer.</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{acceptedDeals.length}</div>
+                    <p className="text-emerald-100 font-medium">Pending Closure</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{acceptedDeals.filter(d => d.type === 'sell').length}</div>
+                    <p className="text-blue-100 font-medium">From Sell Listings</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{acceptedDeals.filter(d => d.type === 'buy').length}</div>
+                    <p className="text-purple-100 font-medium">From Buy Requests</p>
+                  </div>
+                </div>
+
+                {/* Deals Table */}
+                {acceptedDeals.length > 0 ? (
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Company</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Seller</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Buyer</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Qty</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Accepted</th>
+                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {acceptedDeals.map((deal) => (
+                            <tr key={deal.id} className="hover:bg-gray-50 transition">
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-bold text-gray-900">{deal.company}</p>
+                                  <p className="text-xs text-gray-500">{deal.isin}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                                  deal.type === 'sell' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {deal.type === 'sell' ? '📈 Sell' : '🛒 Buy'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-sm font-semibold text-gray-800">{deal.seller}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-sm font-semibold text-gray-800">{deal.buyer}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-emerald-600">₹{deal.price}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-semibold text-gray-700">{deal.quantity}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-lg text-purple-600">₹{deal.total.toLocaleString()}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-xs text-gray-500">{new Date(deal.acceptedAt).toLocaleString()}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`Close this deal?\n\nCompany: ${deal.company}\nSeller: ${deal.seller}\nBuyer: ${deal.buyer}\nAmount: ₹${deal.total.toLocaleString()}\n\nThis will mark the transaction as complete.`)) {
+                                      handleClose(deal.listingId, deal.type);
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:shadow-lg transition text-sm"
+                                >
+                                  ✅ Close Deal
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-md border border-dashed border-gray-300 p-12 text-center">
+                    <div className="text-5xl mb-4">🎉</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">All Clear!</h3>
+                    <p className="text-gray-600">No pending deals to close. All accepted deals have been processed.</p>
+                  </div>
+                )}
+              </>
+            )}
+
             {/* ADMIN RIGHTS - Company Database Management */}
             {activeTab === 'companies' && (
               <>
@@ -1352,6 +1550,113 @@ export default function AdminDashboard({ setPage }) {
                 )}
               </div>
             )}
+              </>
+            )}
+
+            {/* ADMIN RIGHTS - Support Requests */}
+            {activeTab === 'supportRequests' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">💬 Support Requests</h1>
+                  <p className="text-gray-600">View and respond to user support messages. Mock data shown for scaffold.</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{supportRequests.filter(r => r.status === 'open').length}</div>
+                    <p className="text-orange-100 font-medium">Open Requests</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{supportRequests.filter(r => r.status === 'resolved').length}</div>
+                    <p className="text-emerald-100 font-medium">Resolved</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{supportRequests.length}</div>
+                    <p className="text-blue-100 font-medium">Total Requests</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Open Requests */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">🆘 Open Requests</h3>
+                      <span className="text-sm text-gray-500">{supportRequests.filter(r => r.status === 'open').length} request(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                      {supportRequests.filter(r => r.status === 'open').length > 0 ? supportRequests.filter(r => r.status === 'open').map(req => (
+                        <div key={req.id} className="p-5 hover:bg-gray-50 transition">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-gray-900 mb-1">{req.subject}</h4>
+                              <p className="text-sm text-gray-600 mb-2">From: <span className="font-semibold">{req.userName}</span> ({req.email})</p>
+                              <p className="text-xs text-gray-500">Submitted: {new Date(req.createdAt).toLocaleString()}</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Open</span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-4 line-clamp-3">{req.message}</p>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => setSelectedRequest(req)}
+                              className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition text-sm"
+                            >
+                              View & Reply
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setSupportRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'resolved' } : r));
+                                showNotification('success', 'Request Resolved ✅', `Request ${req.id} marked as resolved`);
+                              }}
+                              className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition text-sm"
+                            >
+                              ✓ Resolve
+                            </button>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No open requests</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Resolved Requests */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">✅ Resolved Requests</h3>
+                      <span className="text-sm text-gray-500">{supportRequests.filter(r => r.status === 'resolved').length} request(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                      {supportRequests.filter(r => r.status === 'resolved').length > 0 ? supportRequests.filter(r => r.status === 'resolved').map(req => (
+                        <div key={req.id} className="p-5 hover:bg-gray-50 transition">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-gray-900 mb-1">{req.subject}</h4>
+                              <p className="text-sm text-gray-600 mb-2">From: <span className="font-semibold">{req.userName}</span></p>
+                              <p className="text-xs text-gray-500">Submitted: {new Date(req.createdAt).toLocaleString()}</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Resolved</span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-3 line-clamp-2">{req.message}</p>
+                          {req.replies && req.replies.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
+                              <p className="text-xs font-semibold text-blue-700 mb-1">Admin Reply:</p>
+                              <p className="text-sm text-gray-700">{req.replies[req.replies.length - 1].message}</p>
+                            </div>
+                          )}
+                          <button 
+                            onClick={() => setSelectedRequest(req)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition text-sm"
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No resolved requests yet</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </>
             )}
             </div>
