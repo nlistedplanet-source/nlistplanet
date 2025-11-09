@@ -2129,13 +2129,7 @@ Report ID: ${listing._id || listing.id}
 
 				{/* Bottom Actions */}
 				<div className="p-4 border-t border-white/10 space-y-2">
-					<button
-						onClick={() => setShowProfileModal(true)}
-						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white hover:bg-white/10 transition-all"
-					>
-						<span className="text-lg">👤</span>
-						<span>Profile</span>
-					</button>
+					   {/* Profile button removed: now handled as a sidebar tab */}
 					<button
 						onClick={() => setShowPasswordModal(true)}
 						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white hover:bg-white/10 transition-all"
