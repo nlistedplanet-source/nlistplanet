@@ -373,11 +373,11 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
-                    <input type="date" value={formData.personal.dob} onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} className={inputClass} />
+                    <input type="date" value={formData.personal?.dob || ''} onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
-                    <select value={formData.personal.gender} onChange={(e) => updateSectionField('personal', 'gender', e.target.value)} className={inputClass}>
+                    <select value={formData.personal?.gender || ''} onChange={(e) => updateSectionField('personal', 'gender', e.target.value)} className={inputClass}>
                       <option value="">Select gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -386,27 +386,27 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Occupation</label>
-                    <input type="text" value={formData.personal.occupation} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass} />
+                    <input type="text" value={formData.personal?.occupation || ''} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
-                    <input type="text" value={formData.personal.city} onChange={(e) => updateSectionField('personal', 'city', e.target.value)} className={inputClass} />
+                    <input type="text" value={formData.personal?.city || ''} onChange={(e) => updateSectionField('personal', 'city', e.target.value)} className={inputClass} />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
-                  <textarea value={formData.personal.address} onChange={(e) => updateSectionField('personal', 'address', e.target.value)} rows={3} className={inputClass} />
+                  <textarea value={formData.personal?.address || ''} onChange={(e) => updateSectionField('personal', 'address', e.target.value)} rows={3} className={inputClass} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
-                    <input type="text" value={formData.personal.state} onChange={(e) => updateSectionField('personal', 'state', e.target.value)} className={inputClass} />
+                    <input type="text" value={formData.personal?.state || ''} onChange={(e) => updateSectionField('personal', 'state', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">PIN Code</label>
-                    <input type="text" value={formData.personal.pincode} onChange={(e) => updateSectionField('personal', 'pincode', e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} className={inputClass} />
+                    <input type="text" value={formData.personal?.pincode || ''} onChange={(e) => updateSectionField('personal', 'pincode', e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} className={inputClass} />
                   </div>
                 </div>
               </div>
@@ -419,19 +419,19 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
                     <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.bank.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {formData.bank?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
                       </span>
                       {!editingBank && (
-                        <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                        <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
                       )}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank.accountHolderName}</span></div>
-                    <div><span className="text-gray-600">Bank:</span> <span className="font-semibold">{formData.bank.bankName}</span></div>
-                    <div><span className="text-gray-600">Account No:</span> <span className="font-semibold">{formData.bank.accountNumber}</span></div>
-                    <div><span className="text-gray-600">IFSC:</span> <span className="font-semibold">{formData.bank.ifsc}</span></div>
+                    <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank?.accountHolderName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Bank:</span> <span className="font-semibold">{formData.bank?.bankName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Account No:</span> <span className="font-semibold">{formData.bank?.accountNumber || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">IFSC:</span> <span className="font-semibold">{formData.bank?.ifsc || 'Not set'}</span></div>
                   </div>
                 </div>
 
@@ -460,19 +460,19 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
                     <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.demat.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {formData.demat?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
                       </span>
                       {!editingDemat && (
-                        <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                        <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
                       )}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-600">DP Name:</span> <span className="font-semibold">{formData.demat.dpName}</span></div>
-                    <div><span className="text-gray-600">Client ID:</span> <span className="font-semibold">{formData.demat.clientId}</span></div>
-                    <div><span className="text-gray-600">Broking House:</span> <span className="font-semibold">{formData.demat.brokingHouse}</span></div>
-                    <div><span className="text-gray-600">Experience:</span> <span className="font-semibold">{formData.demat.tradingExperience}</span></div>
+                    <div><span className="text-gray-600">DP Name:</span> <span className="font-semibold">{formData.demat?.dpName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Client ID:</span> <span className="font-semibold">{formData.demat?.clientId || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Broking House:</span> <span className="font-semibold">{formData.demat?.brokingHouse || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Experience:</span> <span className="font-semibold">{formData.demat?.tradingExperience || 'Not set'}</span></div>
                   </div>
                 </div>
 
