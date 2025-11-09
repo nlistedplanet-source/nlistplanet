@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import useUserProfile from '../hooks/useUserProfile';
+import React, { useMemo, useState } from 'react';
 
 const PERSONAL_FIELDS = ['dob', 'gender', 'address', 'city', 'state', 'pincode'];
 const BANK_FIELDS = ['accountHolderName', 'bankName', 'accountNumber', 'ifsc', 'branchName', 'accountType'];
@@ -65,28 +64,8 @@ const mockUser = {
 
 export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const [activeTab, setActiveTab] = useState('contact');
-  const {
-    profile,
-    updateProfile,
-    sendOTP,
-    verifyOTP,
-    uploadPhoto: apiUploadPhoto,
-    uploadDocument: apiUploadDocument,
-    submitBankApproval,
-    submitDematApproval,
-  } = useUserProfile();
-
-  const [formData, setFormData] = useState(profile || currentUser);
+  const [formData, setFormData] = useState(currentUser);
   const [profilePhoto, setProfilePhoto] = useState(null);
-
-  useEffect(() => {
-    if (profile) {
-      setFormData(profile);
-      // Initialize bank/demat edit data from profile
-      if (profile.bank) setBankEditData(profile.bank);
-      if (profile.demat) setDematEditData(profile.demat);
-    }
-  }, [profile]);
   
   const [editingEmail, setEditingEmail] = useState(false);
   const [editingMobile, setEditingMobile] = useState(false);
@@ -124,46 +103,25 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     if (field === 'email' && editingEmail) {
       setOtpField('email');
       setTempData({ email: formData.email });
-      try {
-        await sendOTP('email', formData.email);
-        setShowOTPModal(true);
-        alert('OTP sent to your email!');
-      } catch (err) {
-        alert('Failed to send OTP: ' + (err.message || err));
-      }
+      setShowOTPModal(true);
+      alert('OTP sent to your email!');
     } else if (field === 'mobile' && editingMobile) {
       setOtpField('mobile');
       setTempData({ mobile: formData.mobile });
-      try {
-        await sendOTP('mobile', formData.mobile);
-        setShowOTPModal(true);
-        alert('OTP sent to your mobile!');
-      } catch (err) {
-        alert('Failed to send OTP: ' + (err.message || err));
-      }
+      setShowOTPModal(true);
+      alert('OTP sent to your mobile!');
     }
   };
 
   const handleVerifyOTP = async () => {
-    try {
-      const res = await verifyOTP(otpField, otpCode);
-      // treat truthy response or demo code as success
-      if (res && (res.ok || res.success || otpCode === '1234')) {
-        setFormData((prev) => ({ ...prev, ...tempData }));
-        try {
-          await updateProfile({ ...formData, ...tempData });
-        } catch (err) {
-          // ignore update error, we've already updated locally
-        }
-        setShowOTPModal(false);
-        setOtpCode('');
-        setEditingEmail(false);
-        setEditingMobile(false);
-        alert('✅ ' + (otpField === 'email' ? 'Email' : 'Mobile') + ' verified successfully!');
-      } else {
-        alert('❌ Invalid OTP. Try again!');
-      }
-    } catch (err) {
+    if (otpCode === '1234') {
+      setFormData((prev) => ({ ...prev, ...tempData }));
+      setShowOTPModal(false);
+      setOtpCode('');
+      setEditingEmail(false);
+      setEditingMobile(false);
+      alert('✅ ' + (otpField === 'email' ? 'Email' : 'Mobile') + ' verified successfully!');
+    } else {
       alert('❌ Invalid OTP. Try again!');
     }
   };
@@ -180,20 +138,13 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   };
 
   const confirmBankApproval = () => {
-    (async () => {
-      try {
-        await submitBankApproval(bankEditData);
-        // optimistic local update
-        setFormData(prev => ({ ...prev, bank: { ...bankEditData, status: 'pending' } }));
-        try { await updateProfile({ ...formData, bank: { ...bankEditData, status: 'pending' } }); } catch (_) {}
-        alert('✅ Bank details sent to admin for approval!');
-      } catch (err) {
-        alert('Failed to send bank details for approval: ' + (err.message || err));
-      } finally {
-        setEditingBank(false);
-        setShowBankApprovalModal(false);
-      }
-    })();
+    setFormData(prev => ({
+      ...prev,
+      bank: { ...bankEditData, status: 'pending' }
+    }));
+    setEditingBank(false);
+    setShowBankApprovalModal(false);
+    alert('✅ Bank details sent to admin for approval!');
   };
 
   const handleDematEditChange = (field, value) => {
@@ -208,59 +159,27 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   };
 
   const confirmDematApproval = () => {
-    (async () => {
-      try {
-        await submitDematApproval(dematEditData);
-        setFormData(prev => ({ ...prev, demat: { ...dematEditData, status: 'pending' } }));
-        try { await updateProfile({ ...formData, demat: { ...dematEditData, status: 'pending' } }); } catch (_) {}
-        alert('✅ Demat details sent to admin for approval!');
-      } catch (err) {
-        alert('Failed to send demat details for approval: ' + (err.message || err));
-      } finally {
-        setEditingDemat(false);
-        setShowDematApprovalModal(false);
-      }
-    })();
+    setFormData(prev => ({
+      ...prev,
+      demat: { ...dematEditData, status: 'pending' }
+    }));
+    setEditingDemat(false);
+    setShowDematApprovalModal(false);
+    alert('✅ Demat details sent to admin for approval!');
   };
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    (async () => {
-      try {
-        const res = await apiUploadPhoto(file);
-        // if API returns url, use it; otherwise the hook fallback may have already updated profile
-        const url = res?.url || res?.data || null;
-        if (url) {
-          setProfilePhoto(url);
-          try { await updateProfile({ ...formData, profilePhoto: url }); } catch (_) {}
-        }
-        alert('✅ Profile photo updated!');
-      } catch (err) {
-        // fallback to local preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setProfilePhoto(reader.result);
-          alert('✅ Profile photo updated (local preview)!');
-        };
-        reader.readAsDataURL(file);
-      }
-    })();
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result);
+      alert('✅ Profile photo updated!');
+    };
+    reader.readAsDataURL(file);
   };
 
   const inputClass = `w-full border-2 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base outline-none transition border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200`;
-
-  // Fallback render if formData is missing critical fields
-  if (!formData || !formData.personal || !formData.bank) {
-    return (
-      <div className="w-full min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 text-lg">Loading profile...</p>
-          <p className="text-gray-400 text-sm mt-2">If this persists, please refresh the page.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
@@ -524,18 +443,15 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            (async () => {
-                              try {
-                                await apiUploadDocument(doc.key, file);
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  documents: { ...prev.documents, [doc.key]: { name: file.name, data: '' } }
-                                }));
-                                alert('✅ Document uploaded: ' + file.name);
-                              } catch (err) {
-                                alert('Upload failed: ' + (err.message || err));
-                              }
-                            })();
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                documents: { ...prev.documents, [doc.key]: { name: file.name, data: reader.result } }
+                              }));
+                              alert('✅ Document uploaded: ' + file.name);
+                            };
+                            reader.readAsDataURL(file);
                           }}
                         />
                       </label>
