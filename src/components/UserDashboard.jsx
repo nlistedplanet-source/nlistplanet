@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
@@ -10,6 +10,11 @@ import Notification from './Notification';
 const STATUS_META = {
 	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	pending_admin_approval: { icon: '⏳', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	pending: { icon: '⏳', label: 'Pending', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	under_review: { icon: '🔍', label: 'Under Review', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	submitted: { icon: '📨', label: 'Submitted', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	draft: { icon: '📝', label: 'Draft', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
+	awaiting_admin: { icon: '⏳', label: 'Awaiting Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
 	approved: { icon: '✅', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
 	closed: { icon: '🔒', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
 };
@@ -255,39 +260,91 @@ export default function UserDashboard({ setPage }) {
 		return motivationalQuotes[dayOfYear % motivationalQuotes.length];
 	};
 
+	const userIdentifiers = useMemo(() => {
+		if (!user) return [];
+		return [
+			user.email,
+			user.name,
+			user.username,
+			user.userId,
+			user._id,
+			user.id,
+			user.profileId
+		]
+			.filter(Boolean)
+			.map((value) => value.toString().trim().toLowerCase());
+	}, [user]);
+
+	const matchesCurrentUser = useCallback((value) => {
+		if (!value || userIdentifiers.length === 0) return false;
+		if (typeof value === 'object') {
+			return Object.values(value).some((nested) => matchesCurrentUser(nested));
+		}
+		const normalized = value.toString().trim().toLowerCase();
+		return userIdentifiers.includes(normalized);
+	}, [userIdentifiers]);
+
+	const listingBelongsToUser = useCallback((listing) => {
+		if (!listing) return false;
+		const candidateValues = [
+			listing.seller,
+			listing.sellerEmail,
+			listing.sellerId,
+			listing.sellerName,
+			listing.owner,
+			listing.ownerId,
+			listing.ownerEmail,
+			listing.userId,
+			listing.user,
+			listing.createdBy,
+			listing.createdById,
+			listing.createdByEmail,
+			listing.accountId,
+			listing?.seller?.id,
+			listing?.seller?.email,
+			listing?.seller?.name
+		];
+		return candidateValues.some(matchesCurrentUser);
+	}, [matchesCurrentUser]);
+
+	const requestBelongsToUser = useCallback((request) => {
+		if (!request) return false;
+		const candidateValues = [
+			request.buyer,
+			request.buyerEmail,
+			request.buyerId,
+			request.buyerName,
+			request.requestedBy,
+			request.requestedById,
+			request.createdBy,
+			request.createdById,
+			request.accountId,
+			request?.buyer?.id,
+			request?.buyer?.email,
+			request?.buyer?.name
+		];
+		return candidateValues.some(matchesCurrentUser);
+	}, [matchesCurrentUser]);
+
 	const myListings = useMemo(
-		() => user ? sellListings.filter((listing) => 
-			listing.seller === user.name || 
-			listing.seller === user.email ||
-			listing.sellerName === user.name
-		) : [],
-		[sellListings, user]
+		() => sellListings.filter(listingBelongsToUser),
+		[sellListings, listingBelongsToUser]
 	);
 	const myRequests = useMemo(
-		() => user ? buyRequests.filter((request) => 
-			request.buyer === user.name || 
-			request.buyer === user.email ||
-			request.buyerName === user.name
-		) : [],
-		[buyRequests, user]
+		() => buyRequests.filter(requestBelongsToUser),
+		[buyRequests, requestBelongsToUser]
 	);
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 
-			listing.status === 'active' && 
-			listing.seller !== user.name && 
-			listing.seller !== user.email &&
-			listing.sellerName !== user.name
+			listing.status === 'active' && !listingBelongsToUser(listing)
 		) : [],
-		[sellListings, user]
+		[sellListings, user, listingBelongsToUser]
 	);
 	const availableRequests = useMemo(
 		() => user ? buyRequests.filter((request) => 
-			request.status === 'active' && 
-			request.buyer !== user.name && 
-			request.buyer !== user.email &&
-			request.buyerName !== user.name
+			request.status === 'active' && !requestBelongsToUser(request)
 		) : [],
-		[buyRequests, user]
+		[buyRequests, user, requestBelongsToUser]
 	);
 
 	useEffect(() => {
@@ -399,7 +456,19 @@ export default function UserDashboard({ setPage }) {
 
 	const renderMyListings = () => {
 		// Filter sell listings based on sub-tab  
-		const myActiveListings = myListings.filter(l => l.status === 'active');
+		const openSellStatuses = [
+			'active',
+			'pending_admin_approval',
+			'pending',
+			'under_review',
+			'submitted',
+			'awaiting_admin',
+			'processing',
+			'initiated',
+			'draft'
+		];
+		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
+		const myOpenListings = myListings.filter((l) => openSellStatuses.includes(getStatusKey(l.status)));
 		const bidsReceived = myListings.filter(l => l.bids && l.bids.length > 0);
 		const counterOfferListings = myListings.filter(l => 
 			l.bids?.some(b => b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder')
@@ -434,7 +503,7 @@ export default function UserDashboard({ setPage }) {
 								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
 						}`}
 					>
-						📋 Sell List ({myActiveListings.length})
+							📋 Sell List ({myOpenListings.length})
 					</button>
 					<button
 						onClick={() => setSellSubTab('bids')}
@@ -471,10 +540,10 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{sellSubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Sell Listings</h3>
-						{myActiveListings.length === 0 ? (
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Sell Listings</h3>
+						{myOpenListings.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No active sell listings</p>
+								<p className="text-gray-500">No live or pending sell listings yet</p>
 								<button
 									onClick={() => setFormType('sell')}
 									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
@@ -485,8 +554,8 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-								{myActiveListings.map((listing) => (
-									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+								{myOpenListings.map((listing) => (
+									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 										<div className="flex items-start justify-between">
 											<div>
 												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -531,7 +600,7 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="space-y-4">
 								{bidsReceived.map((listing) => (
-									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
+									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
 										<div className="flex items-start justify-between mb-4">
 											<div>
 												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -542,7 +611,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="space-y-2">
 											<p className="text-sm font-semibold text-gray-700">Received Bids ({listing.bids?.length || 0}):</p>
 											{listing.bids?.map((bid) => (
-												<div key={bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+												<div key={bid._id || bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
 													<div>
 														<p className="text-sm font-semibold text-gray-900">
 															{bid.bidderName || bid.bidder}
@@ -584,7 +653,7 @@ export default function UserDashboard({ setPage }) {
 										b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder'
 									);
 									return (
-										<div key={listing.id} className="bg-white border border-orange-200 rounded-xl p-5">
+										<div key={listing._id || listing.id} className="bg-white border border-orange-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -596,7 +665,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 											<div className="space-y-2">
 												{counterBids?.map((bid) => (
-													<div key={bid.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+													<div key={bid._id || bid.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
 														<div className="flex items-start justify-between">
 															<div>
 																<p className="text-sm font-semibold text-gray-900">{bid.bidderName || bid.bidder}</p>
@@ -635,11 +704,11 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="grid gap-5 md:grid-cols-2">
 								{completedListings.map((listing) => {
-									const acceptedBid = listing.acceptedBid 
-										? listing.bids?.find(b => b.id === listing.acceptedBid)
+									const acceptedBid = listing.acceptedBid
+										? listing.bids?.find((b) => b._id === listing.acceptedBid || b.id === listing.acceptedBid)
 										: null;
 									return (
-										<div key={listing.id} className="bg-white border border-green-200 rounded-xl p-5">
+										<div key={listing._id || listing.id} className="bg-white border border-green-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
