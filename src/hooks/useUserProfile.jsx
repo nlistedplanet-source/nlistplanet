@@ -27,6 +27,7 @@ export default function useUserProfile() {
       else setProfile(FALLBACK_PROFILE);
     } catch (err) {
       // fallback to local if API fails
+      console.error('[useUserProfile] Error fetching profile:', err);
       setError(err.message || 'Failed to fetch profile');
       setProfile(FALLBACK_PROFILE);
     } finally {
@@ -37,6 +38,10 @@ export default function useUserProfile() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profile) console.log('[useUserProfile] Profile loaded:', profile);
+  }, [profile]);
 
   const updateProfile = useCallback(async (payload) => {
     try {
