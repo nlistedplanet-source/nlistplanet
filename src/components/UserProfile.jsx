@@ -226,8 +226,8 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-2 sm:px-4">
+      <div className="w-full max-w-full mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 bg-white rounded-2xl shadow-lg p-6">
           <div>
@@ -298,7 +298,7 @@ export default function UserProfile() {
           </div>
 
           {/* Profile Content - flat layout, no inner cards */}
-          <div className="p-8">
+          <div className="p-10">
             {/* Profile Photo Section - Always Visible */}
             <div className="flex flex-col items-center mb-8">
               <div className="relative">
@@ -364,7 +364,7 @@ export default function UserProfile() {
             {/* Contact Info Tab */}
             {activeTab === 'contact' && !verificationStep && (
               <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
                 <input 
@@ -436,7 +436,7 @@ export default function UserProfile() {
 
             {/* Personal Info Tab */}
             {activeTab === 'personal' && !verificationStep && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
               <input
@@ -537,7 +537,7 @@ export default function UserProfile() {
 
             {/* Bank Details Tab */}
             {activeTab === 'bank' && !verificationStep && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
               <input
@@ -638,7 +638,7 @@ export default function UserProfile() {
 
             {/* Demat Tab */}
             {activeTab === 'demat' && !verificationStep && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">DP Name</label>
               <input
@@ -726,7 +726,7 @@ export default function UserProfile() {
 
             {/* Documents Tab */}
             {activeTab === 'documents' && !verificationStep && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {DOCUMENT_LIST.map((doc) => {
               const uploaded = formData.documents[doc.key];
               return (
