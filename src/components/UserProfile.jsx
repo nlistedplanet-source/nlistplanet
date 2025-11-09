@@ -80,7 +80,12 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const [profilePhoto, setProfilePhoto] = useState(null);
 
   useEffect(() => {
-    if (profile) setFormData(profile);
+    if (profile) {
+      setFormData(profile);
+      // Initialize bank/demat edit data from profile
+      if (profile.bank) setBankEditData(profile.bank);
+      if (profile.demat) setDematEditData(profile.demat);
+    }
   }, [profile]);
   
   const [editingEmail, setEditingEmail] = useState(false);
@@ -93,8 +98,8 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const [otpCode, setOtpCode] = useState('');
   const [tempData, setTempData] = useState({});
   
-  const [bankEditData, setBankEditData] = useState(currentUser.bank);
-  const [dematEditData, setDematEditData] = useState(currentUser.demat);
+  const [bankEditData, setBankEditData] = useState(currentUser?.bank || {});
+  const [dematEditData, setDematEditData] = useState(currentUser?.demat || {});
   
   const [showBankApprovalModal, setShowBankApprovalModal] = useState(false);
   const [showDematApprovalModal, setShowDematApprovalModal] = useState(false);

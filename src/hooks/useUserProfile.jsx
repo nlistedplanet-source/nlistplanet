@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import * as api from '../api/profileApi';
 
 const FALLBACK_PROFILE = {
+  username: 'guest_user',
+  userId: 'USR_GUEST',
   name: 'Guest User',
   email: '',
   mobile: '',
@@ -12,7 +14,7 @@ const FALLBACK_PROFILE = {
 };
 
 export default function useUserProfile() {
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(FALLBACK_PROFILE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
