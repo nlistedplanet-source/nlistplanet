@@ -1715,6 +1715,7 @@ Report ID: ${listing._id || listing.id}
 			case 'support':
 				return renderSupport();
 			case 'profile':
+				console.log('[UserDashboard] Passing user to UserProfile:', user);
 				return <UserProfile currentUser={user} />;
 			default:
 				return renderBrowse();

@@ -78,6 +78,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     submitDematApproval: apiSubmitDematApproval,
   } = useUserProfile();
   
+  console.log('[UserProfile] currentUser prop received:', currentUser);
+  console.log('[UserProfile] apiProfile from hook:', apiProfile);
+  
   // Ensure formData always has complete structure to prevent undefined access
   const [formData, setFormData] = useState(() => ({
     ...currentUser,
@@ -90,7 +93,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   
   // Sync API profile to local state when loaded
   useEffect(() => {
+    console.log('[UserProfile] useEffect triggered, apiProfile:', apiProfile);
     if (apiProfile && apiProfile.name !== 'Guest User') {
+      console.log('[UserProfile] Syncing apiProfile to formData');
       setFormData(apiProfile);
       if (apiProfile.bank) setBankEditData(apiProfile.bank);
       if (apiProfile.demat) setDematEditData(apiProfile.demat);
