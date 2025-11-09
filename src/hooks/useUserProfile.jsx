@@ -23,8 +23,14 @@ export default function useUserProfile() {
     setError(null);
     try {
       const data = await api.getProfile();
-      if (data) setProfile(data);
-      else setProfile(FALLBACK_PROFILE);
+      // Validate API response shape before applying it. Some hosts may return HTML (401/redirect)
+      const isValidProfile = data && typeof data === 'object' && (data.email || data.username || data.userId || data.name);
+      if (isValidProfile) {
+        setProfile(data);
+      } else {
+        console.warn('[useUserProfile] Invalid profile response from API, using fallback', data);
+        setProfile(FALLBACK_PROFILE);
+      }
     } catch (err) {
       // fallback to local if API fails
       console.error('[useUserProfile] Error fetching profile:', err);
