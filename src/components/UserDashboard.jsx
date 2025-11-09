@@ -156,7 +156,7 @@ export default function UserDashboard({ setPage }) {
 	const [selectedItem, setSelectedItem] = useState(null);
 	const [tradeContext, setTradeContext] = useState(null);
 	const [bidOfferData, setBidOfferData] = useState({ price: '', quantity: '' });
-	const [showProfileModal, setShowProfileModal] = useState(false);
+	// Removed showProfileModal state
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
 	// KYC banner state
@@ -451,7 +451,8 @@ export default function UserDashboard({ setPage }) {
 		{ id: 'orders', label: 'Orders', icon: '📋' },
 		{ id: 'portfolio', label: 'Portfolio', icon: '💼' },
 		{ id: 'faq', label: 'FAQ', icon: '❓' },
-		{ id: 'support', label: 'Support', icon: '💬' }
+		{ id: 'support', label: 'Support', icon: '💬' },
+		{ id: 'profile', label: 'Profile', icon: '👤' }
 	];
 
 	const renderMyListings = () => {
@@ -1728,6 +1729,8 @@ Report ID: ${listing._id || listing.id}
 				return renderFAQ();
 			case 'support':
 				return renderSupport();
+			case 'profile':
+				return <div className="p-0 sm:p-6 max-w-3xl mx-auto"><UserProfile /></div>;
 			default:
 				return renderBrowse();
 		}
@@ -2229,9 +2232,7 @@ Report ID: ${listing._id || listing.id}
 			{renderTradeModal()}
 			{renderNegotiationModal()}
 
-			{showProfileModal && (
-				<UserProfile onClose={() => setShowProfileModal(false)} />
-			)}
+			{/* Profile modal removed; now a dashboard page */}
 
 			{showPasswordModal && (
 				<ChangePassword onClose={() => setShowPasswordModal(false)} />
