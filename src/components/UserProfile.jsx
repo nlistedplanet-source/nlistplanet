@@ -81,14 +81,28 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   console.log('[UserProfile] currentUser prop received:', currentUser);
   console.log('[UserProfile] apiProfile from hook:', apiProfile);
   
+  // Normalize user data - map common field variations
+  const normalizeUserData = (userData) => {
+    if (!userData) return {};
+    return {
+      ...userData,
+      // Ensure email and mobile exist (map phone/mobileNumber to mobile if needed)
+      email: userData.email || '',
+      mobile: userData.mobile || userData.phone || userData.mobileNumber || '',
+      personal: userData.personal || {},
+      bank: userData.bank || {},
+      demat: userData.demat || {},
+      documents: userData.documents || {}
+    };
+  };
+  
   // Ensure formData always has complete structure to prevent undefined access
-  const [formData, setFormData] = useState(() => ({
-    ...currentUser,
-    personal: currentUser?.personal || {},
-    bank: currentUser?.bank || {},
-    demat: currentUser?.demat || {},
-    documents: currentUser?.documents || {}
-  }));
+  const [formData, setFormData] = useState(() => {
+    const normalized = normalizeUserData(currentUser);
+    console.log('[UserProfile] Initial formData state:', normalized);
+    console.log('[UserProfile] Email:', normalized.email, 'Mobile:', normalized.mobile);
+    return normalized;
+  });
   const [profilePhoto, setProfilePhoto] = useState(null);
   
   // Sync API profile to local state when loaded
@@ -96,7 +110,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     console.log('[UserProfile] useEffect triggered, apiProfile:', apiProfile);
     if (apiProfile && apiProfile.name !== 'Guest User') {
       console.log('[UserProfile] Syncing apiProfile to formData');
-      setFormData(apiProfile);
+      setFormData(normalizeUserData(apiProfile));
       if (apiProfile.bank) setBankEditData(apiProfile.bank);
       if (apiProfile.demat) setDematEditData(apiProfile.demat);
     }
