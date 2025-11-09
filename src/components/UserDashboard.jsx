@@ -1715,7 +1715,7 @@ Report ID: ${listing._id || listing.id}
 			case 'support':
 				return renderSupport();
 			case 'profile':
-				return <UserProfile />;
+				return <UserProfile currentUser={user} />;
 			default:
 				return renderBrowse();
 		}
