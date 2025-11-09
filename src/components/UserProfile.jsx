@@ -198,10 +198,10 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Main Form - Multiple Cards */}
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Contact Information Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+        {/* Main Form - Fields directly without card wrapper */}
+        <form onSubmit={handleSave} className="space-y-8">
+          {/* Contact Information - Direct fields */}
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📧 Contact Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
@@ -252,8 +252,8 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Personal Information Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Personal Information - Direct fields */}
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">👤 Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
@@ -354,8 +354,8 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Bank Details Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Bank Details - Direct fields */}
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">🏦 Bank Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-3">
@@ -456,8 +456,8 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Demat Details Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Demat Details - Direct fields */}
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📈 Demat Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
@@ -545,8 +545,8 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Documents Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Documents - Direct fields */}
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📄 Documents</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {DOCUMENT_LIST.map((doc) => {
@@ -598,7 +598,7 @@ export default function UserProfile() {
 
           {/* Action Buttons */}
           {isEditing && (
-            <div className="bg-white rounded-2xl shadow-lg p-8 flex gap-4">
+            <div className="flex gap-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => {
