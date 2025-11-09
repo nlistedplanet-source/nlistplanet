@@ -74,9 +74,9 @@ export default function useUserProfile() {
     try {
       return await api.verifyOTP(field, code);
     } catch (err) {
-      // demo behaviour
-      if (code === '1234') return { ok: true };
-      throw err;
+      // Return error, no demo fallback
+      console.error('OTP verification failed:', err);
+      return { ok: false, error: err.message };
     }
   }, []);
 

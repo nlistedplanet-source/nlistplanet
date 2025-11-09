@@ -185,7 +185,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const handleVerifyOTP = async () => {
     try {
       const res = await apiVerifyOTP(otpField, otpCode);
-      if (res && (res.ok || otpCode === '1234')) {
+      if (res && res.ok) {
         setFormData((prev) => ({ ...prev, ...tempData }));
         // Try to update profile via API
         try {
@@ -199,10 +199,10 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
         setEditingMobile(false);
         alert('✅ ' + (otpField === 'email' ? 'Email' : 'Mobile') + ' verified successfully!');
       } else {
-        alert('❌ Invalid OTP. Try again!');
+        alert('❌ Invalid OTP. Please try again!');
       }
     } catch (err) {
-      alert('❌ Invalid OTP. Try again!');
+      alert('❌ OTP verification failed. Please try again!');
     }
   };
 
@@ -396,7 +396,13 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
-                    <input type="date" value={formData.personal?.dob || ''} onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} className={inputClass} />
+                    <input 
+                      type="date" 
+                      value={formData.personal?.dob || ''} 
+                      onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} 
+                      className={inputClass}
+                      placeholder="DD-MM-YYYY"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
@@ -409,7 +415,17 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Occupation</label>
-                    <input type="text" value={formData.personal?.occupation || ''} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass} />
+                    <select value={formData.personal?.occupation || ''} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass}>
+                      <option value="">Select occupation</option>
+                      <option value="business">Business</option>
+                      <option value="service">Service/Employed</option>
+                      <option value="professional">Professional (Doctor, Lawyer, CA, etc.)</option>
+                      <option value="self-employed">Self Employed</option>
+                      <option value="student">Student</option>
+                      <option value="retired">Retired</option>
+                      <option value="homemaker">Homemaker</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
@@ -526,47 +542,81 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* DOCUMENTS TAB */}
             {activeTab === 'documents' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {DOCUMENT_LIST.map((doc) => (
-                    <div key={doc.key} className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 hover:border-purple-300 transition">
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{doc.label}</h4>
-                        <span className="text-lg font-bold text-gray-300">○</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {DOCUMENT_LIST.map((doc) => {
+                    const uploadedDoc = formData.documents?.[doc.key];
+                    const isUploaded = uploadedDoc && (uploadedDoc.name || uploadedDoc.data);
+                    
+                    return (
+                      <div key={doc.key} className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 hover:border-purple-300 transition">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{doc.label}</h4>
+                          <span className={`text-lg font-bold ${isUploaded ? 'text-green-500' : 'text-gray-300'}`}>
+                            {isUploaded ? '✓' : '○'}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{doc.helper}</p>
+                        
+                        {isUploaded && (
+                          <div className="mb-3 p-2 bg-green-50 rounded border border-green-200">
+                            <p className="text-xs text-green-700 font-medium truncate">📎 {uploadedDoc.name || 'Document uploaded'}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          {isUploaded && (
+                            <button
+                              onClick={() => {
+                                if (uploadedDoc.data) {
+                                  // Open base64 data in new window
+                                  const win = window.open();
+                                  if (win) {
+                                    win.document.write(`<iframe src="${uploadedDoc.data}" width="100%" height="100%" frameborder="0"></iframe>`);
+                                  }
+                                } else {
+                                  alert('Document preview not available. Please reupload to view.');
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs font-semibold"
+                            >
+                              View
+                            </button>
+                          )}
+                          <label className={`block text-center px-3 py-2 rounded-lg font-semibold text-xs ${isUploaded ? 'flex-1' : 'w-full'} bg-purple-600 text-white hover:bg-purple-700 transition cursor-pointer`}>
+                            {isUploaded ? 'Reupload' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  await apiUploadDocument(doc.key, file);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    documents: { ...prev.documents, [doc.key]: { name: file.name, data: '' } }
+                                  }));
+                                  alert('✅ Document uploaded: ' + file.name);
+                                } catch (err) {
+                                  // Fallback to local storage
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      documents: { ...prev.documents, [doc.key]: { name: file.name, data: reader.result } }
+                                    }));
+                                    alert('✅ Document uploaded (local): ' + file.name);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{doc.helper}</p>
-                      <label className="block text-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm bg-purple-600 text-white hover:bg-purple-700 transition cursor-pointer">
-                        Upload Document
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              await apiUploadDocument(doc.key, file);
-                              setFormData((prev) => ({
-                                ...prev,
-                                documents: { ...prev.documents, [doc.key]: { name: file.name, data: '' } }
-                              }));
-                              alert('✅ Document uploaded: ' + file.name);
-                            } catch (err) {
-                              // Fallback to local storage
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  documents: { ...prev.documents, [doc.key]: { name: file.name, data: reader.result } }
-                                }));
-                                alert('✅ Document uploaded (local): ' + file.name);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -580,7 +630,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Verify OTP</h2>
             <p className="text-gray-600 mb-4">Enter the OTP sent to your {otpField}</p>
-            <input type="text" placeholder="Enter OTP (Demo: 1234)" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" maxLength="4" />
+            <input type="text" placeholder="Enter 6-digit OTP" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" maxLength="6" />
             <div className="flex gap-3">
               <button onClick={() => setShowOTPModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
               <button onClick={handleVerifyOTP} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">Verify</button>
