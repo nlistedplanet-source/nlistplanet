@@ -78,7 +78,14 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     submitDematApproval: apiSubmitDematApproval,
   } = useUserProfile();
   
-  const [formData, setFormData] = useState(currentUser);
+  // Ensure formData always has complete structure to prevent undefined access
+  const [formData, setFormData] = useState(() => ({
+    ...currentUser,
+    personal: currentUser?.personal || {},
+    bank: currentUser?.bank || {},
+    demat: currentUser?.demat || {},
+    documents: currentUser?.documents || {}
+  }));
   const [profilePhoto, setProfilePhoto] = useState(null);
   
   // Sync API profile to local state when loaded
@@ -107,6 +114,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const [showDematApprovalModal, setShowDematApprovalModal] = useState(false);
 
   const profileCompletion = useMemo(() => {
+    if (!formData || !formData.personal || !formData.bank || !formData.demat || !formData.documents) {
+      return 0;
+    }
     const totalFields = PERSONAL_FIELDS.length + BANK_FIELDS.length + DEMAT_FIELDS.length + DOCUMENT_KEYS.length;
     const completedPersonal = PERSONAL_FIELDS.filter((field) => formData.personal[field]).length;
     const completedBank = BANK_FIELDS.filter((field) => formData.bank[field]).length;
@@ -118,7 +128,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const updateSectionField = (section, field, value) => {
     setFormData((prev) => ({
       ...prev,
-      [section]: { ...prev[section], [field]: value }
+      [section]: { ...(prev[section] || {}), [field]: value }
     }));
   };
 
