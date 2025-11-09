@@ -322,8 +322,8 @@ export default function UserProfile() {
             <form onSubmit={handleSave} className="space-y-6">
             {/* OTP Verification Sections */}
             {verificationStep === 'email' && (
-              <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
-                <h4 className="text-sm font-bold text-blue-900 mb-3">📧 Verify Email</h4>
+              <div className="bg-white border-2 border-blue-300 p-4 rounded-lg">
+                <h4 className="text-sm font-bold text-blue-600 mb-3">📧 Verify Email</h4>
                 <input 
                   type="text" 
                   placeholder="Enter 6-digit OTP" 
@@ -337,8 +337,8 @@ export default function UserProfile() {
             )}
 
             {verificationStep === 'mobile' && (
-              <div className="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
-                <h4 className="text-sm font-bold text-green-900 mb-3">📱 Verify Mobile</h4>
+              <div className="bg-white border-2 border-green-300 p-4 rounded-lg">
+                <h4 className="text-sm font-bold text-green-600 mb-3">📱 Verify Mobile</h4>
                 <input 
                   type="text" 
                   placeholder="Enter 6-digit OTP" 
@@ -720,7 +720,7 @@ export default function UserProfile() {
             {DOCUMENT_LIST.map((doc) => {
               const uploaded = formData.documents[doc.key];
               return (
-                <div key={doc.key} className="border-2 border-dashed border-purple-200 rounded-lg bg-purple-50 p-4">
+                <div key={doc.key} className="border-2 border-dashed border-purple-300 rounded-lg bg-white p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-gray-900">{doc.label}</h4>
                     <span className={`text-xs font-bold ${uploaded ? 'text-green-600' : 'text-gray-500'}`}>
@@ -729,7 +729,7 @@ export default function UserProfile() {
                   </div>
                   <p className="text-xs text-gray-600 mb-3">{doc.helper}</p>
                   {uploaded ? (
-                    <div className="bg-white p-2 rounded border border-gray-200 mb-2">
+                    <div className="bg-gray-50 p-2 rounded border border-gray-200 mb-2">
                       <p className="text-xs font-semibold text-gray-800 truncate">{uploaded.name}</p>
                       {isEditing && (
                         <button
