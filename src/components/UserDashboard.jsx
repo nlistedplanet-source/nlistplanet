@@ -755,7 +755,19 @@ export default function UserDashboard({ setPage }) {
 
 	const renderMyRequests = () => {
 		// Filter buy requests based on sub-tab
-		const myActiveRequests = myRequests.filter(r => r.status === 'active');
+		const openBuyStatuses = [
+			'active',
+			'pending_admin_approval',
+			'pending',
+			'under_review',
+			'submitted',
+			'awaiting_admin',
+			'processing',
+			'initiated',
+			'draft'
+		];
+		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
+		const myOpenRequests = myRequests.filter((r) => openBuyStatuses.includes(getStatusKey(r.status)));
 		const offersReceived = myRequests.filter(r => r.offers && r.offers.length > 0);
 		const counterOfferRequests = myRequests.filter(r => 
 			r.offers?.some(o => o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer')
@@ -790,7 +802,7 @@ export default function UserDashboard({ setPage }) {
 								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
 						}`}
 					>
-						📋 Buy List ({myActiveRequests.length})
+							📋 Buy List ({myOpenRequests.length})
 					</button>
 					<button
 						onClick={() => setBuySubTab('offers')}
@@ -827,10 +839,10 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{buySubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Buy Requests</h3>
-						{myActiveRequests.length === 0 ? (
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Buy Requests</h3>
+						{myOpenRequests.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No active buy requests</p>
+								<p className="text-gray-500">No live or pending buy requests yet</p>
 								<button
 									onClick={() => setFormType('buy')}
 									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
@@ -841,8 +853,8 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-								{myActiveRequests.map((request) => (
-									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+								{myOpenRequests.map((request) => (
+									<div key={request._id || request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 										<div className="flex items-start justify-between">
 											<div>
 												<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -887,7 +899,7 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="space-y-4">
 								{offersReceived.map((request) => (
-									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5">
+									<div key={request._id || request.id} className="bg-white border border-gray-200 rounded-xl p-5">
 										<div className="flex items-start justify-between mb-4">
 											<div>
 												<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -898,7 +910,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="space-y-2">
 											<p className="text-sm font-semibold text-gray-700">Received Offers ({request.offers?.length || 0}):</p>
 											{request.offers?.map((offer) => (
-												<div key={offer.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+												<div key={offer._id || offer.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
 													<div>
 														<p className="text-sm font-semibold text-gray-900">
 															{offer.sellerName || offer.seller}
@@ -940,7 +952,7 @@ export default function UserDashboard({ setPage }) {
 										o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer'
 									);
 									return (
-										<div key={request.id} className="bg-white border border-orange-200 rounded-xl p-5">
+										<div key={request._id || request.id} className="bg-white border border-orange-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -952,7 +964,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 											<div className="space-y-2">
 												{counterOffers?.map((offer) => (
-													<div key={offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+													<div key={offer._id || offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
 														<div className="flex items-start justify-between">
 															<div>
 																<p className="text-sm font-semibold text-gray-900">{offer.sellerName || offer.seller}</p>
