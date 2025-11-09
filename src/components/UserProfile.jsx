@@ -246,6 +246,16 @@ export default function UserProfile() {
           </button>
         </div>
 
+        {/* Profile Incomplete Notification */}
+        {profileCompletion < 100 && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-base font-semibold text-amber-800">Profile Incomplete</p>
+              <p className="text-xs text-amber-700 mt-1">Please complete your profile to get a verified badge and faster approvals.</p>
+            </div>
+          </div>
+        )}
+
         {/* Main Content Container */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Profile Completion Widget */}
@@ -287,10 +297,10 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Profile Content */}
+          {/* Profile Content - flat layout, no inner cards */}
           <div className="p-8">
             {/* Profile Photo Section - Always Visible */}
-            <div className="flex flex-col items-center mb-12 pb-8 border-b border-gray-200">
+            <div className="flex flex-col items-center mb-8">
               <div className="relative">
                 <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-5xl overflow-hidden border-4 border-purple-200">
                   {formData.profilePhoto ? (
@@ -302,7 +312,7 @@ export default function UserProfile() {
                 {isEditing && (
                   <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition shadow-lg">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <input 
@@ -318,11 +328,11 @@ export default function UserProfile() {
               <p className="text-sm text-gray-500">{formData.email}</p>
             </div>
 
-            {/* Tab Content */}
+            {/* Tab Content - no card, just form */}
             <form onSubmit={handleSave} className="space-y-6">
             {/* OTP Verification Sections */}
             {verificationStep === 'email' && (
-              <div className="bg-white border-2 border-blue-300 p-4 rounded-lg">
+              <div className="p-0">
                 <h4 className="text-sm font-bold text-blue-600 mb-3">📧 Verify Email</h4>
                 <input 
                   type="text" 
@@ -337,7 +347,7 @@ export default function UserProfile() {
             )}
 
             {verificationStep === 'mobile' && (
-              <div className="bg-white border-2 border-green-300 p-4 rounded-lg">
+              <div className="p-0">
                 <h4 className="text-sm font-bold text-green-600 mb-3">📱 Verify Mobile</h4>
                 <input 
                   type="text" 
@@ -720,7 +730,7 @@ export default function UserProfile() {
             {DOCUMENT_LIST.map((doc) => {
               const uploaded = formData.documents[doc.key];
               return (
-                <div key={doc.key} className="border-2 border-dashed border-purple-300 rounded-lg bg-white p-4">
+                <div key={doc.key} className="p-0">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-gray-900">{doc.label}</h4>
                     <span className={`text-xs font-bold ${uploaded ? 'text-green-600' : 'text-gray-500'}`}>
@@ -729,7 +739,7 @@ export default function UserProfile() {
                   </div>
                   <p className="text-xs text-gray-600 mb-3">{doc.helper}</p>
                   {uploaded ? (
-                    <div className="bg-gray-50 p-2 rounded border border-gray-200 mb-2">
+                    <div className="mb-2">
                       <p className="text-xs font-semibold text-gray-800 truncate">{uploaded.name}</p>
                       {isEditing && (
                         <button
