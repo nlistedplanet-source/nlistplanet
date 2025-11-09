@@ -129,7 +129,7 @@ const formatDateTime = (iso) => {
 };
 
 export default function UserDashboard({ setPage }) {
-	const { user, logout, getUserDisplayName, updateUserProfile, getKycStatus, submitKycDocuments } = useAuth();
+	const { user, logout, getUserDisplayName, updateUserProfile } = useAuth();
 	const {
 		sellListings,
 		buyRequests,
@@ -159,10 +159,6 @@ export default function UserDashboard({ setPage }) {
 	// Removed showProfileModal state
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
-	// KYC banner state
-	const kycStatus = getKycStatus(user);
-	const [showKycForm, setShowKycForm] = useState(false);
-	const [kycDocs, setKycDocs] = useState({ pan: '', addressProof: '', cmlCopy: '', bankDetails: '' });
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -356,17 +352,6 @@ export default function UserDashboard({ setPage }) {
 	if (!user) {
 		return null;
 	}
-
-	const handleKycSubmit = async (e) => {
-		e.preventDefault();
-		try {
-			await submitKycDocuments(kycDocs);
-			showNotification('success', 'KYC Submitted', 'Your KYC is now under review.');
-			setShowKycForm(false);
-		} catch (err) {
-			showNotification('error', 'Submission Failed', err.message || 'Please try again later');
-		}
-	};
 
 	const handleCompanySearch = (value) => {
 		setFormData({ ...formData, company: value });
