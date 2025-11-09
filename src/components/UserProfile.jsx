@@ -129,7 +129,7 @@ export default function UserProfile() {
   if (!user) return null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-2 sm:px-4">
+    <div className="w-full min-h-screen bg-white py-8 px-2 sm:px-4">
       <div className="w-full max-w-6xl mx-auto">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
