@@ -130,7 +130,7 @@ export default function UserProfile() {
 
   return (
     <div className="w-full min-h-screen bg-white py-8 px-2 sm:px-4">
-      <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
           <div className="flex items-start gap-6">
@@ -203,7 +203,7 @@ export default function UserProfile() {
           {/* Contact Information - Direct fields */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📧 Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Full Name</label>
                 <input 
@@ -255,7 +255,7 @@ export default function UserProfile() {
           {/* Personal Information - Direct fields */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">👤 Personal Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Date of Birth</label>
                 <input
@@ -299,7 +299,7 @@ export default function UserProfile() {
                 />
               </div>
 
-              <div className="lg:col-span-3">
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Address</label>
                 <textarea
                   value={formData.personal.address}
@@ -357,8 +357,8 @@ export default function UserProfile() {
           {/* Bank Details - Direct fields */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">🏦 Bank Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 gap-6">
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Account Holder Name</label>
                 <input
                   type="text"
@@ -440,7 +440,7 @@ export default function UserProfile() {
                 </select>
               </div>
 
-              <div className="lg:col-span-3">
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">UPI ID (Optional)</label>
                 <input
                   type="text"
@@ -459,7 +459,7 @@ export default function UserProfile() {
           {/* Demat Details - Direct fields */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📈 Demat Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">DP Name</label>
                 <input
@@ -548,7 +548,7 @@ export default function UserProfile() {
           {/* Documents - Direct fields */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-purple-200">📄 Documents</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               {DOCUMENT_LIST.map((doc) => {
                 const uploaded = formData.documents[doc.key];
                 return (

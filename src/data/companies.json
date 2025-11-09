@@ -1,44 +1,102 @@
-{
-  "companies": [
-    {"id": 1, "name": "Swiggy", "pan": "AAFCB7707D", "isin": "INE00H001014", "sector": "Food Tech", "logo": "https://unlistedzone.com/storage/company-logo//swiggy_unlisted_shares-logo-1719215633.png", "pricePerShare": 580, "minPrice": 500, "shares": 1200},
-    {"id": 2, "name": "PharmEasy", "pan": "AASCA1201E", "isin": "INE00CA12010", "sector": "HealthTech", "logo": "https://unlistedzone.com/storage/company-logo//pharmeasy_unlisted_shares-logo-1715844846.png", "pricePerShare": 420, "minPrice": 350, "shares": 600},
-    {"id": 3, "name": "Urban Company", "pan": "AABCU7755Q", "isin": "INE00CU77550", "sector": "Services", "logo": "https://unlistedzone.com/storage/company-logo//urban_company_limited-logo-1718882455.jpeg", "pricePerShare": 480, "minPrice": 420, "shares": 550},
-    {"id": 4, "name": "Lenskart Solutions", "pan": "AACCV7324B", "isin": "INE00CV73240", "sector": "Retail", "logo": "https://unlistedzone.com/storage/company-logo//lenskart_solutions_private_limited-logo-1718873896.png", "pricePerShare": 510, "minPrice": 450, "shares": 600},
-    {"id": 5, "name": "Paytm", "pan": "AAACO4007A", "isin": "INE00CO40070", "sector": "FinTech", "logo": "https://unlistedzone.com/storage/company-logo//paytm-logo-1714982710.png", "pricePerShare": 920, "minPrice": 820, "shares": 300},
-    {"id": 6, "name": "ORAVEL STAYS LIMITED (OYO)", "pan": "AABCO6063D", "isin": "INE00CO60630", "sector": "Hospitality", "logo": "https://unlistedzone.com/storage/company-logo//oravel_stays_limited_oyo_unlisted_shares-logo-1723372813.png", "pricePerShare": 850, "minPrice": 750, "shares": 500},
-    {"id": 7, "name": "Flipkart", "pan": "AABCF8078M", "isin": "INE075T01014", "sector": "E-commerce", "logo": "https://unlistedzone.com/storage/company-logo//flipkart_unlisted_shares-logo-1714982656.png", "pricePerShare": 720, "minPrice": 620, "shares": 900},
-    {"id": 8, "name": "Zepto", "pan": "AAICK4821A", "isin": "INE1SE401014", "sector": "E-commerce", "logo": "https://unlistedzone.com/storage/company-logo//zepto_unlisted_shares-logo-1719215680.jpeg", "pricePerShare": 650, "minPrice": 570, "shares": 400},
-    {"id": 9, "name": "Groww", "pan": "AAHCB6189P", "isin": "INE00CB61890", "sector": "FinTech", "logo": "https://unlistedzone.com/storage/company-logo//groww_unlisted_share-logo-1718873716.png", "pricePerShare": 550, "minPrice": 480, "shares": 800},
-    {"id": 10, "name": "Pine Labs", "pan": "AACCP7457K", "isin": "INE00CP74570", "sector": "FinTech", "logo": "https://unlistedzone.com/storage/company-logo//pine_labs_limited-logo-1715232524.png", "pricePerShare": 620, "minPrice": 550, "shares": 800},
-    {"id": 11, "name": "Delhivery", "pan": "AAPCS9575E", "isin": "INE00CS95750", "sector": "Logistics", "logo": "https://unlistedzone.com/storage/company-logo//delhivery-logo-1714982629.png", "pricePerShare": 750, "minPrice": 650, "shares": 1000},
-    {"id": 12, "name": "Mobikwik", "pan": "AABCO0442Q", "isin": "INE00CO04420", "sector": "FinTech", "logo": "https://unlistedzone.com/storage/company-logo//mobikwik_unlisted_shares-logo-1714982680.png", "pricePerShare": 890, "minPrice": 780, "shares": 700},
-    {"id": 13, "name": "Boat (Imagine Marketing)", "pan": "AADCI3821M", "isin": "INE03AV01027", "sector": "Consumer Electronics", "logo": "https://unlistedzone.com/storage/company-logo//boat_unlisted_share_imagine_marketing-logo-1714982606.png", "pricePerShare": 480, "minPrice": 420, "shares": 550},
-    {"id": 14, "name": "FabIndia", "pan": "AAACF0782H", "isin": "INE00CF07820", "sector": "Retail", "logo": "https://unlistedzone.com/storage/company-logo//fabindia_unlisted_share_price-logo-1714982644.png", "pricePerShare": 650, "minPrice": 570, "shares": 400},
-    {"id": 15, "name": "Physicswallah", "pan": "AALCP1681Q", "isin": "INE00CP16810", "sector": "EdTech", "logo": "https://unlistedzone.com/storage/company-logo//physicswallah_private_limited-logo-1728369308.png", "pricePerShare": 550, "minPrice": 480, "shares": 800},
-    {"id": 16, "name": "NSE India Limited", "pan": "AAACN1797L", "isin": "INE721I01024", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//nse_india_limited_unlisted_shares-logo-1714982690.png", "pricePerShare": 920, "minPrice": 820, "shares": 300},
-    {"id": 17, "name": "NSDL", "pan": "AADCN9802F", "isin": "INE301O01023", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//nsdl_unlisted_shares-logo-1714982689.png", "pricePerShare": 510, "minPrice": 450, "shares": 600},
-    {"id": 18, "name": "HDFC Securities", "pan": "AAACH8215R", "isin": "INE00CH82150", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//hdfc_securities_limited_unlisted_shares-logo-1714982665.png", "pricePerShare": 580, "minPrice": 500, "shares": 1200},
-    {"id": 19, "name": "HDB Financial Services", "pan": "AABCH8761M", "isin": "INE00CH87610", "sector": "NBFC", "logo": "https://unlistedzone.com/storage/company-logo//hdb_financial_services_limited_unlisted_shares-logo-1714982664.png", "pricePerShare": 420, "minPrice": 350, "shares": 600},
-    {"id": 20, "name": "Hero Fincorp", "pan": "AAACH0157J", "isin": "INE00CH01570", "sector": "NBFC", "logo": "https://unlistedzone.com/storage/company-logo//hero_fincorp_limited_unlisted_shares-logo-1714982666.png", "pricePerShare": 480, "minPrice": 420, "shares": 550},
-    {"id": 21, "name": "Tata Technologies", "pan": "AAACT3092N", "isin": "INE00CT30920", "sector": "IT Services", "logo": "https://unlistedzone.com/storage/company-logo//tata_technologies-logo-1719473844.jpeg", "pricePerShare": 750, "minPrice": 650, "shares": 1000},
-    {"id": 22, "name": "TATA Capital", "pan": "AADCP9147P", "isin": "INE00CP91470", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//tata_capital_unlisted_share-logo-1718882473.png", "pricePerShare": 720, "minPrice": 620, "shares": 900},
-    {"id": 23, "name": "Waaree Energies", "pan": "AAACA4043J", "isin": "INE00CA40430", "sector": "Renewable Energy", "logo": "https://unlistedzone.com/storage/company-logo//waaree_energies_unlisted_shares-logo-1726484803.png", "pricePerShare": 890, "minPrice": 780, "shares": 700},
-    {"id": 24, "name": "OfBusiness (OFB Tech)", "pan": "AACCO1867C", "isin": "INE00CO18670", "sector": "B2B E-commerce", "logo": "https://unlistedzone.com/storage/company-logo//ofbusiness_ofb_tech_private_limited-logo-1718882436.png", "pricePerShare": 920, "minPrice": 820, "shares": 300},
-    {"id": 25, "name": "Bira (B9 Beverages)", "pan": "AAECD6739Q", "isin": "INE00CD67390", "sector": "Beverages", "logo": "https://unlistedzone.com/storage/company-logo//bira_unlisted_shares-logo-1714982604.png", "pricePerShare": 510, "minPrice": 450, "shares": 600},
-    {"id": 26, "name": "HDFC Ergo General Insurance", "pan": "AABCL5045N", "isin": "INE00CL50450", "sector": "Insurance", "logo": "https://unlistedzone.com/storage/company-logo//hdfc_ergo_general_insurance_limited_unlisted_shares-logo-1714982662.png", "pricePerShare": 580, "minPrice": 500, "shares": 1200},
-    {"id": 27, "name": "Niva Bupa Health Insurance", "pan": "AAFCM7916H", "isin": "INE00CM79160", "sector": "Insurance", "logo": "https://unlistedzone.com/storage/company-logo//niva_bupa_health_insurance_company_limited-logo-1718882429.jpeg", "pricePerShare": 420, "minPrice": 350, "shares": 600},
-    {"id": 28, "name": "GoDigit General Insurance", "pan": "AACCO4128Q", "isin": "INE00CO41280", "sector": "Insurance", "logo": "https://unlistedzone.com/storage/company-logo//godigit_general_insurance_limited_unlisted_shares-logo-1714982655.png", "pricePerShare": 480, "minPrice": 420, "shares": 550},
-    {"id": 29, "name": "Northern Arc Capital", "pan": "AACCI0979B", "isin": "INE00CI09790", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//northern_arc_capital_unlisted_shares_price-logo-1718882432.png", "pricePerShare": 650, "minPrice": 570, "shares": 400},
-    {"id": 30, "name": "Five-Star Business Finance", "pan": "AAACF0419M", "isin": "INE00CF04190", "sector": "NBFC", "logo": "https://unlistedzone.com/storage/company-logo//five-star_business_finance-logo-1714982650.png", "pricePerShare": 550, "minPrice": 480, "shares": 800},
-    {"id": 31, "name": "Bluestone Jewellery", "pan": "AADCN6881C", "isin": "INE00CN68810", "sector": "E-commerce", "logo": "https://unlistedzone.com/storage/company-logo//bluestone_jewellery_and_lifestyle_limited-logo-1721731813.png", "pricePerShare": 620, "minPrice": 550, "shares": 800},
-    {"id": 32, "name": "LE Travenues (IXIGO)", "pan": "AABCL1932G", "isin": "INE00CL19320", "sector": "Travel Tech", "logo": "https://unlistedzone.com/storage/company-logo//le_travenues_technology_ixigo_unlisted_share-logo-1718882423.png", "pricePerShare": 750, "minPrice": 650, "shares": 1000},
-    {"id": 33, "name": "Manipal Payment Solutions", "pan": "AAFCM4088E", "isin": "INE00CM40880", "sector": "FinTech", "logo": "https://unlistedzone.com/storage/company-logo//manipal_payment__identity_solutions_ltd_manipal_cards-logo-1718882424.png", "pricePerShare": 720, "minPrice": 620, "shares": 900},
-    {"id": 34, "name": "Hexaware Technologies", "pan": "AABCA3203F", "isin": "INE00CA32030", "sector": "IT Services", "logo": "https://unlistedzone.com/storage/company-logo//hexaware_technologies_unlisted_shares-logo-1714982668.png", "pricePerShare": 890, "minPrice": 780, "shares": 700},
-    {"id": 35, "name": "LAVA International", "pan": "AABCL5987H", "isin": "INE00CL59870", "sector": "Consumer Electronics", "logo": "https://unlistedzone.com/storage/company-logo//lava_international_limited_unlisted_shares-logo-1714982676.png", "pricePerShare": 920, "minPrice": 820, "shares": 300},
-    {"id": 36, "name": "Fractal Analytics", "pan": "AACF4502D1", "isin": "INE00CF45020", "sector": "Analytics", "logo": "https://unlistedzone.com/storage/company-logo//fractal_analytics_limited-logo-1714982651.png", "pricePerShare": 510, "minPrice": 450, "shares": 600},
-    {"id": 37, "name": "Anand Rathi Wealth Services", "pan": "AAACH8136P", "isin": "INE00CH81360", "sector": "Financial Services", "logo": "https://unlistedzone.com/storage/company-logo//anand_rathi_wealth_services-logo-1714982599.png", "pricePerShare": 580, "minPrice": 500, "shares": 1200},
-    {"id": 38, "name": "Parag Parikh Financial Advisory (PPFAS)", "pan": "AABCP9117F", "isin": "INE00CP91170", "sector": "Asset Management", "logo": "https://unlistedzone.com/storage/company-logo//parag_parikh_financial_advisory_services_ltd._ppfas-logo-1718882438.png", "pricePerShare": 420, "minPrice": 350, "shares": 600},
-    {"id": 39, "name": "UTI AMC", "pan": "AAACU6260F", "isin": "INE00CU62600", "sector": "Asset Management", "logo": "https://unlistedzone.com/storage/company-logo//uti_amc-logo-1714982718.png", "pricePerShare": 480, "minPrice": 420, "shares": 550},
-    {"id": 40, "name": "SBI General Insurance", "pan": "AAMCS8857L", "isin": "INE00CS88570", "sector": "Insurance", "logo": "https://unlistedzone.com/storage/company-logo//sbi_general_insurance_unlisted_shares-logo-1714982706.png", "pricePerShare": 650, "minPrice": 570, "shares": 400}
-  ]
-}
+[
+    {
+        "Logo": "",
+        "CompanyName": "PNB Metlife India Insurance Company Limited",
+        "ScripName": "PNB Metlife",
+        "ISIN": "INE207O01014",
+        "PAN": "AACCM6448H",
+        "CIN": "U66010KA2001PLC028883",
+        "RegistrationDate": "11/04/2001",
+        "Sector": "Life Insurance"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Reliance General Insurance Company Limited",
+        "ScripName": "Reliance GIC",
+        "ISIN": "INE124D01014",
+        "PAN": "AABCR6747B",
+        "CIN": "U66030MH2000PLC128300",
+        "RegistrationDate": "17/08/2000",
+        "Sector": "General Insurance"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "SBI General Insurance Company Ltd",
+        "ScripName": "SBI General Insurance",
+        "ISIN": "INE01MM01017",
+        "PAN": "AAMCS8857L",
+        "CIN": "U66000MH2009PLC190546",
+        "RegistrationDate": "20/02/2009",
+        "Sector": "General Insurance"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Hinduja Leyland Finance Limited",
+        "ScripName": "Hinduja Leyland",
+        "ISIN": "INE146O01014",
+        "PAN": "AACCH1807P",
+        "CIN": "U65993MH2008PLC384221",
+        "RegistrationDate": "12/11/2008",
+        "Sector": "Financial Service"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Parag Parikh Financial Advisory Services Ltd",
+        "ScripName": "PPFAS",
+        "ISIN": "INE0FGC01012",
+        "PAN": "AABCP9117F",
+        "CIN": "U67190MH1992PLC068970",
+        "RegistrationDate": "12/10/1992",
+        "Sector": "Financial Service"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Hero Motors Limited",
+        "ScripName": "Hero Motors",
+        "ISIN": "INE012G01022",
+        "PAN": "AAACH4073P",
+        "CIN": "U29299PB1998PLC039602",
+        "RegistrationDate": "30/04/1998",
+        "Sector": "Automobile"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Vivriti Capital Limited",
+        "ScripName": "Vivriti Capital",
+        "ISIN": "INE01HV01018",
+        "PAN": "AAFCV9757P",
+        "CIN": "U65929TN2017PLC117196",
+        "RegistrationDate": "22/06/2017",
+        "Sector": "Financial Service"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "ASK Investment Managers Limited",
+        "ScripName": "ASK Investment",
+        "ISIN": "INE925L01025",
+        "PAN": "AAFCA2302P",
+        "CIN": "U65993MH2004PLC147890",
+        "RegistrationDate": "09/08/2004",
+        "Sector": "Financial Service"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "Incred Holdings Limited",
+        "ScripName": "Incred Holdings",
+        "ISIN": "INE732W01014",
+        "PAN": "AAECK1977B",
+        "CIN": "U67190MH2011PLC211738",
+        "RegistrationDate": "03/01/2011",
+        "Sector": "Investment & Holding"
+    },
+    {
+        "Logo": "",
+        "CompanyName": "API Holdings Ltd",
+        "ScripName": "PharmEasy",
+        "ISIN": "INEDJ201029",
+        "PAN": "AASCA1201E",
+        "CIN": "U60100MH2019PLC323444",
+        "RegistrationDate": "31/03/2019",
+        "Sector": "eCommerce"
+    }
+]
