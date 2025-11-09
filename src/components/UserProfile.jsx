@@ -454,18 +454,19 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* BANK TAB */}
             {activeTab === 'bank' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
-                    <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.bank?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
-                      </span>
-                      {!editingBank && (
-                        <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
-                      )}
+                {formData.bank?.accountHolderName || formData.bank?.accountNumber ? (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
+                      <div className="flex gap-2">
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {formData.bank?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                        </span>
+                        {!editingBank && (
+                          <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank?.accountHolderName || 'Not set'}</span></div>
                     <div><span className="text-gray-600">Bank:</span> <span className="font-semibold">{formData.bank?.bankName || 'Not set'}</span></div>
@@ -473,6 +474,15 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     <div><span className="text-gray-600">IFSC:</span> <span className="font-semibold">{formData.bank?.ifsc || 'Not set'}</span></div>
                   </div>
                 </div>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
+                    <p className="text-blue-700 font-semibold mb-2">No bank details added yet</p>
+                    <p className="text-blue-600 text-sm mb-4">Add your bank account information to enable transactions</p>
+                    <button onClick={() => setEditingBank(true)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+                      + Add Bank Details
+                    </button>
+                  </div>
+                )}
 
                 {editingBank && (
                   <div className="space-y-4 border-2 border-purple-300 rounded-lg p-4">
@@ -495,14 +505,15 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* DEMAT TAB */}
             {activeTab === 'demat' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
-                    <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.demat?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
-                      </span>
-                      {!editingDemat && (
+                {formData.demat?.dpName || formData.demat?.clientId ? (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
+                      <div className="flex gap-2">
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {formData.demat?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                        </span>
+                        {!editingDemat && (
                         <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
                       )}
                     </div>
@@ -514,6 +525,15 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     <div><span className="text-gray-600">Experience:</span> <span className="font-semibold">{formData.demat?.tradingExperience || 'Not set'}</span></div>
                   </div>
                 </div>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
+                    <p className="text-blue-700 font-semibold mb-2">No demat details added yet</p>
+                    <p className="text-blue-600 text-sm mb-4">Add your demat account information for trading</p>
+                    <button onClick={() => setEditingDemat(true)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+                      + Add Demat Details
+                    </button>
+                  </div>
+                )}
 
                 {editingDemat && (
                   <div className="space-y-4 border-2 border-purple-300 rounded-lg p-4">
