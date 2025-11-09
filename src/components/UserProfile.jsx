@@ -1,65 +1,76 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const PERSONAL_FIELDS = ['dob', 'gender', 'address', 'city', 'state', 'pincode'];
+const BANK_FIELDS = ['accountHolderName', 'bankName', 'accountNumber', 'ifsc', 'branchName', 'accountType'];
+const DEMAT_FIELDS = ['dpName', 'dpId', 'clientId', 'brokingHouse', 'tradingExperience'];
+const DOCUMENT_KEYS = ['pan', 'aadhar', 'cancelCheque', 'cmlCopy'];
+const DOCUMENT_LIST = [
+  { key: 'pan', label: 'PAN Card', helper: 'Upload a clear copy of your PAN card.' },
+  { key: 'aadhar', label: 'Aadhaar Card', helper: 'Front and back in a single PDF or image.' },
+  { key: 'cancelCheque', label: 'Cancelled Cheque', helper: 'Use a recent cheque leaf with “Cancelled” written across.' },
+  { key: 'cmlCopy', label: 'Client Master List (CML)', helper: 'Download from your broker and upload the latest signed copy.' }
+];
+
+const normalizeDocument = (value) => {
+  if (!value) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    const fileName = value.split('/').pop() || 'document';
+    return { name: fileName, data: value };
+  }
+  if (value.fileName || value.name) {
+    return {
+      name: value.name || value.fileName,
+      data: value.data || value.url || value.fileUrl || ''
+    };
+  }
+  return value;
+};
+
+const createInitialFormData = (currentUser) => ({
+  name: currentUser?.name || '',
+  email: currentUser?.email || '',
+  mobile: currentUser?.mobile || '',
+  profilePhoto: currentUser?.profilePhoto || '',
+  hideContactInfo: currentUser?.hideContactInfo || false,
+  personal: {
+    dob: currentUser?.personal?.dob || '',
+    gender: currentUser?.personal?.gender || '',
+    address: currentUser?.personal?.address || '',
+    city: currentUser?.personal?.city || '',
+    state: currentUser?.personal?.state || '',
+    pincode: currentUser?.personal?.pincode || '',
+    occupation: currentUser?.personal?.occupation || ''
+  },
+  bank: {
+    accountHolderName: currentUser?.bank?.accountHolderName || currentUser?.name || '',
+    bankName: currentUser?.bank?.bankName || '',
+    accountNumber: currentUser?.bank?.accountNumber || '',
+    ifsc: currentUser?.bank?.ifsc || '',
+    branchName: currentUser?.bank?.branchName || '',
+    accountType: currentUser?.bank?.accountType || '',
+    upiId: currentUser?.bank?.upiId || ''
+  },
+  demat: {
+    dpName: currentUser?.demat?.dpName || '',
+    dpId: currentUser?.demat?.dpId || '',
+    clientId: currentUser?.demat?.clientId || '',
+    brokingHouse: currentUser?.demat?.brokingHouse || '',
+    nominee: currentUser?.demat?.nominee || '',
+    tradingExperience: currentUser?.demat?.tradingExperience || ''
+  },
+  documents: {
+    pan: normalizeDocument(currentUser?.documents?.pan),
+    aadhar: normalizeDocument(currentUser?.documents?.aadhar),
+    cancelCheque: normalizeDocument(currentUser?.documents?.cancelCheque),
+    cmlCopy: normalizeDocument(currentUser?.documents?.cmlCopy)
+  }
+});
+
 export default function UserProfile({ onClose }) {
   const { user } = useAuth();
-
-  const normalizeDocument = (value) => {
-    if (!value) {
-      return null;
-    }
-    if (typeof value === 'string') {
-      const fileName = value.split('/').pop() || 'document';
-      return { name: fileName, data: value };
-    }
-    if (value.fileName || value.name) {
-      return {
-        name: value.name || value.fileName,
-        data: value.data || value.url || value.fileUrl || ''
-      };
-    }
-    return value;
-  };
-
-  const createInitialFormData = (currentUser) => ({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    mobile: currentUser?.mobile || '',
-    profilePhoto: currentUser?.profilePhoto || '',
-    hideContactInfo: currentUser?.hideContactInfo || false,
-    personal: {
-      dob: currentUser?.personal?.dob || '',
-      gender: currentUser?.personal?.gender || '',
-      address: currentUser?.personal?.address || '',
-      city: currentUser?.personal?.city || '',
-      state: currentUser?.personal?.state || '',
-      pincode: currentUser?.personal?.pincode || '',
-      occupation: currentUser?.personal?.occupation || ''
-    },
-    bank: {
-      accountHolderName: currentUser?.bank?.accountHolderName || currentUser?.name || '',
-      bankName: currentUser?.bank?.bankName || '',
-      accountNumber: currentUser?.bank?.accountNumber || '',
-      ifsc: currentUser?.bank?.ifsc || '',
-      branchName: currentUser?.bank?.branchName || '',
-      accountType: currentUser?.bank?.accountType || '',
-      upiId: currentUser?.bank?.upiId || ''
-    },
-    demat: {
-      dpName: currentUser?.demat?.dpName || '',
-      dpId: currentUser?.demat?.dpId || '',
-      clientId: currentUser?.demat?.clientId || '',
-      brokingHouse: currentUser?.demat?.brokingHouse || '',
-      nominee: currentUser?.demat?.nominee || '',
-      tradingExperience: currentUser?.demat?.tradingExperience || ''
-    },
-    documents: {
-      pan: normalizeDocument(currentUser?.documents?.pan),
-      aadhar: normalizeDocument(currentUser?.documents?.aadhar),
-      cancelCheque: normalizeDocument(currentUser?.documents?.cancelCheque),
-      cmlCopy: normalizeDocument(currentUser?.documents?.cmlCopy)
-    }
-  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(() => createInitialFormData(user));
@@ -73,30 +84,19 @@ export default function UserProfile({ onClose }) {
   const [generatedEmailOTP, setGeneratedEmailOTP] = useState('');
   const [generatedMobileOTP, setGeneratedMobileOTP] = useState('');
 
-  const personalFields = ['dob', 'gender', 'address', 'city', 'state', 'pincode'];
-  const bankFields = ['accountHolderName', 'bankName', 'accountNumber', 'ifsc', 'branchName', 'accountType'];
-  const dematFields = ['dpName', 'dpId', 'clientId', 'brokingHouse', 'tradingExperience'];
-  const documentKeys = ['pan', 'aadhar', 'cancelCheque', 'cmlCopy'];
-  const documentList = [
-    { key: 'pan', label: 'PAN Card', helper: 'Upload a clear copy of your PAN card.' },
-    { key: 'aadhar', label: 'Aadhaar Card', helper: 'Front and back in a single PDF or image.' },
-    { key: 'cancelCheque', label: 'Cancelled Cheque', helper: 'Use a recent cheque leaf with “Cancelled” written across.' },
-    { key: 'cmlCopy', label: 'Client Master List (CML)', helper: 'Download from your broker and upload the latest signed copy.' }
-  ];
-
   const sectionCompletion = useMemo(() => ({
-    personal: personalFields.every((field) => formData.personal[field]),
-    bank: bankFields.every((field) => formData.bank[field]),
-    demat: dematFields.every((field) => formData.demat[field]),
-    documents: documentKeys.every((field) => formData.documents[field])
+    personal: PERSONAL_FIELDS.every((field) => formData.personal[field]),
+    bank: BANK_FIELDS.every((field) => formData.bank[field]),
+    demat: DEMAT_FIELDS.every((field) => formData.demat[field]),
+    documents: DOCUMENT_KEYS.every((field) => formData.documents[field])
   }), [formData]);
 
   const profileCompletion = useMemo(() => {
-    const totalFields = personalFields.length + bankFields.length + dematFields.length + documentKeys.length;
-    const completedPersonal = personalFields.filter((field) => formData.personal[field]).length;
-    const completedBank = bankFields.filter((field) => formData.bank[field]).length;
-    const completedDemat = dematFields.filter((field) => formData.demat[field]).length;
-    const completedDocs = documentKeys.filter((field) => formData.documents[field]).length;
+    const totalFields = PERSONAL_FIELDS.length + BANK_FIELDS.length + DEMAT_FIELDS.length + DOCUMENT_KEYS.length;
+    const completedPersonal = PERSONAL_FIELDS.filter((field) => formData.personal[field]).length;
+    const completedBank = BANK_FIELDS.filter((field) => formData.bank[field]).length;
+    const completedDemat = DEMAT_FIELDS.filter((field) => formData.demat[field]).length;
+    const completedDocs = DOCUMENT_KEYS.filter((field) => formData.documents[field]).length;
     return Math.round(((completedPersonal + completedBank + completedDemat + completedDocs) / totalFields) * 100);
   }, [formData]);
 
@@ -762,7 +762,7 @@ export default function UserProfile({ onClose }) {
                     </div>
                     <p className="text-xs text-gray-600 mb-4">Upload clear copies. Supported formats: PDF, JPG, PNG (max 5&nbsp;MB each).</p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {documentList.map((doc) => {
+                      {DOCUMENT_LIST.map((doc) => {
                         const uploaded = formData.documents[doc.key];
                         return (
                           <div key={doc.key} className="border border-dashed border-gray-300 rounded-xl bg-gray-50 p-4">
