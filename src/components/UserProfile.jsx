@@ -183,7 +183,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 mb-6">
