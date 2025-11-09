@@ -69,7 +69,7 @@ const createInitialFormData = (currentUser) => ({
   }
 });
 
-export default function UserProfile({ onClose }) {
+export default function UserProfile() {
   const { user } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -225,18 +225,9 @@ export default function UserProfile({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-fadeIn" onClick={onClose} style={{ margin: 0, padding: '1rem' }}>
-      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()} style={{ margin: 'auto' }}>
+    <div className="bg-white rounded-2xl shadow p-6 w-full max-w-3xl mx-auto my-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">User Profile</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-gray-900 transition"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         <div className="border-2 border-gray-100 rounded-xl p-4">
@@ -863,7 +854,6 @@ export default function UserProfile({ onClose }) {
             </div>
           </form>
         </div>
-      </div>
     </div>
   );
 }
