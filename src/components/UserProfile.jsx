@@ -226,176 +226,187 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6 w-full max-w-4xl mx-auto my-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">👤 Investor Profile</h2>
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className={`px-4 py-2 rounded-lg font-semibold transition ${
-            isEditing
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-purple-600 text-white hover:bg-purple-700'
-          }`}
-        >
-          {isEditing ? '✕ Cancel' : '✏️ Edit Profile'}
-        </button>
-      </div>
-
-      {/* Profile Completion Widget */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4 mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-semibold text-purple-700">Profile Completion</p>
-          <span className="text-lg font-bold text-purple-700">{profileCompletion}%</span>
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 bg-white rounded-2xl shadow-lg p-6">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">👤 Investor Profile</h1>
+            <p className="text-gray-600 mt-1">Complete your KYC and profile information</p>
+          </div>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`px-6 py-3 rounded-lg font-bold transition text-lg ${
+              isEditing
+                ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg'
+                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg'
+            }`}
+          >
+            {isEditing ? '✕ Cancel' : '✏️ Edit Profile'}
+          </button>
         </div>
-        <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
-          <div
-            className="h-2 bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
-            style={{ width: `${profileCompletion}%` }}
-          />
-        </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
-        <div className="flex gap-4 overflow-x-auto">
-          {[
-            { id: 'contact', label: '📧 Contact Info', icon: '📧' },
-            { id: 'personal', label: '👤 Personal', icon: '👤' },
-            { id: 'bank', label: '🏦 Bank Details', icon: '🏦' },
-            { id: 'demat', label: '📈 Demat', icon: '📈' },
-            { id: 'documents', label: '📄 Documents', icon: '📄' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 font-semibold border-b-2 transition whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-purple-600 text-purple-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Main Content Container */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Profile Completion Widget */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 p-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-lg font-bold text-purple-700">📊 Profile Completion Status</p>
+              <span className="text-3xl font-bold text-purple-700">{profileCompletion}%</span>
+            </div>
+            <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
+              <div
+                className="h-3 bg-gradient-to-r from-purple-500 to-pink-500 transition-all rounded-full"
+                style={{ width: `${profileCompletion}%` }}
+              />
+            </div>
+          </div>
 
-      {/* Profile Photo Section - Always Visible */}
-      <div className="flex flex-col items-center mb-8">
-        <div className="relative">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-5xl overflow-hidden border-4 border-purple-200">
-            {formData.profilePhoto ? (
-              <img src={formData.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              formData.name.charAt(0).toUpperCase()
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <div className="flex gap-2 overflow-x-auto px-6 bg-white">
+              {[
+                { id: 'contact', label: '📧 Contact Info', icon: '📧' },
+                { id: 'personal', label: '👤 Personal', icon: '👤' },
+                { id: 'bank', label: '🏦 Bank Details', icon: '🏦' },
+                { id: 'demat', label: '📈 Demat', icon: '📈' },
+                { id: 'documents', label: '📄 Documents', icon: '📄' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-6 py-4 font-semibold border-b-4 transition whitespace-nowrap text-base ${
+                    activeTab === tab.id
+                      ? 'border-purple-600 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Profile Content */}
+          <div className="p-8">
+            {/* Profile Photo Section - Always Visible */}
+            <div className="flex flex-col items-center mb-12 pb-8 border-b border-gray-200">
+              <div className="relative">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-5xl overflow-hidden border-4 border-purple-200">
+                  {formData.profilePhoto ? (
+                    <img src={formData.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    formData.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                {isEditing && (
+                  <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition shadow-lg">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handlePhotoUpload} 
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mt-4">{formData.name}</h3>
+              <p className="text-sm text-gray-500">{formData.email}</p>
+            </div>
+
+            {/* Tab Content */}
+            <form onSubmit={handleSave} className="space-y-6">
+            {/* OTP Verification Sections */}
+            {verificationStep === 'email' && (
+              <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
+                <h4 className="text-sm font-bold text-blue-900 mb-3">📧 Verify Email</h4>
+                <input 
+                  type="text" 
+                  placeholder="Enter 6-digit OTP" 
+                  value={emailOTP} 
+                  onChange={(e) => setEmailOTP(e.target.value)}
+                  maxLength="6"
+                  className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 text-center font-bold tracking-widest"
+                  required 
+                />
+              </div>
             )}
-          </div>
-          {isEditing && (
-            <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition shadow-lg">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handlePhotoUpload} 
-                className="hidden"
-              />
-            </label>
-          )}
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mt-4">{formData.name}</h3>
-        <p className="text-sm text-gray-500">{formData.email}</p>
-      </div>
 
-      {/* Tab Content */}
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* OTP Verification Sections */}
-        {verificationStep === 'email' && (
-          <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
-            <h4 className="text-sm font-bold text-blue-900 mb-3">📧 Verify Email</h4>
-            <input 
-              type="text" 
-              placeholder="Enter 6-digit OTP" 
-              value={emailOTP} 
-              onChange={(e) => setEmailOTP(e.target.value)}
-              maxLength="6"
-              className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 text-center font-bold tracking-widest"
-              required 
-            />
-          </div>
-        )}
+            {verificationStep === 'mobile' && (
+              <div className="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
+                <h4 className="text-sm font-bold text-green-900 mb-3">📱 Verify Mobile</h4>
+                <input 
+                  type="text" 
+                  placeholder="Enter 6-digit OTP" 
+                  value={mobileOTP} 
+                  onChange={(e) => setMobileOTP(e.target.value)}
+                  maxLength="6"
+                  className="w-full border-2 border-green-300 rounded-lg px-3 py-2 text-center font-bold tracking-widest"
+                  required 
+                />
+              </div>
+            )}
 
-        {verificationStep === 'mobile' && (
-          <div className="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
-            <h4 className="text-sm font-bold text-green-900 mb-3">📱 Verify Mobile</h4>
-            <input 
-              type="text" 
-              placeholder="Enter 6-digit OTP" 
-              value={mobileOTP} 
-              onChange={(e) => setMobileOTP(e.target.value)}
-              maxLength="6"
-              className="w-full border-2 border-green-300 rounded-lg px-3 py-2 text-center font-bold tracking-widest"
-              required 
-            />
-          </div>
-        )}
+            {/* Contact Info Tab */}
+            {activeTab === 'contact' && !verificationStep && (
+              <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                <input 
+                  type="text" 
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  disabled={!isEditing}
+                  className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900 outline-none transition ${
+                    isEditing 
+                      ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  }`}
+                />
+              </div>
 
-        {/* Contact Info Tab */}
-        {activeTab === 'contact' && !verificationStep && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-              <input 
-                type="text" 
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                disabled={!isEditing}
-                className={`w-full border-2 rounded-lg px-4 py-2.5 text-gray-900 outline-none transition ${
-                  isEditing 
-                    ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                }`}
-              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address {isEditing && emailChanged && <span className="text-orange-500">*</span>}
+                </label>
+                <input 
+                  type="email" 
+                  value={formData.email}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  disabled={!isEditing}
+                  className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900 outline-none transition ${
+                    isEditing 
+                      ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mobile Number {isEditing && mobileChanged && <span className="text-orange-500">*</span>}
+                </label>
+                <input 
+                  type="tel" 
+                  value={formData.mobile}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, mobile: e.target.value }))}
+                  disabled={!isEditing}
+                  placeholder="10-digit number"
+                  className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900 outline-none transition ${
+                    isEditing 
+                      ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  }`}
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address {isEditing && emailChanged && <span className="text-orange-500">*</span>}
-              </label>
-              <input 
-                type="email" 
-                value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                disabled={!isEditing}
-                className={`w-full border-2 rounded-lg px-4 py-2.5 text-gray-900 outline-none transition ${
-                  isEditing 
-                    ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mobile Number {isEditing && mobileChanged && <span className="text-orange-500">*</span>}
-              </label>
-              <input 
-                type="tel" 
-                value={formData.mobile}
-                onChange={(e) => setFormData((prev) => ({ ...prev, mobile: e.target.value }))}
-                disabled={!isEditing}
-                placeholder="10-digit number"
-                className={`w-full border-2 rounded-lg px-4 py-2.5 text-gray-900 outline-none transition ${
-                  isEditing 
-                    ? 'border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200' 
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                }`}
-              />
-            </div>
-
-            <div className="border-t pt-4">
+            <div className="border-t pt-6">
               <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                 <input
                   type="checkbox"
@@ -404,15 +415,18 @@ export default function UserProfile() {
                   disabled={!isEditing}
                   className="w-5 h-5"
                 />
-                <span className="text-sm font-semibold text-gray-700">🔒 Hide contact details from other users</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">🔒 Hide contact details from other users</p>
+                  <p className="text-xs text-gray-500 mt-1">Your email and mobile will be private</p>
+                </div>
               </label>
             </div>
           </div>
-        )}
+            )}
 
-        {/* Personal Info Tab */}
-        {activeTab === 'personal' && !verificationStep && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Personal Info Tab */}
+            {activeTab === 'personal' && !verificationStep && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
               <input
@@ -443,7 +457,7 @@ export default function UserProfile() {
               </select>
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="lg:col-span-3">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
               <textarea
                 value={formData.personal.address}
@@ -509,12 +523,12 @@ export default function UserProfile() {
               />
             </div>
           </div>
-        )}
+            )}
 
-        {/* Bank Details Tab */}
-        {activeTab === 'bank' && !verificationStep && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
+            {/* Bank Details Tab */}
+            {activeTab === 'bank' && !verificationStep && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-3">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
               <input
                 type="text"
@@ -596,7 +610,7 @@ export default function UserProfile() {
               </select>
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="lg:col-span-3">
               <label className="block text-sm font-semibold text-gray-700 mb-2">UPI ID (Optional)</label>
               <input
                 type="text"
@@ -610,11 +624,11 @@ export default function UserProfile() {
               />
             </div>
           </div>
-        )}
+            )}
 
-        {/* Demat Tab */}
-        {activeTab === 'demat' && !verificationStep && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Demat Tab */}
+            {activeTab === 'demat' && !verificationStep && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">DP Name</label>
               <input
@@ -698,11 +712,11 @@ export default function UserProfile() {
               />
             </div>
           </div>
-        )}
+            )}
 
-        {/* Documents Tab */}
-        {activeTab === 'documents' && !verificationStep && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Documents Tab */}
+            {activeTab === 'documents' && !verificationStep && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {DOCUMENT_LIST.map((doc) => {
               const uploaded = formData.documents[doc.key];
               return (
@@ -788,6 +802,9 @@ export default function UserProfile() {
           )}
         </div>
       </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
