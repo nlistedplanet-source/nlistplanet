@@ -1715,7 +1715,7 @@ Report ID: ${listing._id || listing.id}
 			case 'support':
 				return renderSupport();
 			case 'profile':
-				return <div className="p-0 sm:p-6 max-w-3xl mx-auto"><UserProfile /></div>;
+				return <UserProfile />;
 			default:
 				return renderBrowse();
 		}

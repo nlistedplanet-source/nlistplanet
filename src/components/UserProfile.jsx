@@ -182,8 +182,8 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const inputClass = `w-full border-2 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base outline-none transition border-purple-300 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200`;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
-      <div className="w-full mx-auto">
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-2 px-2 sm:px-3 lg:px-4">
+      <div className="w-full">
         
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 mb-6">
