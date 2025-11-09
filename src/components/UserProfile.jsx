@@ -108,11 +108,15 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   // Sync API profile to local state when loaded
   useEffect(() => {
     console.log('[UserProfile] useEffect triggered, apiProfile:', apiProfile);
-    if (apiProfile && apiProfile.name !== 'Guest User') {
+    // Only sync if apiProfile has real data (not FALLBACK_PROFILE)
+    if (apiProfile && apiProfile.name !== 'Guest User' && apiProfile.email) {
       console.log('[UserProfile] Syncing apiProfile to formData');
       setFormData(normalizeUserData(apiProfile));
       if (apiProfile.bank) setBankEditData(apiProfile.bank);
       if (apiProfile.demat) setDematEditData(apiProfile.demat);
+    } else {
+      console.log('[UserProfile] apiProfile is FALLBACK, keeping currentUser data');
+      // Keep using currentUser which has email/mobile from auth
     }
   }, [apiProfile]);
   
