@@ -1171,7 +1171,7 @@ export default function UserDashboard({ setPage }) {
 				<span>Open Buy Requests</span>
 			</button>
 		</div>			{browseFilter === 'sell' ? (
-				<div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 					{availableListings.length === 0 ? (
 						<EmptyState
 							icon=""
@@ -1275,7 +1275,7 @@ export default function UserDashboard({ setPage }) {
 					)}
 				</div>
 			) : (
-				<div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 					{availableRequests.length === 0 ? (
 						<EmptyState
 							icon=""
