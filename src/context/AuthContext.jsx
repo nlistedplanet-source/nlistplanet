@@ -15,11 +15,28 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const savedRole = localStorage.getItem('currentRole');
-    
-    if (token && savedRole) {
-      // Token exists, restore role
-      setCurrentRole(savedRole);
-      // User data will be fetched from backend using the token if needed
+    const storedUser = localStorage.getItem('authUser');
+
+    if (token && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        const role = savedRole || (parsedUser?.roles?.includes('admin') ? 'admin' : 'buyer');
+        setCurrentRole(role);
+        localStorage.setItem('currentRole', role);
+      } catch (err) {
+        console.warn('Failed to parse stored auth user:', err);
+        localStorage.removeItem('authUser');
+        setUser(null);
+        setCurrentRole('buyer');
+      }
+    } else {
+      if (!token) {
+        localStorage.removeItem('authUser');
+        localStorage.removeItem('currentRole');
+      }
+      setUser(null);
+      setCurrentRole('buyer');
     }
   }, []);
 
@@ -40,6 +57,7 @@ export function AuthProvider({ children }) {
           kycStatus: response.data.user.kycStatus || 'incomplete',
         };
         setUser(normalizedUser);
+        localStorage.setItem('authUser', JSON.stringify(normalizedUser));
         
         // Set default role based on user type
   const defaultRole = normalizedUser.roles?.includes('admin') ? 'admin' : 'buyer';
@@ -96,6 +114,7 @@ export function AuthProvider({ children }) {
           kycStatus: response.data.user.kycStatus || 'incomplete',
         };
         setUser(normalizedUser);
+        localStorage.setItem('authUser', JSON.stringify(normalizedUser));
         
         // Set default role based on user type
   const defaultRole = normalizedUser.roles?.includes('admin') ? 'admin' : 'buyer';
@@ -236,6 +255,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentRole');
     localStorage.removeItem('lastVisitedPage');
+    localStorage.removeItem('authUser');
   };
 
   const switchRole = (role) => {
