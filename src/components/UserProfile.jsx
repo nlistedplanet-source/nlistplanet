@@ -162,7 +162,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   const handleVerifyOTP = async () => {
     try {
       const res = await apiVerifyOTP(otpField, otpCode);
-      if (res && (res.ok || otpCode === '1234')) {
+      if (res && res.ok) {
         setFormData((prev) => ({ ...prev, ...tempData }));
         // Try to update profile via API
         try {
@@ -176,7 +176,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
         setEditingMobile(false);
         alert('✅ ' + (otpField === 'email' ? 'Email' : 'Mobile') + ' verified successfully!');
       } else {
-        alert('❌ Invalid OTP. Try again!');
+        alert('❌ Invalid OTP. Please check and try again!');
       }
     } catch (err) {
       alert('❌ Invalid OTP. Try again!');
@@ -557,7 +557,14 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Verify OTP</h2>
             <p className="text-gray-600 mb-4">Enter the OTP sent to your {otpField}</p>
-            <input type="text" placeholder="Enter OTP (Demo: 1234)" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" maxLength="4" />
+            <input 
+              type="text" 
+              placeholder="Enter 6-digit OTP" 
+              value={otpCode} 
+              onChange={(e) => setOtpCode(e.target.value)} 
+              className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" 
+              maxLength="6" 
+            />
             <div className="flex gap-3">
               <button onClick={() => setShowOTPModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
               <button onClick={handleVerifyOTP} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">Verify</button>
