@@ -342,8 +342,18 @@ export default function UserDashboard({ setPage }) {
 		[sellListings, listingBelongsToUser]
 	);
 	const myRequests = useMemo(
-		() => buyRequests.filter(requestBelongsToUser),
-		[buyRequests, requestBelongsToUser]
+		() => {
+			const filtered = buyRequests.filter(requestBelongsToUser);
+			console.log('=== BUY REQUESTS DEBUG ===');
+			console.log('Total buyRequests:', buyRequests.length);
+			console.log('All buyRequests:', buyRequests);
+			console.log('Current user:', user);
+			console.log('Filtered myRequests:', filtered.length);
+			console.log('myRequests:', filtered);
+			console.log('========================');
+			return filtered;
+		},
+		[buyRequests, requestBelongsToUser, user]
 	);
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 
