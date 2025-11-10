@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
@@ -12,7 +12,28 @@ import { CompanyProvider } from './context/CompanyContext';
 import { PortfolioProvider } from './context/PortfolioContext';
 
 export default function App() {
-  const [page, setPage] = useState('home');
+  const getInitialPage = useCallback(() => {
+    if (typeof window === 'undefined') return 'home';
+    const saved = localStorage.getItem('lastVisitedPage');
+    const token = localStorage.getItem('authToken');
+    if (saved === 'user' || saved === 'admin') {
+      return token ? saved : 'home';
+    }
+    return saved || 'home';
+  }, []);
+
+  const [page, setPageState] = useState(() => getInitialPage());
+
+  const setPage = useCallback((nextPage) => {
+    setPageState(nextPage);
+    if (typeof window !== 'undefined') {
+      if (nextPage === 'user' || nextPage === 'admin') {
+        localStorage.setItem('lastVisitedPage', nextPage);
+      } else {
+        localStorage.removeItem('lastVisitedPage');
+      }
+    }
+  }, []);
 
   const renderPage = () => {
     switch (page) {

@@ -235,6 +235,7 @@ export function AuthProvider({ children }) {
     setCurrentRole('buyer');
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentRole');
+    localStorage.removeItem('lastVisitedPage');
   };
 
   const switchRole = (role) => {
