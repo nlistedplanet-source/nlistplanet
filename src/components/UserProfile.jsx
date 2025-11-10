@@ -397,11 +397,33 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
                     <input 
-                      type="date" 
-                      value={formData.personal?.dob || ''} 
-                      onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} 
+                      type="text" 
+                      value={(() => {
+                        const dob = formData.personal?.dob;
+                        if (!dob) return '';
+                        // Convert YYYY-MM-DD to MM-DD-YYYY
+                        const [year, month, day] = dob.split('-');
+                        return month && day && year ? `${month}-${day}-${year}` : dob;
+                      })()}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/[^0-9-]/g, '');
+                        // Auto-format as MM-DD-YYYY
+                        if (value.length === 2 && !value.includes('-')) value += '-';
+                        if (value.length === 5 && value.split('-').length === 2) value += '-';
+                        if (value.length <= 10) {
+                          // Convert MM-DD-YYYY back to YYYY-MM-DD for storage
+                          const parts = value.split('-');
+                          if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+                            const isoDate = `${parts[2]}-${parts[0]}-${parts[1]}`;
+                            updateSectionField('personal', 'dob', isoDate);
+                          } else {
+                            updateSectionField('personal', 'dob', value);
+                          }
+                        }
+                      }}
+                      placeholder="MM-DD-YYYY"
                       className={inputClass}
-                      placeholder="DD-MM-YYYY"
+                      maxLength="10"
                     />
                   </div>
                   <div>
