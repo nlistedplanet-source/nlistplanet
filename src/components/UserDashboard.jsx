@@ -1218,49 +1218,7 @@ export default function UserDashboard({ setPage }) {
 											>
 												<Share2 className="w-4 h-4" />
 											</button>
-											<button
-											onClick={() => {
-												const reportContent = `
-===========================================
-NLIST - RESEARCH REPORT
-===========================================
-
-Company: ${listing.company}
-ISIN: ${listing.isin || 'N/A'}
-Sector: ${company?.sector || 'N/A'}
-
-LISTING DETAILS
---------------
-Seller: ${sellerUsername}
-Ask Price: ${formatCurrency(listing.price)}
-Available Shares: ${formatShares(listing.shares)}
-Listed Date: ${listingDate}
-Status: ${listing.status}
-
-Market Overview: ${company?.description || 'N/A'}
-
-===========================================
-Generated on: ${new Date().toLocaleString('en-IN')}
-Report ID: ${listing._id || listing.id}
-===========================================
-												`.trim();
-												
-												const blob = new Blob([reportContent], { type: 'text/plain' });
-												const url = URL.createObjectURL(blob);
-												const a = document.createElement('a');
-												a.href = url;
-												a.download = `${listing.company}-Research-Report.txt`;
-												a.click();
-												URL.revokeObjectURL(url);
-											}}
-											className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-gray-600 border-2 border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 ml-2"
-											title="Download Report"
-										>
-											<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-											</svg>
-										</button>
-									</div>
+										</div>
 								</div>
 							</div>
 							);
