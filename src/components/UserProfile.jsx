@@ -149,12 +149,16 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
       setOtpField('mobile');
       setTempData({ mobile: formData.mobile });
       try {
-        await apiSendOTP('mobile', formData.mobile);
+        // Add +91 prefix for Indian mobile numbers if not already present
+        const mobileWithPrefix = formData.mobile.startsWith('+91') 
+          ? formData.mobile 
+          : `+91${formData.mobile}`;
+        await apiSendOTP('mobile', mobileWithPrefix);
         setShowOTPModal(true);
         alert('OTP sent to your mobile!');
       } catch (err) {
-        setShowOTPModal(true);
-        alert('OTP sent to your mobile! (Demo mode)');
+        console.error('OTP send error:', err);
+        alert('Failed to send OTP. Please check your mobile number or try again later.');
       }
     }
   };
