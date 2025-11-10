@@ -141,6 +141,8 @@ export function AuthProvider({ children }) {
       // DEMO MODE FALLBACK - If backend is unavailable, use demo user
       if (err.request && !err.response) {
         console.warn('⚠️ Backend unavailable, using DEMO MODE');
+        console.log('🔗 Attempted backend URL:', err.config?.baseURL + err.config?.url);
+        console.log('📡 Error details:', err.message);
         
         // Create demo user based on email
         const demoUser = {
