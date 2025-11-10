@@ -1131,9 +1131,9 @@ export default function UserDashboard({ setPage }) {
 							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
 							
 							return (
-								<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
-									{/* Green accent bar */}
-									<div className="h-1.5 bg-green-500"></div>
+								<div key={listing.id || listing._id} className="bg-white border border-yellow-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
+									{/* Yellow/Orange accent bar */}
+									<div className="h-1.5 bg-gradient-to-r from-yellow-400 to-orange-400"></div>
 									
 									<div className="p-3">
 										{/* Date and BUY tag on same line */}
@@ -1142,13 +1142,13 @@ export default function UserDashboard({ setPage }) {
 												<span>📅</span>
 												<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
 											</div>
-											<span className="bg-green-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+											<span className="bg-orange-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
 										</div>
 										
 										{/* Company name with logo */}
 										<div className="flex items-center gap-2 mb-2">
-											<div className="w-8 h-8 rounded bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 border border-gray-200">
-												<span className="text-sm font-bold text-gray-600">{listing.company.charAt(0)}</span>
+											<div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200">
+												<span className="text-sm font-bold text-orange-600">{listing.company.charAt(0)}</span>
 											</div>
 											<div className="flex-1 min-w-0">
 												<div className="flex items-center gap-1">
@@ -1161,23 +1161,23 @@ export default function UserDashboard({ setPage }) {
 													</h3>
 												</div>
 												<div className="flex items-center gap-1 text-gray-500">
-													<Building2 className="w-3 h-3 text-green-600" />
+													<Building2 className="w-3 h-3 text-orange-600" />
 													<span className="text-[10px] truncate">{company?.sector || 'Financial Services'}</span>
 												</div>
 												<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
 													<User className="w-3 h-3 text-gray-400" />
 													<span className="truncate">@{sellerUsername}</span>
-													<CheckCircle className="w-3 h-3 text-green-600" />
+													<CheckCircle className="w-3 h-3 text-orange-600" />
 												</div>
 											</div>
 										</div>
 										
 										{/* Price and Quantity */}
-										<div className="bg-green-50 rounded p-2 mb-2">
+										<div className="bg-yellow-50 rounded p-2 mb-2">
 											<div className="grid grid-cols-2 gap-2">
 												<div>
 													<p className="text-gray-500 text-[9px]">Ask Price</p>
-													<h4 className="text-sm font-semibold text-green-700">{formatCurrency(listing.price)}</h4>
+													<h4 className="text-sm font-semibold text-orange-700">{formatCurrency(listing.price)}</h4>
 												</div>
 												<div className="text-right">
 													<p className="text-gray-500 text-[9px]">Quantity</p>
@@ -1193,7 +1193,7 @@ export default function UserDashboard({ setPage }) {
 													setTradeContext({ type: 'bid', item: listing });
 													setBidOfferData({ price: listing.price, quantity: listing.shares });
 												}}
-												className="flex-1 px-3 py-1.5 rounded text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm transition"
+												className="flex-1 px-3 py-1.5 rounded text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition"
 											>
 												{myBid ? 'Update' : 'Bid'}
 											</button>
