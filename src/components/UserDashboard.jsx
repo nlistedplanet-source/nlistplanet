@@ -288,20 +288,43 @@ export default function UserDashboard({ setPage }) {
 					const blob = await (await fetch(dataUrl)).blob();
 					const file = new File([blob], `${listing.company}-Share.png`, { type: 'image/png' });
 					
+					// Create caption with company link
+					const companySlug = listing.company.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+					const shareUrl = `${window.location.origin}/share/${companySlug}`;
+					const caption = `🚀 Check out this unlisted share of *${listing.company}* listed on *Nlist Planet*!
+
+📊 *Ask Price:* ₹${listing.price.toFixed(2)}
+📦 *Quantity:* ${(listing.shares / 100000).toFixed(2)} Lakh
+🏭 *Sector:* ${company?.sector || 'Manufacturing'}
+📅 *Listed:* ${listingDate}
+
+💰 Explore more unlisted shares and make your offer now!
+
+🔗 ${shareUrl}
+
+#UnlistedShare #NlistPlanet #${listing.company.replace(/\s+/g, '')}`;
+					
 					// Try native share
 					if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
 						await navigator.share({
 							title: `${listing.company} - Unlisted Share`,
-							text: `Check out this unlisted share of ${listing.company} listed on Nlist Planet!`,
+							text: caption,
 							files: [file]
 						});
 					} else {
-						// Fallback: Download image
+						// Fallback: Copy caption to clipboard and download image
+						try {
+							await navigator.clipboard.writeText(caption);
+							showNotification('success', 'Caption Copied!', 'Share text copied to clipboard. Image will download now.');
+						} catch (clipErr) {
+							console.log('Clipboard copy failed:', clipErr);
+						}
+						
 						const link = document.createElement('a');
 						link.download = `${listing.company}-Share.png`;
 						link.href = dataUrl;
 						link.click();
-						showNotification('success', 'Image Downloaded!', 'Share card has been saved to your downloads.');
+						showNotification('success', 'Ready to Share!', 'Image downloaded. Caption is copied - paste it with the image!');
 					}
 				}
 			} catch (error) {
