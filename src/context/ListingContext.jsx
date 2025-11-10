@@ -38,7 +38,10 @@ export function ListingProvider({ children }) {
     try {
       const response = await listingAPI.createSellListing(data);
       const newListing = response.data.listing;
-      setSellListings([...sellListings, newListing]);
+      
+      // Force refresh to ensure latest data from server
+      await fetchListings();
+      
       return newListing;
     } catch (error) {
       console.error('Failed to create sell listing:', error);
@@ -51,7 +54,10 @@ export function ListingProvider({ children }) {
     try {
       const response = await listingAPI.createBuyRequest(data);
       const newRequest = response.data.listing;
-      setBuyRequests([...buyRequests, newRequest]);
+      
+      // Force refresh to ensure latest data from server
+      await fetchListings();
+      
       return newRequest;
     } catch (error) {
       console.error('Failed to create buy request:', error);
