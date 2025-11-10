@@ -171,6 +171,8 @@ export default function UserDashboard({ setPage }) {
 	// Removed showProfileModal state
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
+	const [showConfirmation, setShowConfirmation] = useState(false);
+	const [confirmationData, setConfirmationData] = useState(null);
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -387,27 +389,40 @@ export default function UserDashboard({ setPage }) {
 
 	const handleCreateSellListing = async (e) => {
 		e.preventDefault();
-		try {
-			await createSellListing({ ...formData, seller: user.email, sellerName: user.name });
-			showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
-			setFormData({ company: '', isin: '', price: '', shares: '' });
-			setFormType(null);
-		} catch (error) {
-			console.error('Failed to create listing:', error);
-			showNotification('error', 'Failed to create listing', 'Please try again later.');
-		}
+		// Show confirmation modal first
+		setConfirmationData({
+			type: 'sell',
+			data: { ...formData, seller: user.email, sellerName: user.name }
+		});
+		setShowConfirmation(true);
 	};
 
 	const handleCreateBuyRequest = async (e) => {
 		e.preventDefault();
+		// Show confirmation modal first
+		setConfirmationData({
+			type: 'buy',
+			data: { ...formData, buyer: user.email, buyerName: user.name }
+		});
+		setShowConfirmation(true);
+	};
+
+	const confirmSubmit = async () => {
 		try {
-			await createBuyRequest({ ...formData, buyer: user.email, buyerName: user.name });
-			showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+			if (confirmationData.type === 'sell') {
+				await createSellListing(confirmationData.data);
+				showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
+			} else {
+				await createBuyRequest(confirmationData.data);
+				showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+			}
 			setFormData({ company: '', isin: '', price: '', shares: '' });
 			setFormType(null);
+			setShowConfirmation(false);
+			setConfirmationData(null);
 		} catch (error) {
-			console.error('Failed to create buy request:', error);
-			showNotification('error', 'Failed to create buy request', 'Please try again later.');
+			console.error('Failed to create listing:', error);
+			showNotification('error', 'Failed to submit', 'Please try again later.');
 		}
 	};
 
@@ -2291,6 +2306,86 @@ Report ID: ${listing._id || listing.id}
 
 			{showPasswordModal && (
 				<ChangePassword onClose={() => setShowPasswordModal(false)} />
+			)}
+
+			{/* Confirmation Modal */}
+			{showConfirmation && confirmationData && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+					<div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fadeIn">
+						<div className="text-center mb-6">
+							<div className="text-5xl mb-4">
+								{confirmationData.type === 'sell' ? '📈' : '🛒'}
+							</div>
+							<h2 className="text-2xl font-bold text-gray-900 mb-2">
+								Confirm {confirmationData.type === 'sell' ? 'Sell Listing' : 'Buy Request'}
+							</h2>
+							<p className="text-sm text-gray-500">
+								Please review your details before submitting
+							</p>
+						</div>
+
+						<div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-5 mb-6 space-y-4">
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Company</span>
+								<span className="text-base font-bold text-gray-900">{formData.company}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">ISIN</span>
+								<span className="text-base font-semibold text-gray-700 font-mono">{formData.isin}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Price per Share</span>
+								<span className="text-lg font-bold text-green-600">₹{Number(formData.price).toLocaleString('en-IN')}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Number of Shares</span>
+								<span className="text-lg font-bold text-blue-600">{Number(formData.shares).toLocaleString('en-IN')}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center pt-2">
+								<span className="text-base font-semibold text-gray-800">Total Value</span>
+								<span className="text-xl font-bold text-purple-600">
+									₹{(Number(formData.price) * Number(formData.shares)).toLocaleString('en-IN')}
+								</span>
+							</div>
+						</div>
+
+						<div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+							<div className="flex gap-3">
+								<span className="text-2xl">⚠️</span>
+								<div>
+									<p className="text-sm font-medium text-yellow-800 mb-1">Important Notice</p>
+									<p className="text-xs text-yellow-700">
+										{confirmationData.type === 'sell' 
+											? 'Your shares will be listed publicly. Make sure all details are correct.'
+											: 'Your buy request will be visible to sellers. Ensure you have funds available.'}
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div className="flex gap-3">
+							<button
+								onClick={() => {
+									setShowConfirmation(false);
+									setConfirmationData(null);
+								}}
+								className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={confirmSubmit}
+								className="flex-1 px-5 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition"
+							>
+								✅ Confirm & Submit
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);
