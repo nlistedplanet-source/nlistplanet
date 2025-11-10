@@ -1132,16 +1132,17 @@ export default function UserDashboard({ setPage }) {
 							
 							return (
 								<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
-									{/* Green accent bar with BUY tag */}
-									<div className="h-1.5 bg-green-500 relative">
-										<span className="absolute right-2 -bottom-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">BUY</span>
-									</div>
+									{/* Green accent bar */}
+									<div className="h-1.5 bg-green-500"></div>
 									
 									<div className="p-3">
-										{/* Date */}
-										<div className="flex items-center gap-1 text-gray-500 text-[10px] mb-2">
-											<span>📅</span>
-											<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+										{/* Date and BUY tag on same line */}
+										<div className="flex items-center justify-between mb-2">
+											<div className="flex items-center gap-1 text-gray-500 text-[10px]">
+												<span>📅</span>
+												<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+											</div>
+											<span className="bg-green-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
 										</div>
 										
 										{/* Company name with logo */}
@@ -1185,7 +1186,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 										</div>
 										
-										{/* Action buttons - smaller */}
+										{/* Action buttons - removed download */}
 										<div className="flex items-center gap-2">
 											<button
 												onClick={() => {
@@ -1291,16 +1292,17 @@ Report ID: ${listing._id || listing.id}
 									transition={{ duration: 0.6, delay: index * 0.1 }}
 								>
 									<div className="bg-white border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
-										{/* Blue accent bar with SELL tag */}
-										<div className="h-1.5 bg-blue-500 relative">
-											<span className="absolute right-2 -bottom-1 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">SELL</span>
-										</div>
+										{/* Blue accent bar */}
+										<div className="h-1.5 bg-blue-500"></div>
 										
 										<div className="p-3">
-											{/* Date */}
-											<div className="flex items-center gap-1 text-gray-500 text-[10px] mb-2">
-												<CalendarDays className="w-3 h-3 text-gray-400" />
-												<span>{requestDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+											{/* Date and SELL tag on same line */}
+											<div className="flex items-center justify-between mb-2">
+												<div className="flex items-center gap-1 text-gray-500 text-[10px]">
+													<CalendarDays className="w-3 h-3 text-gray-400" />
+													<span>{requestDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+												</div>
+												<span className="bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">SELL</span>
 											</div>
 											
 											{/* Company logo and info */}
@@ -1344,7 +1346,7 @@ Report ID: ${listing._id || listing.id}
 												</div>
 											</div>
 											
-											{/* Action buttons - smaller */}
+											{/* Action buttons */}
 											<div className="flex items-center gap-2">
 												<button
 													onClick={() => {
