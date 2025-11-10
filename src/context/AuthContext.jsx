@@ -72,7 +72,7 @@ export function AuthProvider({ children }) {
           errorMessage = backendMessage;
         }
       } else if (err.request) {
-        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        errorMessage = 'Backend server is currently unavailable. The server may be starting up (takes ~30 seconds). Please try again in a moment.';
       }
       
       setError(errorMessage);
@@ -129,8 +129,8 @@ export function AuthProvider({ children }) {
           errorMessage = backendMessage;
         }
       } else if (err.request) {
-        // This shouldn't reach here due to demo fallback above
-        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        // Request was made but no response received - server is down
+        errorMessage = 'Backend server is currently unavailable. The server may be starting up (takes ~30 seconds). Please try again in a moment.';
       }
       
       setError(errorMessage);
