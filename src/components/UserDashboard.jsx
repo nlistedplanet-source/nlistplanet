@@ -173,6 +173,7 @@ export default function UserDashboard({ setPage }) {
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
 	const [showConfirmation, setShowConfirmation] = useState(false);
 	const [confirmationData, setConfirmationData] = useState(null);
+	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -390,6 +391,7 @@ export default function UserDashboard({ setPage }) {
 	const handleCreateSellListing = async (e) => {
 		e.preventDefault();
 		// Show confirmation modal first
+		setAcceptedTerms(false); // Reset checkbox
 		setConfirmationData({
 			type: 'sell',
 			data: { ...formData, seller: user.email, sellerName: user.name }
@@ -400,6 +402,7 @@ export default function UserDashboard({ setPage }) {
 	const handleCreateBuyRequest = async (e) => {
 		e.preventDefault();
 		// Show confirmation modal first
+		setAcceptedTerms(false); // Reset checkbox
 		setConfirmationData({
 			type: 'buy',
 			data: { ...formData, buyer: user.email, buyerName: user.name }
@@ -408,6 +411,11 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const confirmSubmit = async () => {
+		if (!acceptedTerms) {
+			showNotification('error', 'Terms not accepted', 'Please accept the terms and conditions to proceed.');
+			return;
+		}
+		
 		try {
 			if (confirmationData.type === 'sell') {
 				await createSellListing(confirmationData.data);
@@ -420,6 +428,7 @@ export default function UserDashboard({ setPage }) {
 			setFormType(null);
 			setShowConfirmation(false);
 			setConfirmationData(null);
+			setAcceptedTerms(false); // Reset checkbox
 		} catch (error) {
 			console.error('Failed to create listing:', error);
 			showNotification('error', 'Failed to submit', 'Please try again later.');
@@ -2317,7 +2326,10 @@ Report ID: ${listing._id || listing.id}
 								{confirmationData.type === 'sell' ? '📈' : '🛒'}
 							</div>
 							<h2 className="text-2xl font-bold text-gray-900 mb-2">
-								Confirm {confirmationData.type === 'sell' ? 'Sell Listing' : 'Buy Request'}
+								{confirmationData.type === 'sell' 
+									? `Do you want to list your "${formData.company}" for sell?`
+									: `Do you want to post buy request for "${formData.company}"?`
+								}
 							</h2>
 							<p className="text-sm text-gray-500">
 								Please review your details before submitting
@@ -2353,18 +2365,24 @@ Report ID: ${listing._id || listing.id}
 							</div>
 						</div>
 
-						<div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-							<div className="flex gap-3">
-								<span className="text-2xl">⚠️</span>
-								<div>
-									<p className="text-sm font-medium text-yellow-800 mb-1">Important Notice</p>
-									<p className="text-xs text-yellow-700">
-										{confirmationData.type === 'sell' 
-											? 'Your shares will be listed publicly. Make sure all details are correct.'
-											: 'Your buy request will be visible to sellers. Ensure you have funds available.'}
+						{/* Terms & Conditions Checkbox */}
+						<div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+							<label className="flex items-start gap-3 cursor-pointer">
+								<input
+									type="checkbox"
+									checked={acceptedTerms}
+									onChange={(e) => setAcceptedTerms(e.target.checked)}
+									className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+								/>
+								<div className="flex-1">
+									<p className="text-sm font-medium text-gray-800 mb-1">
+										⚠️ Terms & Conditions
+									</p>
+									<p className="text-xs text-gray-600 leading-relaxed">
+										I confirm that all information provided is accurate and complete. I understand that {confirmationData.type === 'sell' ? 'my shares will be listed publicly' : 'my buy request will be visible to all sellers'} and I accept full responsibility for this transaction. I agree to the platform's terms of service and trading policies.
 									</p>
 								</div>
-							</div>
+							</label>
 						</div>
 
 						<div className="flex gap-3">
@@ -2372,6 +2390,7 @@ Report ID: ${listing._id || listing.id}
 								onClick={() => {
 									setShowConfirmation(false);
 									setConfirmationData(null);
+									setAcceptedTerms(false);
 								}}
 								className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
 							>
@@ -2379,7 +2398,12 @@ Report ID: ${listing._id || listing.id}
 							</button>
 							<button
 								onClick={confirmSubmit}
-								className="flex-1 px-5 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition"
+								disabled={!acceptedTerms}
+								className={`flex-1 px-5 py-3 rounded-xl font-semibold transition ${
+									acceptedTerms
+										? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg'
+										: 'bg-gray-300 text-gray-500 cursor-not-allowed'
+								}`}
 							>
 								✅ Confirm & Submit
 							</button>
