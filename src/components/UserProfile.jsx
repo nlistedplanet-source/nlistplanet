@@ -137,28 +137,37 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
       setOtpField('email');
       setTempData({ email: formData.email });
       try {
-        await apiSendOTP('email', formData.email);
+        const response = await apiSendOTP('email', formData.email);
+        console.log('Email OTP response:', response);
         setShowOTPModal(true);
-        alert('OTP sent to your email!');
+        alert('✅ OTP sent to your email! Check your inbox.');
       } catch (err) {
-        // Fallback to demo mode
-        setShowOTPModal(true);
-        alert('OTP sent to your email! (Demo mode)');
+        console.error('Email OTP error:', err);
+        alert('❌ Failed to send OTP to email: ' + (err.message || 'Unknown error'));
       }
     } else if (field === 'mobile' && editingMobile) {
       setOtpField('mobile');
+      
+      // Validate mobile number
+      const mobileNum = formData.mobile.replace(/\s+/g, '');
+      if (!/^\d{10}$/.test(mobileNum)) {
+        alert('❌ Please enter a valid 10-digit mobile number');
+        return;
+      }
+      
       setTempData({ mobile: formData.mobile });
       try {
-        // Add +91 prefix for Indian mobile numbers if not already present
-        const mobileWithPrefix = formData.mobile.startsWith('+91') 
-          ? formData.mobile 
-          : `+91${formData.mobile}`;
-        await apiSendOTP('mobile', mobileWithPrefix);
+        // Add +91 prefix for Indian mobile numbers
+        const mobileWithPrefix = `+91${mobileNum}`;
+        console.log('Sending OTP to:', mobileWithPrefix);
+        
+        const response = await apiSendOTP('mobile', mobileWithPrefix);
+        console.log('Mobile OTP response:', response);
         setShowOTPModal(true);
-        alert('OTP sent to your mobile!');
+        alert('✅ OTP sent to your mobile! Check your SMS.\n\n⚠️ Note: If using Twilio trial account, verify your number in Twilio Console first.');
       } catch (err) {
-        console.error('OTP send error:', err);
-        alert('Failed to send OTP. Please check your mobile number or try again later.');
+        console.error('Mobile OTP error:', err);
+        alert('❌ Failed to send OTP to mobile: ' + (err.message || 'Unknown error') + '\n\n💡 Twilio trial accounts can only send to verified numbers. Please verify your number in Twilio Console.');
       }
     }
   };

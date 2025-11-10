@@ -4,6 +4,8 @@ import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
 import { usePortfolio } from '../context/PortfolioContext';
 import UserProfile from './UserProfile';
+import { motion } from 'framer-motion';
+import { CheckCircle, Building2, Share2, User, Info, CalendarDays } from 'lucide-react';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
 
@@ -1234,105 +1236,113 @@ Report ID: ${listing._id || listing.id}
 							onAction={() => setFormType('sell')}
 						/>
 					) : (
-						availableRequests.map((request) => {
+						availableRequests.map((request, index) => {
 							const company = companies.find((c) => c.isin === request.isin || c.name.toLowerCase() === request.company.toLowerCase());
 							const myOffer = request.offers?.find((offer) => offer.seller === user.name || offer.seller === user.email);
 							const buyerUsername = request.userId?.username || request.buyerName || 'Unknown';
 							const requestDate = request.createdAt ? new Date(request.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 							
 							return (
-								<div key={request.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden">
-									{/* Green accent bar at top */}
-									<div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-									
-									<div className="p-5">
-										{/* Date */}
-										<div className="flex items-center gap-1.5 text-gray-500 text-xs mb-3">
-											<span>📅</span>
-											<span>{requestDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-										</div>
+								<motion.div 
+									key={request.id}
+									initial={{ opacity: 0, y: 30 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.6, delay: index * 0.1 }}
+								>
+									<div className="bg-white border border-green-100 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 overflow-hidden">
+										{/* Green accent bar at top */}
+										<div className="h-2 bg-green-500"></div>
 										
-										{/* Company name with logo placeholder and info icon */}
-										<div className="flex items-start gap-3 mb-3">
-											<div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 border border-gray-200">
-												<span className="text-xl font-bold text-gray-600">{request.company.charAt(0)}</span>
+										<div className="p-6">
+											{/* Date */}
+											<div className="flex justify-between items-center mb-3">
+												<div className="flex items-center gap-2 text-xs text-gray-500">
+													<CalendarDays className="w-4 h-4 text-gray-400" />
+													<span>{requestDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+												</div>
 											</div>
-											<div className="flex-1 min-w-0">
-												<div className="flex items-start justify-between gap-2">
-													<h3 className="text-lg font-bold text-gray-900 leading-tight">{request.company}</h3>
-													<button className="text-gray-400 hover:text-gray-600 transition flex-shrink-0">
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-														</svg>
+											
+											{/* Company logo and info */}
+											<div className="flex items-center gap-3 mb-3">
+												<div className="w-10 h-10 rounded-md border border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0">
+													<span className="text-xl font-bold text-gray-600">{request.company.charAt(0)}</span>
+												</div>
+												<div>
+													<div className="flex items-center gap-2">
+														<h3 className="text-xl font-bold text-gray-800 relative group flex items-center gap-1">
+															{request.company}
+															<Info className="w-4 h-4 text-gray-400 cursor-pointer" />
+															<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded-md p-2 shadow-lg z-10 whitespace-nowrap">
+																<p>PAN: {request.pan || 'N/A'}</p>
+																<p>ISIN: {request.isin || 'N/A'}</p>
+															</div>
+														</h3>
+													</div>
+													<div className="flex items-center gap-2 text-gray-500">
+														<Building2 className="w-4 h-4 text-green-600" />
+														<span className="text-sm">{company?.sector || 'Financial Services'}</span>
+													</div>
+													<div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+														<User className="w-4 h-4 text-gray-400" />
+														<span>{buyerUsername}</span>
+														<CheckCircle className="w-4 h-4 text-green-600" />
+													</div>
+												</div>
+											</div>
+											
+											{/* Price and Quantity box */}
+											<div className="bg-green-50 rounded-lg p-3 mb-4">
+												<div className="flex justify-between items-center mb-1">
+													<p className="text-gray-500 text-xs">Ask Price</p>
+													<h4 className="text-lg font-semibold text-green-700">{formatCurrency(request.price)}</h4>
+												</div>
+												<div className="flex justify-between items-center">
+													<p className="text-gray-500 text-xs">Quantity</p>
+													<h4 className="text-lg font-bold text-gray-800">{formatShares(request.shares)}</h4>
+												</div>
+											</div>
+											
+											{/* Action buttons */}
+											<div className="flex items-center justify-center gap-3">
+												<button
+													onClick={() => {
+														setTradeContext({ type: 'offer', item: request });
+														setBidOfferData({ price: request.price, quantity: request.shares });
+													}}
+													className="border-green-500 text-green-600 hover:bg-green-50 px-5 py-2 rounded-md flex items-center gap-2 border transition-all duration-200"
+												>
+													<span>{myOffer ? 'Update Offer' : 'Place Your Bid'}</span>
+												</button>
+												<div className="flex items-center gap-2">
+													<button
+														onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+														className="border-gray-300 text-gray-600 hover:bg-gray-50 px-5 py-2 rounded-md border transition-all duration-200"
+													>
+														<span>View Details</span>
+													</button>
+													<button
+														onClick={() => {
+															const shareText = `Check out this ${request.company} unlisted share post on Nlist Planet!`;
+															if (navigator.share) {
+																navigator.share({
+																	title: 'Nlist Planet',
+																	text: shareText,
+																	url: window.location.href,
+																});
+															} else {
+																navigator.clipboard.writeText(shareText);
+																alert('Link copied to clipboard!');
+															}
+														}}
+														className="text-gray-500 hover:text-gray-700 transition-all duration-200"
+													>
+														<Share2 className="w-5 h-5" />
 													</button>
 												</div>
-												<div className="flex items-center gap-1.5 mt-1.5">
-													<span className="text-xs">🏢</span>
-													<span className="text-sm text-gray-600">{company?.sector || 'Financial Services'}</span>
-												</div>
-												<div className="flex items-center gap-1.5 mt-1">
-													<span className="text-xs">👤</span>
-													<span className="text-sm text-gray-600">{buyerUsername}</span>
-													<span className="ml-1">
-														<svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-															<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-														</svg>
-													</span>
-												</div>
 											</div>
-										</div>
-										
-										{/* Price and Quantity - Green theme */}
-										<div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 mb-4">
-											<div className="grid grid-cols-2 gap-4">
-												<div>
-													<p className="text-xs text-emerald-700 font-medium mb-1">Ask Price</p>
-													<p className="text-2xl font-bold text-emerald-600">{formatCurrency(request.price)}</p>
-												</div>
-												<div className="text-right">
-													<p className="text-xs text-gray-600 font-medium mb-1">Quantity</p>
-													<p className="text-2xl font-bold text-gray-900">{request.shares} Lakh</p>
-												</div>
-											</div>
-										</div>
-										
-										{/* Action buttons */}
-										<div className="flex gap-2">
-											<button
-												onClick={() => {
-													setTradeContext({ type: 'offer', item: request });
-													setBidOfferData({ price: request.price, quantity: request.shares });
-												}}
-												className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all duration-200"
-											>
-												<span>{myOffer ? 'Update Offer' : 'Place Your Bid'}</span>
-											</button>
-											<button
-												onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-												className="inline-flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-gray-700 border-2 border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200"
-											>
-												<span>View Details</span>
-											</button>
-											<button
-												onClick={() => {
-													const shareText = `Check out ${request.company} buy request on Nlist!\n\n💰 Target: ${formatCurrency(request.price)}\n📊 Quantity: ${formatShares(request.shares)}\n🔗 Visit: ${window.location.origin}`;
-													if (navigator.share) {
-														navigator.share({ title: `${request.company} - Nlist`, text: shareText, url: window.location.href });
-													} else {
-														navigator.clipboard.writeText(shareText);
-														alert('Link copied to clipboard!');
-													}
-												}}
-												className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-gray-600 border-2 border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200"
-												title="Share"
-											>
-												<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-												</svg>
-											</button>
 										</div>
 									</div>
-								</div>
+								</motion.div>
 							);
 						})
 					)}
