@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Building2, Share2, User, Info, CalendarDays } from 'lucide-react';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
+import { toPng } from 'html-to-image';
 
 const STATUS_META = {
 	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
@@ -174,6 +175,8 @@ export default function UserDashboard({ setPage }) {
 	const [showConfirmation, setShowConfirmation] = useState(false);
 	const [confirmationData, setConfirmationData] = useState(null);
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
+	const [shareCardData, setShareCardData] = useState(null);
+	const shareCardRef = useRef(null);
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -254,6 +257,60 @@ export default function UserDashboard({ setPage }) {
 	[]
 );	const showNotification = (type, title, message) => {
 		setNotification({ show: true, type, title, message });
+	};
+
+	const handleShareListing = async (listing, company) => {
+		const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
+		const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+		
+		setShareCardData({
+			company: listing.company,
+			sector: company?.sector || 'Manufacturing',
+			seller: sellerUsername,
+			verified: true,
+			askPrice: listing.price,
+			quantity: listing.shares,
+			date: listingDate,
+			isin: listing.isin
+		});
+
+		// Wait for component to render
+		setTimeout(async () => {
+			try {
+				if (shareCardRef.current) {
+					const dataUrl = await toPng(shareCardRef.current, {
+						quality: 1.0,
+						pixelRatio: 2,
+						backgroundColor: '#fef3c7'
+					});
+					
+					// Convert to blob for sharing
+					const blob = await (await fetch(dataUrl)).blob();
+					const file = new File([blob], `${listing.company}-Share.png`, { type: 'image/png' });
+					
+					// Try native share
+					if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+						await navigator.share({
+							title: `${listing.company} - Unlisted Share`,
+							text: `Check out this unlisted share of ${listing.company} listed on Nlist Planet!`,
+							files: [file]
+						});
+					} else {
+						// Fallback: Download image
+						const link = document.createElement('a');
+						link.download = `${listing.company}-Share.png`;
+						link.href = dataUrl;
+						link.click();
+						showNotification('success', 'Image Downloaded!', 'Share card has been saved to your downloads.');
+					}
+				}
+			} catch (error) {
+				console.error('Share error:', error);
+				showNotification('error', 'Share Failed', 'Could not generate share card. Please try again.');
+			} finally {
+				setShareCardData(null);
+			}
+		}, 100);
 	};
 
 	const getGreeting = () => {
@@ -1204,15 +1261,7 @@ export default function UserDashboard({ setPage }) {
 												Details
 											</button>
 											<button
-												onClick={() => {
-													const shareText = `Check out ${listing.company} shares on Nlist!\n\n💰 Price: ${formatCurrency(listing.price)}\n📊 Shares: ${formatShares(listing.shares)}\n🔗 Visit: ${window.location.origin}`;
-													if (navigator.share) {
-														navigator.share({ title: `${listing.company} - Nlist`, text: shareText, url: window.location.href });
-													} else {
-														navigator.clipboard.writeText(shareText);
-														alert('Link copied!');
-													}
-												}}
+												onClick={() => handleShareListing(listing, company)}
 												className="text-gray-500 hover:text-gray-700 transition p-1"
 												title="Share"
 											>
@@ -2377,6 +2426,135 @@ export default function UserDashboard({ setPage }) {
 							>
 								✅ Confirm & Submit
 							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Hidden Share Card for Image Generation */}
+			{shareCardData && (
+				<div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+					<div
+						ref={shareCardRef}
+						style={{
+							width: '560px',
+							background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+							borderRadius: '24px',
+							padding: '32px',
+							boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+							fontFamily: 'system-ui, -apple-system, sans-serif'
+						}}
+					>
+						{/* Border with gradient */}
+						<div style={{
+							background: 'white',
+							borderRadius: '16px',
+							border: '3px solid #f59e0b',
+							padding: '24px',
+							position: 'relative'
+						}}>
+							{/* Date and Hashtag */}
+							<div style={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								marginBottom: '20px',
+								fontSize: '13px'
+							}}>
+								<div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6b7280' }}>
+									<span>📅</span>
+									<span>{shareCardData.date}</span>
+								</div>
+								<span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '14px' }}>#UnlistedShare</span>
+							</div>
+
+							{/* Company Name */}
+							<div style={{ marginBottom: '16px' }}>
+								<h2 style={{
+									fontSize: '28px',
+									fontWeight: 'bold',
+									color: '#111827',
+									margin: '0 0 8px 0'
+								}}>
+									{shareCardData.company}
+								</h2>
+							</div>
+
+							{/* Sector */}
+							<div style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px',
+								marginBottom: '12px',
+								color: '#f59e0b',
+								fontSize: '14px'
+							}}>
+								<span>🏭</span>
+								<span style={{ fontWeight: '500' }}>{shareCardData.sector}</span>
+							</div>
+
+							{/* Seller Info */}
+							<div style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px',
+								marginBottom: '20px',
+								fontSize: '14px',
+								color: '#4b5563'
+							}}>
+								<span>👤</span>
+								<span>@{shareCardData.seller}</span>
+								{shareCardData.verified && <span style={{ color: '#f59e0b' }}>✓ Verified</span>}
+							</div>
+
+							{/* Price and Quantity Box */}
+							<div style={{
+								background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%)',
+								borderRadius: '12px',
+								padding: '16px',
+								marginBottom: '20px'
+							}}>
+								<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+									<div>
+										<div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Ask Price</div>
+										<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>
+											₹{shareCardData.askPrice.toFixed(2)}
+										</div>
+									</div>
+									<div style={{ textAlign: 'right' }}>
+										<div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Quantity</div>
+										<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+											{(shareCardData.quantity / 100000).toFixed(2)} Lakh
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Call to Action */}
+							<div style={{
+								borderTop: '1px solid #e5e7eb',
+								paddingTop: '16px',
+								fontSize: '14px',
+								lineHeight: '1.6',
+								color: '#4b5563'
+							}}>
+								<p style={{ margin: '0 0 8px 0' }}>
+									Check out this unlisted share of <strong style={{ color: '#111827' }}>{shareCardData.company}</strong> listed on <strong style={{ color: '#f59e0b' }}>Nlist Planet</strong>. Explore more and make your offer now!
+								</p>
+							</div>
+
+							{/* Footer */}
+							<div style={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								marginTop: '16px',
+								fontSize: '12px',
+								color: '#9ca3af'
+							}}>
+								<span>nlistplanet.com/share/{shareCardData.company.toLowerCase().replace(/\s+/g, '-')}</span>
+								<span>{shareCardData.date}</span>
+							</div>
 						</div>
 					</div>
 				</div>
