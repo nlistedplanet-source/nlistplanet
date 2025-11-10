@@ -74,8 +74,6 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     verifyOTP: apiVerifyOTP,
     uploadPhoto: apiUploadPhoto,
     uploadDocument: apiUploadDocument,
-    submitBankApproval: apiSubmitBankApproval,
-    submitDematApproval: apiSubmitDematApproval,
   } = useUserProfile();
   
   // Ensure formData always has complete structure
@@ -109,9 +107,6 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   
   const [bankEditData, setBankEditData] = useState(currentUser?.bank || {});
   const [dematEditData, setDematEditData] = useState(currentUser?.demat || {});
-  
-  const [showBankApprovalModal, setShowBankApprovalModal] = useState(false);
-  const [showDematApprovalModal, setShowDematApprovalModal] = useState(false);
 
   const profileCompletion = useMemo(() => {
     if (!formData || !formData.personal || !formData.bank || !formData.demat || !formData.documents) {
@@ -203,22 +198,17 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     }));
   };
 
-  const handleBankSubmit = () => {
-    setShowBankApprovalModal(true);
-  };
-
-  const confirmBankApproval = async () => {
+  const handleBankSubmit = async () => {
     try {
-      await apiSubmitBankApproval(bankEditData);
-      setFormData(prev => ({ ...prev, bank: { ...bankEditData, status: 'pending' } }));
-      alert('✅ Bank details sent to admin for approval!');
+      await apiUpdateProfile({ bank: bankEditData });
+      setFormData(prev => ({ ...prev, bank: bankEditData }));
+      alert('✅ Bank details saved successfully!');
     } catch (err) {
       // Fallback to local update
-      setFormData(prev => ({ ...prev, bank: { ...bankEditData, status: 'pending' } }));
+      setFormData(prev => ({ ...prev, bank: bankEditData }));
       alert('✅ Bank details saved locally!');
     } finally {
       setEditingBank(false);
-      setShowBankApprovalModal(false);
     }
   };
 
@@ -229,21 +219,16 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     }));
   };
 
-  const handleDematSubmit = () => {
-    setShowDematApprovalModal(true);
-  };
-
-  const confirmDematApproval = async () => {
+  const handleDematSubmit = async () => {
     try {
-      await apiSubmitDematApproval(dematEditData);
-      setFormData(prev => ({ ...prev, demat: { ...dematEditData, status: 'pending' } }));
-      alert('✅ Demat details sent to admin for approval!');
+      await apiUpdateProfile({ demat: dematEditData });
+      setFormData(prev => ({ ...prev, demat: dematEditData }));
+      alert('✅ Demat details saved successfully!');
     } catch (err) {
-      setFormData(prev => ({ ...prev, demat: { ...dematEditData, status: 'pending' } }));
+      setFormData(prev => ({ ...prev, demat: dematEditData }));
       alert('✅ Demat details saved locally!');
     } finally {
       setEditingDemat(false);
-      setShowDematApprovalModal(false);
     }
   };
 
@@ -431,14 +416,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
-                    <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.bank.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
-                      </span>
-                      {!editingBank && (
-                        <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
-                      )}
-                    </div>
+                    {!editingBank && (
+                      <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank); }} className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank.accountHolderName}</span></div>
@@ -459,7 +439,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     </div>
                     <div className="flex gap-3">
                       <button onClick={() => setEditingBank(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-sm">Cancel</button>
-                      <button onClick={handleBankSubmit} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm">Submit for Approval</button>
+                      <button onClick={handleBankSubmit} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm">💾 Save</button>
                     </div>
                   </div>
                 )}
@@ -472,14 +452,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
-                    <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {formData.demat.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
-                      </span>
-                      {!editingDemat && (
-                        <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
-                      )}
-                    </div>
+                    {!editingDemat && (
+                      <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat); }} className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div><span className="text-gray-600">DP Name:</span> <span className="font-semibold">{formData.demat.dpName}</span></div>
@@ -506,7 +481,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     </div>
                     <div className="flex gap-3">
                       <button onClick={() => setEditingDemat(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-sm">Cancel</button>
-                      <button onClick={handleDematSubmit} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm">Submit for Approval</button>
+                      <button onClick={handleDematSubmit} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm">💾 Save</button>
                     </div>
                   </div>
                 )}
@@ -581,44 +556,6 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             <div className="flex gap-3">
               <button onClick={() => setShowOTPModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
               <button onClick={handleVerifyOTP} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">Verify</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bank Approval Modal */}
-      {showBankApprovalModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">⏳ Send for Approval</h2>
-            <p className="text-gray-600 mb-4">Your bank details will be sent to admin for approval. This may take 24-48 hours.</p>
-            <div className="space-y-2 mb-4 text-sm bg-gray-50 p-3 rounded">
-              <p><strong>Account Holder:</strong> {bankEditData.accountHolderName}</p>
-              <p><strong>Bank:</strong> {bankEditData.bankName}</p>
-              <p><strong>Account No:</strong> {bankEditData.accountNumber}</p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowBankApprovalModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
-              <button onClick={confirmBankApproval} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Demat Approval Modal */}
-      {showDematApprovalModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">⏳ Send for Approval</h2>
-            <p className="text-gray-600 mb-4">Your demat details will be sent to admin for approval. This may take 24-48 hours.</p>
-            <div className="space-y-2 mb-4 text-sm bg-gray-50 p-3 rounded">
-              <p><strong>DP Name:</strong> {dematEditData.dpName}</p>
-              <p><strong>Client ID:</strong> {dematEditData.clientId}</p>
-              <p><strong>Broking House:</strong> {dematEditData.brokingHouse}</p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDematApprovalModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
-              <button onClick={confirmDematApproval} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirm</button>
             </div>
           </div>
         </div>
