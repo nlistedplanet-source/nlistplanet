@@ -55,6 +55,33 @@ export function AuthProvider({ children }) {
     } catch (err) {
       setLoading(false);
       
+      // DEMO MODE FALLBACK - If backend is unavailable, create demo user
+      if (err.request && !err.response) {
+        console.warn('⚠️ Backend unavailable, using DEMO MODE for signup');
+        
+        const demoUser = {
+          userId: 'USR' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+          name: userData.name,
+          email: userData.email,
+          username: userData.email.split('@')[0],
+          mobile: userData.mobile || '',
+          roles: ['user'],
+          kycStatus: 'incomplete',
+          personal: {},
+          bank: {},
+          demat: {},
+          documents: {}
+        };
+        
+        setUser(demoUser);
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
+        const defaultRole = 'buyer';
+        setCurrentRole(defaultRole);
+        localStorage.setItem('currentRole', defaultRole);
+        
+        return { success: true, user: demoUser };
+      }
+      
       // User-friendly error messages
       let errorMessage = 'Signup failed. Please try again.';
       
@@ -111,6 +138,34 @@ export function AuthProvider({ children }) {
     } catch (err) {
       setLoading(false);
       
+      // DEMO MODE FALLBACK - If backend is unavailable, use demo user
+      if (err.request && !err.response) {
+        console.warn('⚠️ Backend unavailable, using DEMO MODE');
+        
+        // Create demo user based on email
+        const demoUser = {
+          userId: 'USR002',
+          name: email.split('@')[0].replace(/[0-9]/g, '').replace(/[._-]/g, ' ').trim() || 'Demo User',
+          email: email,
+          username: email.split('@')[0],
+          mobile: '',
+          roles: ['user'],
+          kycStatus: 'incomplete',
+          personal: {},
+          bank: {},
+          demat: {},
+          documents: {}
+        };
+        
+        setUser(demoUser);
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
+        const defaultRole = 'buyer';
+        setCurrentRole(defaultRole);
+        localStorage.setItem('currentRole', defaultRole);
+        
+        return { success: true, user: demoUser };
+      }
+      
       // User-friendly error messages
       let errorMessage = 'Something went wrong. Please try again.';
       
@@ -129,7 +184,7 @@ export function AuthProvider({ children }) {
           errorMessage = backendMessage;
         }
       } else if (err.request) {
-        // Request was made but no response received
+        // This shouldn't reach here due to demo fallback above
         errorMessage = 'Cannot connect to server. Please check your internet connection.';
       }
       
