@@ -116,6 +116,16 @@ const formatShares = (value) => {
 	return `${numeric.toLocaleString('en-IN')} shares`;
 };
 
+// Compact quantity formatter (e.g., 1.80 Lakh, 2.5 Cr)
+const formatQty = (value) => {
+	const n = Number(value);
+	if (!Number.isFinite(n)) return String(value);
+	if (n >= 1e7) return `${(n / 1e7).toFixed(2)} Cr`;
+	if (n >= 1e5) return `${(n / 1e5).toFixed(2)} Lakh`;
+	if (n >= 1e3) return `${(n / 1e3).toFixed(2)} K`;
+	return n.toLocaleString('en-IN');
+};
+
 const formatDate = (iso) => {
 	if (!iso) return '�';
 	const date = new Date(iso);
@@ -1087,9 +1097,9 @@ export default function UserDashboard({ setPage }) {
 							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 							
 							return (
-								<div key={listing.id || listing._id} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden">
+								<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 overflow-hidden">
 									{/* Green accent bar at top */}
-									<div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+									<div className="h-2 bg-green-500"></div>
 									
 									<div className="p-5">
 										{/* Date */}
@@ -1099,63 +1109,61 @@ export default function UserDashboard({ setPage }) {
 										</div>
 										
 										{/* Company name with logo placeholder and info icon */}
-										<div className="flex items-start gap-3 mb-3">
-											<div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 border border-gray-200">
+										<div className="flex items-center gap-3 mb-3">
+											<div className="w-10 h-10 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 border border-gray-200">
 												<span className="text-xl font-bold text-gray-600">{listing.company.charAt(0)}</span>
 											</div>
-											<div className="flex-1 min-w-0">
-												<div className="flex items-start justify-between gap-2">
-													<h3 className="text-lg font-bold text-gray-900 leading-tight">{listing.company}</h3>
-													<button className="text-gray-400 hover:text-gray-600 transition flex-shrink-0">
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-														</svg>
-													</button>
+											<div>
+												<div className="flex items-center gap-2">
+													<h3 className="text-xl font-bold text-gray-800 relative group flex items-center gap-1">
+														{listing.company}
+														<Info className="w-4 h-4 text-gray-400 cursor-pointer" />
+														<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded-md p-2 shadow-lg z-10 whitespace-nowrap">
+															<p>PAN: {listing.pan || 'N/A'}</p>
+															<p>ISIN: {listing.isin || 'N/A'}</p>
+														</div>
+													</h3>
 												</div>
-												<div className="flex items-center gap-1.5 mt-1.5">
-													<span className="text-xs">🏢</span>
-													<span className="text-sm text-gray-600">{company?.sector || 'Financial Services'}</span>
+												<div className="flex items-center gap-2 text-gray-500">
+													<Building2 className="w-4 h-4 text-green-600" />
+													<span className="text-sm">{company?.sector || 'Financial Services'}</span>
 												</div>
-												<div className="flex items-center gap-1.5 mt-1">
-													<span className="text-xs">👤</span>
-													<span className="text-sm text-gray-600">{sellerUsername}</span>
-													<span className="ml-1">
-														<svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-															<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-														</svg>
-													</span>
+												<div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+													<User className="w-4 h-4 text-gray-400" />
+													<span>@{sellerUsername}</span>
+													<CheckCircle className="w-4 h-4 text-green-600" />
 												</div>
 											</div>
 										</div>
 										
 										{/* Price and Quantity - Green theme */}
-										<div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 mb-4">
+										<div className="bg-green-50 rounded-lg p-3 mb-4">
 											<div className="grid grid-cols-2 gap-4">
 												<div>
-													<p className="text-xs text-emerald-700 font-medium mb-1">Ask Price</p>
-													<p className="text-2xl font-bold text-emerald-600">{formatCurrency(listing.price)}</p>
+													<p className="text-gray-500 text-xs">Ask Price</p>
+													<h4 className="text-lg font-semibold text-green-700">{formatCurrency(listing.price)}</h4>
 												</div>
 												<div className="text-right">
-													<p className="text-xs text-gray-600 font-medium mb-1">Quantity</p>
-													<p className="text-2xl font-bold text-gray-900">{listing.shares} Lakh</p>
+													<p className="text-gray-500 text-xs">Quantity</p>
+													<h4 className="text-lg font-bold text-gray-800">{formatQty(listing.shares)}</h4>
 												</div>
 											</div>
 										</div>
 										
 										{/* Action buttons */}
-										<div className="flex gap-2">
+										<div className="flex items-center justify-start gap-3">
 											<button
 												onClick={() => {
 													setTradeContext({ type: 'bid', item: listing });
 													setBidOfferData({ price: listing.price, quantity: listing.shares });
 												}}
-												className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all duration-200"
+												className="px-5 py-2 rounded-md font-semibold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm hover:shadow transition-all duration-200"
 											>
 												<span>{myBid ? 'Update Bid' : 'Place Your Bid'}</span>
 											</button>
 											<button
 												onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-												className="inline-flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-gray-700 border-2 border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200"
+												className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-5 py-2 rounded-md transition-all duration-200"
 											>
 												<span>View Details</span>
 											</button>
@@ -1169,12 +1177,10 @@ export default function UserDashboard({ setPage }) {
 														alert('Link copied to clipboard!');
 													}
 												}}
-												className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-gray-600 border-2 border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200"
+												className="text-gray-500 hover:text-gray-700 transition-all duration-200"
 												title="Share"
 											>
-												<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-												</svg>
+												<Share2 className="w-5 h-5" />
 											</button>
 											<button
 											onClick={() => {
