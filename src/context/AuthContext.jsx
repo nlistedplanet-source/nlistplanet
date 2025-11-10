@@ -24,6 +24,13 @@ export function AuthProvider({ children }) {
         const role = savedRole || (parsedUser?.roles?.includes('admin') ? 'admin' : 'buyer');
         setCurrentRole(role);
         localStorage.setItem('currentRole', role);
+        
+        // Auto-redirect to last visited page after restoration
+        const lastPage = localStorage.getItem('lastVisitedPage');
+        if (lastPage === 'user' || lastPage === 'admin') {
+          // Signal App to navigate (we'll use custom event)
+          window.dispatchEvent(new CustomEvent('auth-restored', { detail: { page: lastPage } }));
+        }
       } catch (err) {
         console.warn('Failed to parse stored auth user:', err);
         localStorage.removeItem('authUser');

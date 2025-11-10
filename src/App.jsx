@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
@@ -13,16 +13,25 @@ import { PortfolioProvider } from './context/PortfolioContext';
 
 export default function App() {
   const getInitialPage = useCallback(() => {
-    if (typeof window === 'undefined') return 'home';
-    const saved = localStorage.getItem('lastVisitedPage');
-    const token = localStorage.getItem('authToken');
-    if (saved === 'user' || saved === 'admin') {
-      return token ? saved : 'home';
-    }
-    return saved || 'home';
+    // Always start with 'home' to avoid blank screen
+    // User will be redirected after AuthContext loads
+    return 'home';
   }, []);
 
   const [page, setPageState] = useState(() => getInitialPage());
+
+  // Listen for auth restoration event to redirect
+  useEffect(() => {
+    const handleAuthRestored = (event) => {
+      const { page: restoredPage } = event.detail;
+      if (restoredPage) {
+        setPageState(restoredPage);
+      }
+    };
+
+    window.addEventListener('auth-restored', handleAuthRestored);
+    return () => window.removeEventListener('auth-restored', handleAuthRestored);
+  }, []);
 
   const setPage = useCallback((nextPage) => {
     setPageState(nextPage);
