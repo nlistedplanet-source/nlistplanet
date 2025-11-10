@@ -37,12 +37,37 @@ const normalizeDocument = (value) => {
   return value;
 };
 
+// Format date from YYYY-MM-DD to DD-MM-YYYY for display
+const formatDateDDMMYYYY = (isoDate) => {
+  if (!isoDate) return '';
+  const [year, month, day] = isoDate.split('-');
+  return `${day}-${month}-${year}`;
+};
+
+// Convert DD-MM-YYYY to YYYY-MM-DD for storage
+const convertToISO = (ddmmyyyy) => {
+  if (!ddmmyyyy) return '';
+  const cleaned = ddmmyyyy.replace(/\D/g, '');
+  if (cleaned.length !== 8) return '';
+  const day = cleaned.slice(0, 2);
+  const month = cleaned.slice(2, 4);
+  const year = cleaned.slice(4, 8);
+  return `${year}-${month}-${day}`;
+};
+
+// Format input as user types: DD-MM-YYYY
+const formatDateInput = (value) => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers;
+  if (numbers.length <= 4) return numbers.slice(0, 2) + '-' + numbers.slice(2);
+  return numbers.slice(0, 2) + '-' + numbers.slice(2, 4) + '-' + numbers.slice(4, 8);
+};
+
 const createInitialFormData = (currentUser) => ({
   name: currentUser?.name || '',
   email: currentUser?.email || '',
   mobile: currentUser?.mobile || '',
   profilePhoto: currentUser?.profilePhoto || '',
-  hideContactInfo: currentUser?.hideContactInfo || false,
   personal: {
     dob: currentUser?.personal?.dob || '',
     gender: currentUser?.personal?.gender || '',
@@ -408,22 +433,6 @@ export default function UserProfile() {
                 />
               </div>
             </div>
-
-            <div className="border-t pt-6">
-              <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
-                <input
-                  type="checkbox"
-                  checked={formData.hideContactInfo}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, hideContactInfo: e.target.checked }))}
-                  disabled={!isEditing}
-                  className="w-5 h-5"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">🔒 Hide contact details from other users</p>
-                  <p className="text-xs text-gray-500 mt-1">Your email and mobile will be private</p>
-                </div>
-              </label>
-            </div>
           </div>
             )}
 
@@ -433,10 +442,16 @@ export default function UserProfile() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
               <input
-                type="date"
-                value={formData.personal.dob}
-                onChange={(e) => updateSectionField('personal', 'dob', e.target.value)}
+                type="text"
+                value={formData.personal.dob ? formatDateDDMMYYYY(formData.personal.dob) : ''}
+                onChange={(e) => {
+                  const formatted = formatDateInput(e.target.value);
+                  const isoDate = convertToISO(formatted);
+                  updateSectionField('personal', 'dob', isoDate || formatted);
+                }}
                 disabled={!isEditing}
+                placeholder="DD-MM-YYYY"
+                maxLength="10"
                 className={`w-full border-2 rounded-lg px-4 py-2.5 text-gray-900 outline-none transition ${
                   isEditing ? 'border-purple-300 bg-white focus:border-purple-500' : 'border-gray-200 bg-gray-50 cursor-not-allowed'
                 }`}
