@@ -35,8 +35,9 @@ export default function Header({ setPage, currentPage }) {
             : 'bg-white/60'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3 lg:py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Standard header height to avoid pushing content */}
+          <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
@@ -44,19 +45,21 @@ export default function Header({ setPage, currentPage }) {
           >
               {/* Mobile: static image to save bandwidth. Desktop/Tablet: animated video with WebM (alpha) + MP4 fallback */}
               <img src="/images/logos/logo.png" alt="Nlist logo" className="block sm:hidden h-10 w-10 object-contain" />
-              <video
-                className="hidden sm:block h-16 w-16 md:h-28 md:w-28 lg:h-48 lg:w-48 object-contain bg-transparent"
-                autoPlay
-                loop
-                muted
-                playsInline
-                poster="/images/logos/logo.png"
-              >
-                <source src="/images/logos/animated_logo.webm" type="video/webm" />
-                <source src="/images/logos/animated_logo.mp4" type="video/mp4" />
-                {/* Fallback to static image if video not supported */}
-                <img src="/images/logos/logo.png" alt="Nlist logo" />
-              </video>
+              <div className="hidden sm:block h-full flex items-center">
+                <video
+                  className="max-h-10 md:max-h-14 lg:max-h-16 w-auto object-contain bg-transparent"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster="/images/logos/logo.png"
+                >
+                  <source src="/images/logos/animated_logo.webm" type="video/webm" />
+                  <source src="/images/logos/animated_logo.mp4" type="video/mp4" />
+                  {/* Fallback to static image if video not supported */}
+                  <img src="/images/logos/logo.png" alt="Nlist logo" />
+                </video>
+              </div>
           </button>
 
           {/* Navigation Links */}
