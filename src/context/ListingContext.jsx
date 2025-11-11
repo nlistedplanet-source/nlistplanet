@@ -53,10 +53,12 @@ export function ListingProvider({ children }) {
   const createBuyRequest = async (data) => {
     try {
       const response = await listingAPI.createBuyRequest(data);
-      const newRequest = response.data.listing;
+      // Debug: log server response to ensure we pick the right payload field
+      console.log('createBuyRequest response:', response && response.data);
+      const newRequest = (response && (response.data?.listing || response.data)) || data;
       
-      // Optimistic UI: add the new request locally so it appears immediately
-      setBuyRequests((prev) => [newRequest, ...(prev || [])]);
+  // Optimistic UI: add the new request locally so it appears immediately
+  setBuyRequests((prev) => [newRequest, ...(prev || [])]);
 
       // Force refresh to ensure latest data from server (will reconcile state)
       await fetchListings();
