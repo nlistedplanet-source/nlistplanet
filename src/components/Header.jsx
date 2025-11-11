@@ -24,20 +24,20 @@ export default function Header({ setPage, currentPage }) {
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
-            className="flex items-center group cursor-pointer pl-3 sm:pl-6"
+            className="flex items-center group cursor-pointer pl-4 sm:pl-6"
             aria-label="Go to home"
           >
               {/* Use the new logo PNG */}
               <img
                 src="/images/logos/new_logo.png"
                 alt="Nlist logo"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-[2.25] md:scale-[2.5] lg:scale-[3] md:-translate-y-2 lg:-translate-y-3"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-center scale-150 translate-y-0"
               />
           </button>
 
           {/* Navigation Links */}
           {!isDashboardPage && (
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
               <button
                 onClick={() => setPage('home')}
                 className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
