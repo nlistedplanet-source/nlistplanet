@@ -33,8 +33,10 @@ export default function Header({ setPage, currentPage }) {
                   alt="Nlist logo"
                   className="h-12 w-12 sm:h-14 sm:w-14 object-contain scale-150"
                   onError={(e) => {
-                    console.error('Logo failed to load, trying fallback');
-                    e.target.src = '/images/logos/nlist_logo_simple.svg';
+                    // If the SVG fails to load, fall back to the raster PNG
+                    console.error('Logo failed to load, using PNG fallback');
+                    e.target.onerror = null; // prevent infinite loop
+                    e.target.src = '/images/logos/new_logo.png';
                   }}
                 />
                 <span className="text-2xl font-bold tracking-tight text-gray-900">Nlist</span>
