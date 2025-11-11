@@ -442,6 +442,17 @@ export default function UserDashboard({ setPage }) {
 		},
 		[buyRequests, requestBelongsToUser, user]
 	);
+
+	// Derived counts for buy submenu
+	const buyOffersCount = useMemo(() => {
+		return myRequests.reduce((acc, r) => acc + (r.offers?.length || 0), 0);
+	}, [myRequests]);
+
+	const buyCounterOffersCount = useMemo(() => {
+		return myRequests.reduce((acc, r) => acc + (r.offers?.filter(o => o.status === 'counter_offered').length || 0), 0);
+	}, [myRequests]);
+
+	const buyCompletedCount = useMemo(() => myRequests.filter(r => r.status === 'approved' || r.status === 'closed').length, [myRequests]);
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 
 			listing.status === 'active' && !listingBelongsToUser(listing)
@@ -564,7 +575,18 @@ export default function UserDashboard({ setPage }) {
 
 	const navItems = [
 		{ id: 'marketplace', label: 'Nlist Zone', icon: '🏪' },
-		{ id: 'buy', label: 'Buy', icon: '🛒', counter: myRequests.length },
+		{
+			id: 'buy',
+			label: 'Buy',
+			icon: '🛒',
+			counter: myRequests.length,
+			children: [
+				{ id: 'buy_list', label: 'Buy List', counter: myRequests.length },
+				{ id: 'buy_offers', label: 'Offers Received', counter: buyOffersCount },
+				{ id: 'buy_counter', label: 'Counter Offers', counter: buyCounterOffersCount },
+				{ id: 'buy_completed', label: 'Completed', counter: buyCompletedCount }
+			]
+		},
 		{ id: 'sell', label: 'Sell', icon: '📈', counter: myListings.length },
 		{ id: 'orders', label: 'Orders', icon: '📋' },
 		{ id: 'portfolio', label: 'Portfolio', icon: '💼' },
@@ -2286,7 +2308,33 @@ export default function UserDashboard({ setPage }) {
 								</span>
 							)}
 						</button>
-					))}
+						))}
+
+						{/* If a nav item has children and it is active, render submenu */}
+						{navItems.map((nav) => (
+							nav.children && activeTab === nav.id ? (
+								<div key={`${nav.id}-children`} className="pl-8 pr-4 mt-2 space-y-1">
+									{nav.children.map((child) => (
+										<button
+											key={child.id}
+											onClick={() => { setActiveTab(nav.id); setBuySubTab(child.id.replace('buy_', '')); }}
+											className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
+												buySubTab === child.id.replace('buy_', '')
+													? 'bg-white text-purple-700 shadow'
+													: 'text-purple-700 hover:bg-white/10'
+											}`}
+										>
+											<span className="text-sm">{child.label}</span>
+											{typeof child.counter === 'number' && child.counter > 0 && (
+												<span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-2 rounded-full text-xs font-bold bg-white/60 text-purple-700 border border-white/30">
+													{child.counter}
+												</span>
+											)}
+										</button>
+									))}
+								</div>
+							) : null
+						))}
 				</nav>
 
 				{/* Bottom Actions */}
