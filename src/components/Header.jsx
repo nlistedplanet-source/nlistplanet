@@ -27,11 +27,15 @@ export default function Header({ setPage, currentPage }) {
             className="flex items-center group cursor-pointer pl-4 sm:pl-6"
             aria-label="Go to home"
           >
-                {/* Use SVG logo for crisp scaling; larger size for clarity */}
+                {/* Simple clean SVG logo */}
                 <img
-                  src="/images/logos/nlist_logo.svg"
+                  src="/images/logos/nlist_logo_simple.svg"
                   alt="Nlist logo"
-                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-lg shadow-sm"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                  onError={(e) => {
+                    console.error('Logo failed to load');
+                    e.target.style.display = 'none';
+                  }}
                 />
                 <span className="text-2xl font-bold tracking-tight text-gray-900">Nlist</span>
           </button>
