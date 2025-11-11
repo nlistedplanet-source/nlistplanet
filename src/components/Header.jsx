@@ -31,7 +31,7 @@ export default function Header({ setPage, currentPage }) {
                 <img
                   src="/images/logos/nlist_logo.svg"
                   alt="Nlist logo"
-                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain scale-150"
                   onError={(e) => {
                     console.error('Logo failed to load, trying fallback');
                     e.target.src = '/images/logos/nlist_logo_simple.svg';
