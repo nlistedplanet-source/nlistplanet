@@ -48,7 +48,7 @@ export default function Header({ setPage, currentPage }) {
               loop
               muted
               playsInline
-              className="h-36 w-36 object-contain rounded-lg shadow-sm"
+              className="h-64 w-64 object-contain rounded-lg shadow-sm"
             />
           </button>
 
