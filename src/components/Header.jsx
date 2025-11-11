@@ -37,7 +37,7 @@ export default function Header({ setPage, currentPage }) {
     >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 overflow-visible">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
@@ -47,7 +47,7 @@ export default function Header({ setPage, currentPage }) {
               <img
                 src="/images/logos/new_logo.png"
                 alt="Nlist logo"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-125 md:scale-150"
               />
           </button>
 
