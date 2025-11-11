@@ -2290,7 +2290,7 @@ export default function UserDashboard({ setPage }) {
 						<button
 							key={nav.id}
 							onClick={() => setActiveTab(nav.id)}
-							className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+							className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
 								activeTab === nav.id
 									? 'bg-white text-purple-700 shadow-lg shadow-purple-200 scale-105'
 									: 'text-purple-700 hover:bg-white/20 hover:scale-105'
@@ -2299,7 +2299,7 @@ export default function UserDashboard({ setPage }) {
 							<span className="text-xl">{nav.icon}</span>
 							<span className="flex-1 text-left">{nav.label}</span>
 							{typeof nav.counter === 'number' && nav.counter > 0 && (
-								<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-bold ${
+								<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold ${
 									activeTab === nav.id 
 										? 'bg-purple-100 text-purple-700' 
 										: 'bg-white/60 text-purple-700 border border-white/30'
@@ -2318,7 +2318,7 @@ export default function UserDashboard({ setPage }) {
 										<button
 											key={child.id}
 											onClick={() => { setActiveTab(nav.id); setBuySubTab(child.id.replace('buy_', '')); }}
-											className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
+											className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-normal transition ${
 												buySubTab === child.id.replace('buy_', '')
 													? 'bg-white text-purple-700 shadow'
 													: 'text-purple-700 hover:bg-white/10'
@@ -2326,7 +2326,7 @@ export default function UserDashboard({ setPage }) {
 										>
 											<span className="text-sm">{child.label}</span>
 											{typeof child.counter === 'number' && child.counter > 0 && (
-												<span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-2 rounded-full text-xs font-bold bg-white/60 text-purple-700 border border-white/30">
+												<span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-2 rounded-full text-xs font-semibold bg-white/60 text-purple-700 border border-white/30">
 													{child.counter}
 												</span>
 											)}

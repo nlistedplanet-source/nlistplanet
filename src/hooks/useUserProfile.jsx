@@ -14,7 +14,21 @@ const FALLBACK_PROFILE = {
 };
 
 export default function useUserProfile() {
-  const [profile, setProfile] = useState(FALLBACK_PROFILE);
+  // Try to seed profile from localStorage (authUser) so freshly-signed-up users
+  // see their mobile/email immediately even if the profile API isn't updated yet.
+  const seedFromStorage = (() => {
+    try {
+      const raw = localStorage.getItem('authUser');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (err) {
+      // ignore parse errors
+    }
+    return null;
+  })();
+
+  const [profile, setProfile] = useState(() => ({ ...(FALLBACK_PROFILE || {}), ...(seedFromStorage || {}) }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

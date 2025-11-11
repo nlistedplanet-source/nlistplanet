@@ -1,9 +1,13 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { listingAPI } from '../services/api';
+import { AuthContext } from './AuthContext';
 
 export const ListingContext = createContext();
 
 export function ListingProvider({ children }) {
+  // Get current user from AuthContext for optimistic updates
+  const { user } = useContext(AuthContext);
+  
   // Sell Listings - Users/Admin want to SELL shares
   const [sellListings, setSellListings] = useState([]);
 
@@ -55,10 +59,31 @@ export function ListingProvider({ children }) {
       const response = await listingAPI.createBuyRequest(data);
       // Debug: log server response to ensure we pick the right payload field
       console.log('createBuyRequest response:', response && response.data);
-      const newRequest = (response && (response.data?.listing || response.data)) || data;
       
-  // Optimistic UI: add the new request locally so it appears immediately
-  setBuyRequests((prev) => [newRequest, ...(prev || [])]);
+      // Extract the new request from response (try multiple possible paths)
+      let newRequest = response?.data?.listing || response?.data || data;
+      
+      // Ensure the optimistic update has proper user identification
+      // Add all possible user identification fields to ensure requestBelongsToUser catches it
+      if (user) {
+        newRequest = {
+          ...newRequest,
+          buyer: user.email || newRequest.buyer,
+          buyerEmail: user.email || newRequest.buyerEmail,
+          buyerId: user._id || user.id || newRequest.buyerId,
+          buyerName: user.name || newRequest.buyerName,
+          requestedBy: user.email || newRequest.requestedBy,
+          requestedById: user._id || user.id || newRequest.requestedById,
+          createdBy: user.email || newRequest.createdBy,
+          createdById: user._id || user.id || newRequest.createdById,
+          accountId: user._id || user.id || newRequest.accountId,
+        };
+      }
+      
+      console.log('createBuyRequest - Optimistic newRequest with user fields:', newRequest);
+      
+      // Optimistic UI: add the new request locally so it appears immediately
+      setBuyRequests((prev) => [newRequest, ...(prev || [])]);
 
       // Force refresh to ensure latest data from server (will reconcile state)
       await fetchListings();
