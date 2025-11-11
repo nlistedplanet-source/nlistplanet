@@ -2236,7 +2236,7 @@ export default function UserDashboard({ setPage }) {
 			/>
 
 			{/* Left Sidebar Navigation */}
-			<aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto sidebar-scroll">
+			<aside className="hidden lg:flex lg:flex-col w-56 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto sidebar-scroll">
 				{/* Logo & User Info */}
 				<div className="p-6 border-b border-white/10">
 					<div className="flex items-center gap-3">
@@ -2313,7 +2313,7 @@ export default function UserDashboard({ setPage }) {
 			</aside>
 
 			{/* Main Content Area */}
-			<div className="flex-1 lg:ml-64">
+			<div className="flex-1 lg:ml-56">
 				{/* Top Header Bar */}
 				<header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
 					<div className="px-6 py-4">
