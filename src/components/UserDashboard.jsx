@@ -2294,7 +2294,7 @@ export default function UserDashboard({ setPage }) {
 					   {/* Profile button removed: now handled as a sidebar tab */}
 					<button
 						onClick={() => setShowPasswordModal(true)}
-						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white hover:bg-white/10 transition-all"
+						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-purple-900 bg-white/80 hover:bg-white transition-all shadow-sm border border-white/30"
 					>
 						<span className="text-lg">🔐</span>
 						<span>Password</span>
@@ -2304,7 +2304,7 @@ export default function UserDashboard({ setPage }) {
 							logout();
 							setPage('home');
 						}}
-						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-red-500/20 hover:bg-red-500 transition-all border border-red-400/30"
+						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md"
 					>
 						<span className="text-lg">🚪</span>
 						<span>Logout</span>
