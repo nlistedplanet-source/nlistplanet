@@ -48,7 +48,8 @@ export default function Header({ setPage, currentPage }) {
                 loop
                 muted
                 playsInline
-                className="h-16 w-16 md:h-28 md:w-28 lg:h-48 lg:w-48 object-contain rounded-lg shadow-sm"
+                className="h-16 w-16 md:h-28 md:w-28 lg:h-48 lg:w-48 object-contain bg-transparent"
+                style={{ backgroundColor: 'transparent' }}
               />
           </button>
 
