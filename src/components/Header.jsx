@@ -17,14 +17,15 @@ export default function Header({ setPage, currentPage }) {
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
 
   return (
-    <header className="w-full transition-all duration-300 bg-transparent">
+  <header className="w-full absolute top-0 left-0 z-50 transition-all duration-300 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16 overflow-visible">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
-            className="flex items-center group cursor-pointer"
+            className="flex items-center group cursor-pointer pl-3 sm:pl-6"
+            aria-label="Go to home"
           >
               {/* Use the new logo PNG */}
               <img
