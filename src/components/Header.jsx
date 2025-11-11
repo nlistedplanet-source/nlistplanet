@@ -5,7 +5,7 @@ import ChangePassword from './ChangePassword';
 import LoginModal from './LoginModal';
 
 export default function Header({ setPage, currentPage }) {
-  const { user, logout, currentRole, switchRole } = useAuth();
+  const { user, logout, currentRole } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -135,20 +135,6 @@ export default function Header({ setPage, currentPage }) {
                         >
                           <span className="font-medium text-sm">Change Password</span>
                         </button>
-
-                        {user.roles?.length > 1 && (
-                          <button
-                            onClick={() => {
-                              switchRole();
-                              setShowMenu(false);
-                            }}
-                            className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
-                          >
-                            <span className="font-medium text-sm">
-                              Switch to {currentRole === 'admin' ? 'User' : 'Admin'}
-                            </span>
-                          </button>
-                        )}
 
                         <div className="border-t border-gray-100 my-1"></div>
 
