@@ -17,7 +17,7 @@ export default function Header({ setPage, currentPage }) {
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
 
   return (
-  <header className="w-full absolute top-0 left-0 z-50 transition-all duration-300 bg-transparent">
+  <header className="w-full absolute left-0 top-3 sm:top-4 z-50 transition-all duration-300 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16 overflow-visible">
