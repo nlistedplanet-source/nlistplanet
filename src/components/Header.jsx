@@ -42,9 +42,12 @@ export default function Header({ setPage, currentPage }) {
             onClick={() => setPage('home')} 
             className="flex items-center gap-2 group cursor-pointer"
           >
-            <img
-              src="/images/logos/logo.png"
-              alt="Nlist Logo"
+            <video
+              src="/images/logos/animated_logo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
               className="h-10 w-10 object-contain rounded-lg shadow-sm"
             />
             <span className="text-xl font-bold tracking-tight text-gray-900">Nlist</span>
