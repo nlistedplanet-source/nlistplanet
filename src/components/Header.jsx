@@ -48,6 +48,7 @@ export default function Header({ setPage, currentPage }) {
                 src="/images/logos/list-removebg-preview.png"
                 alt="Nlist logo"
                 className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/logos/logo.png'; }}
               />
           </button>
 
