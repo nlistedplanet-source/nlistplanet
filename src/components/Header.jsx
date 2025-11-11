@@ -30,7 +30,7 @@ export default function Header({ setPage, currentPage }) {
               <img
                 src="/images/logos/new_logo.png"
                 alt="Nlist logo"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-150 md:scale-150 lg:scale-150 md:-translate-y-1 lg:-translate-y-2"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-[2.25] md:scale-[2.5] lg:scale-[3] md:-translate-y-2 lg:-translate-y-3"
               />
           </button>
 
