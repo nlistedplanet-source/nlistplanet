@@ -31,7 +31,8 @@ export default function Header({ setPage, currentPage }) {
                 <img
                   src="/images/logos/nlist_logo.svg"
                   alt="Nlist logo"
-                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain scale-150"
+                  aria-label="Nlist logo"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain scale-200"
                   onError={(e) => {
                     // If the SVG fails to load, fall back to the raster PNG
                     console.error('Logo failed to load, using PNG fallback');
@@ -39,7 +40,6 @@ export default function Header({ setPage, currentPage }) {
                     e.target.src = '/images/logos/new_logo.png';
                   }}
                 />
-                <span className="text-2xl font-bold tracking-tight text-gray-900">Nlist</span>
           </button>
 
           {/* Navigation Links */}
