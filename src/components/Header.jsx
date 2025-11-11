@@ -36,20 +36,20 @@ export default function Header({ setPage, currentPage }) {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center py-3 lg:py-4">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
             className="flex items-center group cursor-pointer"
           >
-            <video
-              src="/images/logos/animated_logo.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="h-64 w-64 object-contain rounded-lg shadow-sm"
-            />
+              <video
+                src="/images/logos/animated_logo.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-16 w-16 md:h-28 md:w-28 lg:h-48 lg:w-48 object-contain rounded-lg shadow-sm"
+              />
           </button>
 
           {/* Navigation Links */}
