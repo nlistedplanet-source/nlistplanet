@@ -2225,8 +2225,8 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
-	return (
-		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex">
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-white flex">
 			<Notification
 				show={notification.show}
 				type={notification.type}
@@ -2236,7 +2236,7 @@ export default function UserDashboard({ setPage }) {
 			/>
 
 			{/* Left Sidebar Navigation */}
-			<aside className="hidden lg:flex lg:flex-col w-56 bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl fixed h-screen overflow-y-auto sidebar-scroll">
+			<aside className="hidden lg:flex lg:flex-col w-56 bg-gradient-to-b from-purple-200 via-purple-100 to-indigo-50 shadow-2xl fixed h-screen overflow-y-auto sidebar-scroll">
 				{/* Logo & User Info */}
 				<div className="p-6 border-b border-white/10">
 					<div className="flex items-center gap-3">
@@ -2244,9 +2244,9 @@ export default function UserDashboard({ setPage }) {
 							👤
 						</div>
 						<div className="flex-1">
-							<h3 className="text-white font-bold text-base truncate">{user.name}</h3>
+							<h3 className="text-purple-900 font-bold text-base truncate">{user.name}</h3>
 							<div className="flex items-center gap-1 mt-1">
-								<p className="text-purple-200 text-xs truncate">{currentUsername}</p>
+								<p className="text-purple-600 text-xs truncate">{currentUsername}</p>
 								<button
 									onClick={handleUsernameChange}
 									className="text-purple-200 hover:text-white transition-colors"
@@ -2257,7 +2257,7 @@ export default function UserDashboard({ setPage }) {
 									</svg>
 								</button>
 							</div>
-							<p className="text-purple-300 text-xs mt-1">ID: {user.userId || 'N/A'}</p>
+							<p className="text-purple-600 text-xs mt-1">ID: {user.userId || 'N/A'}</p>
 						</div>
 					</div>
 				</div>
@@ -2270,8 +2270,8 @@ export default function UserDashboard({ setPage }) {
 							onClick={() => setActiveTab(nav.id)}
 							className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
 								activeTab === nav.id
-									? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
-									: 'text-white hover:bg-white/10 hover:scale-105'
+									? 'bg-white text-purple-700 shadow-lg shadow-purple-200 scale-105'
+									: 'text-purple-700 hover:bg-white/20 hover:scale-105'
 							}`}
 						>
 							<span className="text-xl">{nav.icon}</span>
@@ -2280,7 +2280,7 @@ export default function UserDashboard({ setPage }) {
 								<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-bold ${
 									activeTab === nav.id 
 										? 'bg-purple-100 text-purple-700' 
-										: 'bg-white/20 text-white border border-white/30'
+										: 'bg-white/60 text-purple-700 border border-white/30'
 								}`}>
 									{nav.counter}
 								</span>
