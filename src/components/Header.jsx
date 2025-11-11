@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UserProfile from './UserProfile';
 import ChangePassword from './ChangePassword';
@@ -11,14 +11,7 @@ export default function Header({ setPage, currentPage }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
-    onScroll();
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  // scrolled state removed (header is now non-sticky/transparent)
 
   // Hide navigation on dashboard and admin pages
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
