@@ -24,17 +24,7 @@ export default function Header({ setPage, currentPage }) {
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
 
   return (
-    <header
-      className={`w-full sticky top-0 z-50 transition-all duration-300 backdrop-blur-md ${
-        isDashboardPage
-          ? scrolled
-            ? 'bg-white/80 border-b border-gray-200 shadow-sm'
-            : 'bg-transparent'
-          : scrolled
-            ? 'bg-white/85 border-b border-gray-200 shadow-sm'
-            : 'bg-white/60'
-      }`}
-    >
+    <header className="w-full transition-all duration-300 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16 overflow-visible">
@@ -47,7 +37,7 @@ export default function Header({ setPage, currentPage }) {
               <img
                 src="/images/logos/new_logo.png"
                 alt="Nlist logo"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-125 md:scale-175 lg:scale-200 md:-translate-y-1 lg:-translate-y-2"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transform origin-left scale-150 md:scale-150 lg:scale-150 md:-translate-y-1 lg:-translate-y-2"
               />
           </button>
 
