@@ -5,7 +5,7 @@ import ChangePassword from './ChangePassword';
 import LoginModal from './LoginModal';
 
 export default function Header({ setPage, currentPage }) {
-  const { user, logout, currentRole, switchRole } = useAuth();
+  const { user, logout, currentRole } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -35,19 +35,21 @@ export default function Header({ setPage, currentPage }) {
             : 'bg-white/60'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Standard header height to avoid pushing content */}
+          <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
-            className="flex items-center gap-2 group cursor-pointer"
+            className="flex items-center group cursor-pointer"
           >
-            <img
-              src="/images/logos/logo.png"
-              alt="Nlist Logo"
-              className="h-10 w-10 object-contain rounded-lg shadow-sm"
-            />
-            <span className="text-xl font-bold tracking-tight text-gray-900">Nlist</span>
+              {/* Use the provided static logo PNG */}
+              <img
+                src="/images/logos/new_logo.png"
+                alt="Nlist logo"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/logos/logo.png'; }}
+              />
           </button>
 
           {/* Navigation Links */}
@@ -135,20 +137,6 @@ export default function Header({ setPage, currentPage }) {
                         >
                           <span className="font-medium text-sm">Change Password</span>
                         </button>
-
-                        {user.roles?.length > 1 && (
-                          <button
-                            onClick={() => {
-                              switchRole();
-                              setShowMenu(false);
-                            }}
-                            className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
-                          >
-                            <span className="font-medium text-sm">
-                              Switch to {currentRole === 'admin' ? 'User' : 'Admin'}
-                            </span>
-                          </button>
-                        )}
 
                         <div className="border-t border-gray-100 my-1"></div>
 

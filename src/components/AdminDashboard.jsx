@@ -6,7 +6,7 @@ import Notification from './Notification';
 
 export default function AdminDashboard({ setPage }) {
   const { user, logout } = useAuth();
-  const { sellListings, buyRequests, createSellListing, createBuyRequest, placeBid, makeOffer, acceptBid, acceptOffer, adminApprove, adminClose } = useListing();
+  const { sellListings, buyRequests, createSellListing, createBuyRequest, placeBid, makeOffer, adminApprove, adminClose } = useListing();
   const { companies, addCompany, updateCompany, deleteCompany, searchCompany } = useCompany();
   const [activeTab, setActiveTab] = useState('overview');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -29,6 +29,21 @@ export default function AdminDashboard({ setPage }) {
   });
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySuggestions, setCompanySuggestions] = useState([]);
+  // Mock Users/KYC data for admin tab scaffold
+  const [kycUsers, setKycUsers] = useState([
+    { id: 'U1001', name: 'Aarav Sharma', email: 'aarav@example.com', joinedAt: Date.now() - 86400000 * 12, kycStatus: 'under_review', docs: { pan: true, address: true, cml: false, bank: true } },
+    { id: 'U1002', name: 'Priya Singh', email: 'priya@example.com', joinedAt: Date.now() - 86400000 * 45, kycStatus: 'verified', docs: { pan: true, address: true, cml: true, bank: true } },
+    { id: 'U1003', name: 'Rohit Verma', email: 'rohit@example.com', joinedAt: Date.now() - 86400000 * 5, kycStatus: 'incomplete', docs: { pan: false, address: false, cml: false, bank: false } },
+    { id: 'U1004', name: 'Neha Gupta', email: 'neha@example.com', joinedAt: Date.now() - 86400000 * 90, kycStatus: 'under_review', docs: { pan: true, address: true, cml: true, bank: true } },
+  ]);
+  
+  // Mock Support Requests data
+  const [supportRequests, setSupportRequests] = useState([
+    { id: 'SR001', userId: 'U1001', userName: 'Aarav Sharma', email: 'aarav@example.com', subject: 'KYC Verification Delay', message: 'My KYC has been under review for 2 weeks. Can you please check?', status: 'open', createdAt: Date.now() - 86400000 * 3, response: null },
+    { id: 'SR002', userId: 'U1003', userName: 'Rohit Verma', email: 'rohit@example.com', subject: 'Payment Issue', message: 'I did not receive payment for my last deal. Order ID: ORD123', status: 'open', createdAt: Date.now() - 86400000 * 1, response: null },
+    { id: 'SR003', userId: 'U1002', userName: 'Priya Singh', email: 'priya@example.com', subject: 'How to add portfolio?', message: 'I want to add my existing shares to portfolio. Please guide.', status: 'resolved', createdAt: Date.now() - 86400000 * 7, response: 'Please go to Portfolio tab and click Add Existing Share button.' },
+  ]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   // Show notification helper
   const showNotification = (type, title, message) => {
@@ -39,6 +54,20 @@ export default function AdminDashboard({ setPage }) {
   const pendingApprovals = allListings.filter(item => item.status === 'pending_admin_approval');
   const approvedItems = allListings.filter(item => item.status === 'approved');
   const closedItems = allListings.filter(item => item.status === 'closed');
+  
+  // Deal Closure Queue: Find all accepted bids/offers awaiting admin closure
+  const acceptedDeals = [
+    ...sellListings.filter(l => l.bids?.some(b => b.status === 'accepted')).map(l => ({
+      ...l,
+      type: 'sell',
+      acceptedBid: l.bids.find(b => b.status === 'accepted')
+    })),
+    ...buyRequests.filter(r => r.offers?.some(o => o.status === 'accepted')).map(r => ({
+      ...r,
+      type: 'buy',
+      acceptedOffer: r.offers.find(o => o.status === 'accepted')
+    }))
+  ];
 
   // Admin's own listings and requests (for trading section)
   const myListings = sellListings.filter(l => l.seller === user?.name || l.seller === user?.email);
@@ -124,6 +153,32 @@ export default function AdminDashboard({ setPage }) {
   };
 
   const filteredItems = getFilteredItems();
+
+  // KYC admin actions (local state only for scaffold)
+  const approveKyc = (userId) => {
+    setKycUsers(prev => prev.map(u => u.id === userId ? { ...u, kycStatus: 'verified' } : u));
+    const u = kycUsers.find(x => x.id === userId);
+    showNotification('success', 'KYC Verified ✅', `${u?.name || 'User'} is now verified`);
+  };
+  const rejectKyc = (userId) => {
+    setKycUsers(prev => prev.map(u => u.id === userId ? { ...u, kycStatus: 'incomplete' } : u));
+    const u = kycUsers.find(x => x.id === userId);
+    showNotification('warning', 'KYC Set to Incomplete ⚠️', `${u?.name || 'User'} needs re-submission`);
+  };
+
+  const pendingKycUsers = kycUsers.filter(u => u.kycStatus === 'under_review' || u.kycStatus === 'incomplete');
+  const verifiedKycUsers = kycUsers.filter(u => u.kycStatus === 'verified');
+  
+  // Support request actions
+  const resolveRequest = (reqId, response) => {
+    setSupportRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'resolved', response, resolvedAt: Date.now() } : r));
+    showNotification('success', 'Request Resolved ✅', 'User will be notified via email');
+  };
+  
+  const reopenRequest = (reqId) => {
+    setSupportRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'open', response: null, resolvedAt: null } : r));
+    showNotification('info', 'Request Reopened', 'Status changed to open');
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -247,6 +302,59 @@ export default function AdminDashboard({ setPage }) {
                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
               </svg>
               <span className="flex-1 text-left">Company DB</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('usersKyc')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'usersKyc'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 4a3 3 0 100 6 3 3 0 000-6zM2 16a8 8 0 1116 0v1H2v-1z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Users/KYC</span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('dealQueue')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'dealQueue'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              <span className="flex-1 text-left">Deal Queue</span>
+              {acceptedDeals.length > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {acceptedDeals.length}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('support')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'support'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+              </svg>
+              <span className="flex-1 text-left">Support Requests</span>
+              {supportRequests.filter(r => r.status === 'open').length > 0 && (
+                <span className="bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {supportRequests.filter(r => r.status === 'open').length}
+                </span>
+              )}
             </button>
           </div>
         </nav>
@@ -970,6 +1078,92 @@ export default function AdminDashboard({ setPage }) {
               </div>
             )}
 
+            {/* ADMIN RIGHTS - Users/KYC Management (scaffold) */}
+            {activeTab === 'usersKyc' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">👥 Users & KYC</h1>
+                  <p className="text-gray-600">Review and update user KYC status. This section uses mock data and is ready to connect to backend APIs.</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{kycUsers.length}</div>
+                    <p className="text-indigo-100 font-medium">Total Users</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{pendingKycUsers.length}</div>
+                    <p className="text-amber-100 font-medium">Pending / Incomplete</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{verifiedKycUsers.length}</div>
+                    <p className="text-emerald-100 font-medium">Verified</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Pending/Incomplete */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">⏳ Pending Review</h3>
+                      <span className="text-sm text-gray-500">{pendingKycUsers.length} user(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {pendingKycUsers.length > 0 ? pendingKycUsers.map(u => (
+                        <div key={u.id} className="p-5 flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800">{u.name}</p>
+                            <p className="text-sm text-gray-600">{u.email}</p>
+                            <div className="mt-2 flex items-center gap-2 text-xs">
+                              <span className={`px-2 py-1 rounded-full font-bold ${u.kycStatus === 'under_review' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}`}>{u.kycStatus}</span>
+                              <span className="text-gray-500">Joined: {new Date(u.joinedAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-600">
+                              Docs: PAN {u.docs.pan ? '✅' : '—'}, Address {u.docs.address ? '✅' : '—'}, CML {u.docs.cml ? '✅' : '—'}, Bank {u.docs.bank ? '✅' : '—'}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 min-w-[160px]">
+                            <button onClick={() => approveKyc(u.id)} className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">✅ Approve</button>
+                            <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">↺ Mark Incomplete</button>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No users pending review</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Verified */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-800">✅ Verified Users</h3>
+                      <span className="text-sm text-gray-500">{verifiedKycUsers.length} user(s)</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {verifiedKycUsers.length > 0 ? verifiedKycUsers.map(u => (
+                        <div key={u.id} className="p-5 flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800">{u.name}</p>
+                            <p className="text-sm text-gray-600">{u.email}</p>
+                            <div className="mt-2 flex items-center gap-2 text-xs">
+                              <span className="px-2 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700">verified</span>
+                              <span className="text-gray-500">Joined: {new Date(u.joinedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 min-w-[160px]">
+                            <button onClick={() => rejectKyc(u.id)} className="px-4 py-2 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 transition">↺ Revoke (Incomplete)</button>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-6 text-center text-gray-500">No verified users yet</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Add New Company */}
             {companySubTab === 'add' && (
               <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-200">
@@ -1229,6 +1423,195 @@ export default function AdminDashboard({ setPage }) {
             )}
               </>
             )}
+            
+            {/* ADMIN - Deal Closure Queue */}
+            {activeTab === 'dealQueue' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">🤝 Deal Closure Queue</h1>
+                  <p className="text-gray-600">Review and close accepted deals after offline verification (bank transfer, share transfer, etc.)</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white mb-8">
+                  <div className="text-4xl font-bold mb-2">{acceptedDeals.length}</div>
+                  <p className="text-blue-100 font-medium">Deals Awaiting Closure</p>
+                </div>
+
+                {acceptedDeals.length > 0 ? (
+                  <div className="space-y-6">
+                    {acceptedDeals.map((deal) => {
+                      const interaction = deal.type === 'sell' ? deal.acceptedBid : deal.acceptedOffer;
+                      const otherParty = deal.type === 'sell' ? interaction.bidder : interaction.seller;
+                      
+                      return (
+                        <div key={deal.id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-xl font-bold text-gray-800">{deal.company}</h3>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${deal.type === 'sell' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                  {deal.type === 'sell' ? '📈 Sell Deal' : '🛒 Buy Deal'}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-600">ISIN: {deal.isin}</p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {deal.type === 'sell' ? `Seller: ${deal.seller}` : `Buyer: ${deal.buyer}`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {deal.type === 'sell' ? `Buyer: ${otherParty}` : `Seller: ${otherParty}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-lg border border-emerald-200 mb-4">
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-600 mb-1">Agreed Price</p>
+                                <p className="text-xl font-bold text-emerald-600">₹{interaction.price}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 mb-1">Quantity</p>
+                                <p className="text-xl font-bold text-gray-800">{interaction.quantity} shares</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 mb-1">Total Value</p>
+                                <p className="text-xl font-bold text-blue-600">₹{(interaction.price * interaction.quantity).toLocaleString()}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                            <p className="text-sm text-amber-800 font-semibold mb-2">⏳ Accepted on: {new Date(interaction.timestamp).toLocaleString()}</p>
+                            <p className="text-xs text-amber-700">Both parties have agreed. Please verify offline payment and share transfer before closing.</p>
+                          </div>
+
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => {
+                                handleClose(deal.id, deal.type);
+                                showNotification('success', 'Deal Closed Successfully! 🎉', `${deal.company} deal has been marked as complete`);
+                              }}
+                              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 rounded-lg font-bold hover:shadow-lg transition"
+                            >
+                              ✅ Close Deal (Mark Complete)
+                            </button>
+                            <button
+                              onClick={() => setSelectedItem(deal)}
+                              className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition"
+                            >
+                              📋 View Full Details
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
+                    <div className="text-6xl mb-4">🎯</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Deal Closures</h3>
+                    <p className="text-gray-600">All accepted deals have been processed and closed.</p>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {/* ADMIN - Support Requests */}
+            {activeTab === 'support' && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">💬 Support Requests</h1>
+                  <p className="text-gray-600">Manage user inquiries and support tickets</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{supportRequests.filter(r => r.status === 'open').length}</div>
+                    <p className="text-amber-100 font-medium">Open Requests</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="text-3xl font-bold mb-2">{supportRequests.filter(r => r.status === 'resolved').length}</div>
+                    <p className="text-emerald-100 font-medium">Resolved Requests</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Open Requests */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 bg-amber-50">
+                      <h3 className="text-xl font-bold text-gray-800">🔔 Open Requests</h3>
+                      <p className="text-sm text-gray-600 mt-1">Awaiting response</p>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                      {supportRequests.filter(r => r.status === 'open').length > 0 ? (
+                        supportRequests.filter(r => r.status === 'open').map(req => (
+                          <div key={req.id} className="p-5">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="font-bold text-gray-800">{req.userName}</p>
+                                <p className="text-xs text-gray-500">{req.email}</p>
+                              </div>
+                              <span className="text-xs text-gray-500">{new Date(req.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <h4 className="font-semibold text-gray-800 mb-2">📌 {req.subject}</h4>
+                            <p className="text-sm text-gray-600 mb-4">{req.message}</p>
+                            <button
+                              onClick={() => setSelectedRequest(req)}
+                              className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                            >
+                              💬 Respond & Resolve
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-gray-500">No open requests</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Resolved Requests */}
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 bg-emerald-50">
+                      <h3 className="text-xl font-bold text-gray-800">✅ Resolved Requests</h3>
+                      <p className="text-sm text-gray-600 mt-1">Completed tickets</p>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                      {supportRequests.filter(r => r.status === 'resolved').length > 0 ? (
+                        supportRequests.filter(r => r.status === 'resolved').map(req => (
+                          <div key={req.id} className="p-5">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="font-bold text-gray-800">{req.userName}</p>
+                                <p className="text-xs text-gray-500">{req.email}</p>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {req.resolvedAt ? new Date(req.resolvedAt).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                            <h4 className="font-semibold text-gray-800 mb-2">📌 {req.subject}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{req.message}</p>
+                            {req.response && (
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+                                <p className="text-xs font-semibold text-emerald-800 mb-1">Admin Response:</p>
+                                <p className="text-sm text-gray-700">{req.response}</p>
+                              </div>
+                            )}
+                            <button
+                              onClick={() => reopenRequest(req.id)}
+                              className="w-full px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100 transition"
+                            >
+                              ↺ Reopen Request
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-gray-500">No resolved requests yet</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             </div>
           </div>
 
@@ -1422,6 +1805,68 @@ export default function AdminDashboard({ setPage }) {
           </div>
         </main>
       </div>
+      
+      {/* Support Request Response Modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full border border-gray-200 shadow-2xl">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">💬 Respond to Support Request</h2>
+                <p className="text-sm text-gray-600 mt-1">From: {selectedRequest.userName} ({selectedRequest.email})</p>
+              </div>
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="text-gray-400 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-gray-800 mb-2">📌 {selectedRequest.subject}</h3>
+              <p className="text-sm text-gray-600">{selectedRequest.message}</p>
+              <p className="text-xs text-gray-500 mt-2">Submitted: {new Date(selectedRequest.createdAt).toLocaleString()}</p>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const response = e.target.response.value;
+              if (response.trim()) {
+                resolveRequest(selectedRequest.id, response);
+                setSelectedRequest(null);
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-700">Your Response *</label>
+                <textarea
+                  name="response"
+                  rows="6"
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-purple-400 outline-none transition"
+                  placeholder="Type your response here..."
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRequest(null)}
+                  className="flex-1 border-2 border-gray-300 rounded-lg py-3 font-semibold text-gray-700 hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 rounded-lg font-bold hover:shadow-lg transition"
+                >
+                  ✅ Send Response & Mark Resolved
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
       {/* Notification */}
       <Notification 

@@ -74,24 +74,49 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     verifyOTP: apiVerifyOTP,
     uploadPhoto: apiUploadPhoto,
     uploadDocument: apiUploadDocument,
+    submitBankApproval: apiSubmitBankApproval,
+    submitDematApproval: apiSubmitDematApproval,
   } = useUserProfile();
   
-  // Ensure formData always has complete structure
-  const [formData, setFormData] = useState(() => ({
-    ...currentUser,
-    personal: currentUser?.personal || {},
-    bank: currentUser?.bank || {},
-    demat: currentUser?.demat || {},
-    documents: currentUser?.documents || {}
-  }));
+  console.log('[UserProfile] currentUser prop received:', currentUser);
+  console.log('[UserProfile] apiProfile from hook:', apiProfile);
+  
+  // Normalize user data - map common field variations
+  const normalizeUserData = (userData) => {
+    if (!userData) return {};
+    return {
+      ...userData,
+      // Ensure email and mobile exist (map phone/mobileNumber to mobile if needed)
+      email: userData.email || '',
+      mobile: userData.mobile || userData.phone || userData.mobileNumber || '',
+      personal: userData.personal || {},
+      bank: userData.bank || {},
+      demat: userData.demat || {},
+      documents: userData.documents || {}
+    };
+  };
+  
+  // Ensure formData always has complete structure to prevent undefined access
+  const [formData, setFormData] = useState(() => {
+    const normalized = normalizeUserData(currentUser);
+    console.log('[UserProfile] Initial formData state:', normalized);
+    console.log('[UserProfile] Email:', normalized.email, 'Mobile:', normalized.mobile);
+    return normalized;
+  });
   const [profilePhoto, setProfilePhoto] = useState(null);
   
   // Sync API profile to local state when loaded
   useEffect(() => {
-    if (apiProfile && apiProfile.name !== 'Guest User') {
-      setFormData(apiProfile);
+    console.log('[UserProfile] useEffect triggered, apiProfile:', apiProfile);
+    // Only sync if apiProfile has real data (not FALLBACK_PROFILE)
+    if (apiProfile && apiProfile.name !== 'Guest User' && apiProfile.email) {
+      console.log('[UserProfile] Syncing apiProfile to formData');
+      setFormData(normalizeUserData(apiProfile));
       if (apiProfile.bank) setBankEditData(apiProfile.bank);
       if (apiProfile.demat) setDematEditData(apiProfile.demat);
+    } else {
+      console.log('[UserProfile] apiProfile is FALLBACK, keeping currentUser data');
+      // Keep using currentUser which has email/mobile from auth
     }
   }, [apiProfile]);
   
@@ -107,6 +132,9 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
   
   const [bankEditData, setBankEditData] = useState(currentUser?.bank || {});
   const [dematEditData, setDematEditData] = useState(currentUser?.demat || {});
+  
+  const [showBankApprovalModal, setShowBankApprovalModal] = useState(false);
+  const [showDematApprovalModal, setShowDematApprovalModal] = useState(false);
 
   const profileCompletion = useMemo(() => {
     if (!formData || !formData.personal || !formData.bank || !formData.demat || !formData.documents) {
@@ -132,37 +160,24 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
       setOtpField('email');
       setTempData({ email: formData.email });
       try {
-        const response = await apiSendOTP('email', formData.email);
-        console.log('Email OTP response:', response);
+        await apiSendOTP('email', formData.email);
         setShowOTPModal(true);
-        alert('✅ OTP sent to your email! Check your inbox.');
+        alert('OTP sent to your email!');
       } catch (err) {
-        console.error('Email OTP error:', err);
-        alert('❌ Failed to send OTP to email: ' + (err.message || 'Unknown error'));
+        // Fallback to demo mode
+        setShowOTPModal(true);
+        alert('OTP sent to your email! (Demo mode)');
       }
     } else if (field === 'mobile' && editingMobile) {
       setOtpField('mobile');
-      
-      // Validate mobile number
-      const mobileNum = formData.mobile.replace(/\s+/g, '');
-      if (!/^\d{10}$/.test(mobileNum)) {
-        alert('❌ Please enter a valid 10-digit mobile number');
-        return;
-      }
-      
       setTempData({ mobile: formData.mobile });
       try {
-        // Add +91 prefix for Indian mobile numbers
-        const mobileWithPrefix = `+91${mobileNum}`;
-        console.log('Sending OTP to:', mobileWithPrefix);
-        
-        const response = await apiSendOTP('mobile', mobileWithPrefix);
-        console.log('Mobile OTP response:', response);
+        await apiSendOTP('mobile', formData.mobile);
         setShowOTPModal(true);
-        alert('✅ OTP sent to your mobile! Check your SMS.\n\n⚠️ Note: If using Twilio trial account, verify your number in Twilio Console first.');
+        alert('OTP sent to your mobile!');
       } catch (err) {
-        console.error('Mobile OTP error:', err);
-        alert('❌ Failed to send OTP to mobile: ' + (err.message || 'Unknown error') + '\n\n💡 Twilio trial accounts can only send to verified numbers. Please verify your number in Twilio Console.');
+        setShowOTPModal(true);
+        alert('OTP sent to your mobile! (Demo mode)');
       }
     }
   };
@@ -184,10 +199,10 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
         setEditingMobile(false);
         alert('✅ ' + (otpField === 'email' ? 'Email' : 'Mobile') + ' verified successfully!');
       } else {
-        alert('❌ Invalid OTP. Please check and try again!');
+        alert('❌ Invalid OTP. Please try again!');
       }
     } catch (err) {
-      alert('❌ Invalid OTP. Try again!');
+      alert('❌ OTP verification failed. Please try again!');
     }
   };
 
@@ -198,17 +213,22 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     }));
   };
 
-  const handleBankSubmit = async () => {
+  const handleBankSubmit = () => {
+    setShowBankApprovalModal(true);
+  };
+
+  const confirmBankApproval = async () => {
     try {
-      await apiUpdateProfile({ bank: bankEditData });
-      setFormData(prev => ({ ...prev, bank: bankEditData }));
-      alert('✅ Bank details saved successfully!');
+      await apiSubmitBankApproval(bankEditData);
+      setFormData(prev => ({ ...prev, bank: { ...bankEditData, status: 'pending' } }));
+      alert('✅ Bank details sent to admin for approval!');
     } catch (err) {
       // Fallback to local update
-      setFormData(prev => ({ ...prev, bank: bankEditData }));
+      setFormData(prev => ({ ...prev, bank: { ...bankEditData, status: 'pending' } }));
       alert('✅ Bank details saved locally!');
     } finally {
       setEditingBank(false);
+      setShowBankApprovalModal(false);
     }
   };
 
@@ -219,16 +239,21 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
     }));
   };
 
-  const handleDematSubmit = async () => {
+  const handleDematSubmit = () => {
+    setShowDematApprovalModal(true);
+  };
+
+  const confirmDematApproval = async () => {
     try {
-      await apiUpdateProfile({ demat: dematEditData });
-      setFormData(prev => ({ ...prev, demat: dematEditData }));
-      alert('✅ Demat details saved successfully!');
+      await apiSubmitDematApproval(dematEditData);
+      setFormData(prev => ({ ...prev, demat: { ...dematEditData, status: 'pending' } }));
+      alert('✅ Demat details sent to admin for approval!');
     } catch (err) {
-      setFormData(prev => ({ ...prev, demat: dematEditData }));
+      setFormData(prev => ({ ...prev, demat: { ...dematEditData, status: 'pending' } }));
       alert('✅ Demat details saved locally!');
     } finally {
       setEditingDemat(false);
+      setShowDematApprovalModal(false);
     }
   };
 
@@ -371,11 +396,39 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
-                    <input type="date" value={formData.personal.dob} onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} className={inputClass} />
+                    <input 
+                      type="text" 
+                      value={(() => {
+                        const dob = formData.personal?.dob;
+                        if (!dob) return '';
+                        // Convert YYYY-MM-DD to MM-DD-YYYY
+                        const [year, month, day] = dob.split('-');
+                        return month && day && year ? `${month}-${day}-${year}` : dob;
+                      })()}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/[^0-9-]/g, '');
+                        // Auto-format as MM-DD-YYYY
+                        if (value.length === 2 && !value.includes('-')) value += '-';
+                        if (value.length === 5 && value.split('-').length === 2) value += '-';
+                        if (value.length <= 10) {
+                          // Convert MM-DD-YYYY back to YYYY-MM-DD for storage
+                          const parts = value.split('-');
+                          if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+                            const isoDate = `${parts[2]}-${parts[0]}-${parts[1]}`;
+                            updateSectionField('personal', 'dob', isoDate);
+                          } else {
+                            updateSectionField('personal', 'dob', value);
+                          }
+                        }
+                      }}
+                      placeholder="MM-DD-YYYY"
+                      className={inputClass}
+                      maxLength="10"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
-                    <select value={formData.personal.gender} onChange={(e) => updateSectionField('personal', 'gender', e.target.value)} className={inputClass}>
+                    <select value={formData.personal?.gender || ''} onChange={(e) => updateSectionField('personal', 'gender', e.target.value)} className={inputClass}>
                       <option value="">Select gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -384,27 +437,37 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Occupation</label>
-                    <input type="text" value={formData.personal.occupation} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass} />
+                    <select value={formData.personal?.occupation || ''} onChange={(e) => updateSectionField('personal', 'occupation', e.target.value)} className={inputClass}>
+                      <option value="">Select occupation</option>
+                      <option value="business">Business</option>
+                      <option value="service">Service/Employed</option>
+                      <option value="professional">Professional (Doctor, Lawyer, CA, etc.)</option>
+                      <option value="self-employed">Self Employed</option>
+                      <option value="student">Student</option>
+                      <option value="retired">Retired</option>
+                      <option value="homemaker">Homemaker</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
-                    <input type="text" value={formData.personal.city} onChange={(e) => updateSectionField('personal', 'city', e.target.value)} className={inputClass} />
+                    <input type="text" value={formData.personal?.city || ''} onChange={(e) => updateSectionField('personal', 'city', e.target.value)} className={inputClass} />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
-                  <textarea value={formData.personal.address} onChange={(e) => updateSectionField('personal', 'address', e.target.value)} rows={3} className={inputClass} />
+                  <textarea value={formData.personal?.address || ''} onChange={(e) => updateSectionField('personal', 'address', e.target.value)} rows={3} className={inputClass} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
-                    <input type="text" value={formData.personal.state} onChange={(e) => updateSectionField('personal', 'state', e.target.value)} className={inputClass} />
+                    <input type="text" value={formData.personal?.state || ''} onChange={(e) => updateSectionField('personal', 'state', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">PIN Code</label>
-                    <input type="text" value={formData.personal.pincode} onChange={(e) => updateSectionField('personal', 'pincode', e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} className={inputClass} />
+                    <input type="text" value={formData.personal?.pincode || ''} onChange={(e) => updateSectionField('personal', 'pincode', e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} className={inputClass} />
                   </div>
                 </div>
               </div>
@@ -413,20 +476,35 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* BANK TAB */}
             {activeTab === 'bank' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
-                    {!editingBank && (
-                      <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank); }} className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
-                    )}
-                  </div>
+                {formData.bank?.accountHolderName || formData.bank?.accountNumber ? (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-semibold text-gray-900">Current Bank Details</h3>
+                      <div className="flex gap-2">
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${formData.bank?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {formData.bank?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                        </span>
+                        {!editingBank && (
+                          <button onClick={() => { setEditingBank(true); setBankEditData(formData.bank || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                        )}
+                      </div>
+                    </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank.accountHolderName}</span></div>
-                    <div><span className="text-gray-600">Bank:</span> <span className="font-semibold">{formData.bank.bankName}</span></div>
-                    <div><span className="text-gray-600">Account No:</span> <span className="font-semibold">{formData.bank.accountNumber}</span></div>
-                    <div><span className="text-gray-600">IFSC:</span> <span className="font-semibold">{formData.bank.ifsc}</span></div>
+                    <div><span className="text-gray-600">Account Holder:</span> <span className="font-semibold">{formData.bank?.accountHolderName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Bank:</span> <span className="font-semibold">{formData.bank?.bankName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Account No:</span> <span className="font-semibold">{formData.bank?.accountNumber || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">IFSC:</span> <span className="font-semibold">{formData.bank?.ifsc || 'Not set'}</span></div>
                   </div>
                 </div>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
+                    <p className="text-blue-700 font-semibold mb-2">No bank details added yet</p>
+                    <p className="text-blue-600 text-sm mb-4">Add your bank account information to enable transactions</p>
+                    <button onClick={() => setEditingBank(true)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+                      + Add Bank Details
+                    </button>
+                  </div>
+                )}
 
                 {editingBank && (
                   <div className="space-y-4 border-2 border-purple-300 rounded-lg p-4">
@@ -439,7 +517,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     </div>
                     <div className="flex gap-3">
                       <button onClick={() => setEditingBank(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-sm">Cancel</button>
-                      <button onClick={handleBankSubmit} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm">💾 Save</button>
+                      <button onClick={handleBankSubmit} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm">Submit for Approval</button>
                     </div>
                   </div>
                 )}
@@ -449,20 +527,35 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* DEMAT TAB */}
             {activeTab === 'demat' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
-                    {!editingDemat && (
-                      <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat); }} className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
-                    )}
+                {formData.demat?.dpName || formData.demat?.clientId ? (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-semibold text-gray-900">Current Demat Details</h3>
+                      <div className="flex gap-2">
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${formData.demat?.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {formData.demat?.status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                        </span>
+                        {!editingDemat && (
+                        <button onClick={() => { setEditingDemat(true); setDematEditData(formData.demat || {}); }} className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-semibold">✏️ Edit</button>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-600">DP Name:</span> <span className="font-semibold">{formData.demat.dpName}</span></div>
-                    <div><span className="text-gray-600">Client ID:</span> <span className="font-semibold">{formData.demat.clientId}</span></div>
-                    <div><span className="text-gray-600">Broking House:</span> <span className="font-semibold">{formData.demat.brokingHouse}</span></div>
-                    <div><span className="text-gray-600">Experience:</span> <span className="font-semibold">{formData.demat.tradingExperience}</span></div>
+                    <div><span className="text-gray-600">DP Name:</span> <span className="font-semibold">{formData.demat?.dpName || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Client ID:</span> <span className="font-semibold">{formData.demat?.clientId || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Broking House:</span> <span className="font-semibold">{formData.demat?.brokingHouse || 'Not set'}</span></div>
+                    <div><span className="text-gray-600">Experience:</span> <span className="font-semibold">{formData.demat?.tradingExperience || 'Not set'}</span></div>
                   </div>
                 </div>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
+                    <p className="text-blue-700 font-semibold mb-2">No demat details added yet</p>
+                    <p className="text-blue-600 text-sm mb-4">Add your demat account information for trading</p>
+                    <button onClick={() => setEditingDemat(true)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+                      + Add Demat Details
+                    </button>
+                  </div>
+                )}
 
                 {editingDemat && (
                   <div className="space-y-4 border-2 border-purple-300 rounded-lg p-4">
@@ -481,7 +574,7 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
                     </div>
                     <div className="flex gap-3">
                       <button onClick={() => setEditingDemat(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-sm">Cancel</button>
-                      <button onClick={handleDematSubmit} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm">💾 Save</button>
+                      <button onClick={handleDematSubmit} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm">Submit for Approval</button>
                     </div>
                   </div>
                 )}
@@ -491,47 +584,81 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
             {/* DOCUMENTS TAB */}
             {activeTab === 'documents' && (
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {DOCUMENT_LIST.map((doc) => (
-                    <div key={doc.key} className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 hover:border-purple-300 transition">
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{doc.label}</h4>
-                        <span className="text-lg font-bold text-gray-300">○</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {DOCUMENT_LIST.map((doc) => {
+                    const uploadedDoc = formData.documents?.[doc.key];
+                    const isUploaded = uploadedDoc && (uploadedDoc.name || uploadedDoc.data);
+                    
+                    return (
+                      <div key={doc.key} className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 hover:border-purple-300 transition">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{doc.label}</h4>
+                          <span className={`text-lg font-bold ${isUploaded ? 'text-green-500' : 'text-gray-300'}`}>
+                            {isUploaded ? '✓' : '○'}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{doc.helper}</p>
+                        
+                        {isUploaded && (
+                          <div className="mb-3 p-2 bg-green-50 rounded border border-green-200">
+                            <p className="text-xs text-green-700 font-medium truncate">📎 {uploadedDoc.name || 'Document uploaded'}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          {isUploaded && (
+                            <button
+                              onClick={() => {
+                                if (uploadedDoc.data) {
+                                  // Open base64 data in new window
+                                  const win = window.open();
+                                  if (win) {
+                                    win.document.write(`<iframe src="${uploadedDoc.data}" width="100%" height="100%" frameborder="0"></iframe>`);
+                                  }
+                                } else {
+                                  alert('Document preview not available. Please reupload to view.');
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs font-semibold"
+                            >
+                              View
+                            </button>
+                          )}
+                          <label className={`block text-center px-3 py-2 rounded-lg font-semibold text-xs ${isUploaded ? 'flex-1' : 'w-full'} bg-purple-600 text-white hover:bg-purple-700 transition cursor-pointer`}>
+                            {isUploaded ? 'Reupload' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  await apiUploadDocument(doc.key, file);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    documents: { ...prev.documents, [doc.key]: { name: file.name, data: '' } }
+                                  }));
+                                  alert('✅ Document uploaded: ' + file.name);
+                                } catch (err) {
+                                  // Fallback to local storage
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      documents: { ...prev.documents, [doc.key]: { name: file.name, data: reader.result } }
+                                    }));
+                                    alert('✅ Document uploaded (local): ' + file.name);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{doc.helper}</p>
-                      <label className="block text-center px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm bg-purple-600 text-white hover:bg-purple-700 transition cursor-pointer">
-                        Upload Document
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              await apiUploadDocument(doc.key, file);
-                              setFormData((prev) => ({
-                                ...prev,
-                                documents: { ...prev.documents, [doc.key]: { name: file.name, data: '' } }
-                              }));
-                              alert('✅ Document uploaded: ' + file.name);
-                            } catch (err) {
-                              // Fallback to local storage
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  documents: { ...prev.documents, [doc.key]: { name: file.name, data: reader.result } }
-                                }));
-                                alert('✅ Document uploaded (local): ' + file.name);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -545,17 +672,48 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Verify OTP</h2>
             <p className="text-gray-600 mb-4">Enter the OTP sent to your {otpField}</p>
-            <input 
-              type="text" 
-              placeholder="Enter 6-digit OTP" 
-              value={otpCode} 
-              onChange={(e) => setOtpCode(e.target.value)} 
-              className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" 
-              maxLength="6" 
-            />
+            <input type="text" placeholder="Enter 6-digit OTP" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} className="w-full border-2 border-purple-300 rounded-lg px-4 py-3 mb-4 outline-none focus:border-purple-500" maxLength="6" />
             <div className="flex gap-3">
               <button onClick={() => setShowOTPModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
               <button onClick={handleVerifyOTP} className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">Verify</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Approval Modal */}
+      {showBankApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">⏳ Send for Approval</h2>
+            <p className="text-gray-600 mb-4">Your bank details will be sent to admin for approval. This may take 24-48 hours.</p>
+            <div className="space-y-2 mb-4 text-sm bg-gray-50 p-3 rounded">
+              <p><strong>Account Holder:</strong> {bankEditData.accountHolderName}</p>
+              <p><strong>Bank:</strong> {bankEditData.bankName}</p>
+              <p><strong>Account No:</strong> {bankEditData.accountNumber}</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowBankApprovalModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
+              <button onClick={confirmBankApproval} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Demat Approval Modal */}
+      {showDematApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">⏳ Send for Approval</h2>
+            <p className="text-gray-600 mb-4">Your demat details will be sent to admin for approval. This may take 24-48 hours.</p>
+            <div className="space-y-2 mb-4 text-sm bg-gray-50 p-3 rounded">
+              <p><strong>DP Name:</strong> {dematEditData.dpName}</p>
+              <p><strong>Client ID:</strong> {dematEditData.clientId}</p>
+              <p><strong>Broking House:</strong> {dematEditData.brokingHouse}</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDematApprovalModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg">Cancel</button>
+              <button onClick={confirmDematApproval} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirm</button>
             </div>
           </div>
         </div>

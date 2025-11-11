@@ -1,15 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useListing } from '../context/ListingContext';
 import { useCompany } from '../context/CompanyContext';
 import { usePortfolio } from '../context/PortfolioContext';
 import UserProfile from './UserProfile';
+import { motion } from 'framer-motion';
+import { CheckCircle, Building2, Share2, User, Info, CalendarDays } from 'lucide-react';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
+import { toPng } from 'html-to-image';
 
 const STATUS_META = {
 	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	pending_admin_approval: { icon: '⏳', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	pending: { icon: '⏳', label: 'Pending', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	under_review: { icon: '🔍', label: 'Under Review', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	submitted: { icon: '📨', label: 'Submitted', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	draft: { icon: '📝', label: 'Draft', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
+	awaiting_admin: { icon: '⏳', label: 'Awaiting Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
 	approved: { icon: '✅', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
 	closed: { icon: '🔒', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
 };
@@ -54,26 +62,6 @@ const InteractionBadge = ({ status }) => {
 	);
 };
 
-const SummaryTile = ({ icon, label, value, helper, tone = 'emerald' }) => {
-	const toneMap = {
-		emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-		blue: 'bg-blue-50 text-blue-600 border-blue-100',
-		purple: 'bg-purple-50 text-purple-600 border-purple-100',
-		amber: 'bg-amber-50 text-amber-600 border-amber-100'
-	};
-
-	return (
-		<div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-			<div className={`inline-flex items-center gap-2 rounded-xl px-3 py-1 text-sm font-semibold border ${toneMap[tone] || toneMap.emerald}`}>
-				<span>{icon}</span>
-				<span>{label}</span>
-			</div>
-			<div className="mt-4 text-3xl font-bold text-gray-900">{value}</div>
-			{helper && <p className="mt-2 text-sm text-gray-500">{helper}</p>}
-		</div>
-	);
-};
-
 const EmptyState = ({ icon = '?', title, description, actionLabel, onAction }) => (
 	<div className="flex flex-col items-center justify-center text-center bg-white border border-dashed border-gray-300 rounded-2xl py-12 px-6">
 		<div className="text-4xl mb-4">{icon}</div>
@@ -90,29 +78,6 @@ const EmptyState = ({ icon = '?', title, description, actionLabel, onAction }) =
 		)}
 	</div>
 );
-
-const QuickActionCard = ({ icon, title, description, tone = 'emerald', onClick }) => {
-	const toneMap = {
-		emerald: 'from-emerald-500 to-teal-500 text-white',
-		blue: 'from-blue-500 to-cyan-500 text-white'
-	};
-
-	return (
-		<button onClick={onClick} className="group w-full text-left">
-			<div className="bg-white border border-gray-200 rounded-2xl px-5 py-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-				<div className={`inline-flex items-center justify-center rounded-2xl px-3 py-3 bg-gradient-to-br ${toneMap[tone] || toneMap.emerald} text-2xl shadow-md`}>{icon}</div>
-				<h3 className="mt-4 text-lg font-semibold text-gray-900">{title}</h3>
-				<p className="mt-2 text-sm text-gray-500">{description}</p>
-				<span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-purple-600 group-hover:text-purple-700">
-					Start now
-					<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-						<path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" />
-					</svg>
-				</span>
-			</div>
-		</button>
-	);
-};
 
 const SectionHeader = ({ title, subtitle, actionLabel, onAction, actionTone = 'primary' }) => (
 	<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -150,6 +115,23 @@ const formatShares = (value) => {
 	const numeric = Number(value);
 	if (!Number.isFinite(numeric)) return `${value} shares`;
 	return `${numeric.toLocaleString('en-IN')} shares`;
+};
+
+// Compact quantity formatter (e.g., 1.8 Lakh, 2.5 Cr) - no trailing zeros
+const formatQty = (value) => {
+	const n = Number(value);
+	if (!Number.isFinite(n)) return String(value);
+	
+	// Helper to remove trailing zeros after decimal
+	const formatNum = (num) => {
+		const formatted = num.toFixed(2);
+		return formatted.endsWith('.00') ? formatted.slice(0, -3) : formatted.replace(/\.?0+$/, '');
+	};
+	
+	if (n >= 1e7) return `${formatNum(n / 1e7)} Cr`;
+	if (n >= 1e5) return `${formatNum(n / 1e5)} Lakh`;
+	if (n >= 1e3) return `${formatNum(n / 1e3)} K`;
+	return n.toLocaleString('en-IN');
 };
 
 const formatDate = (iso) => {
@@ -194,9 +176,14 @@ export default function UserDashboard({ setPage }) {
 	const [selectedItem, setSelectedItem] = useState(null);
 	const [tradeContext, setTradeContext] = useState(null);
 	const [bidOfferData, setBidOfferData] = useState({ price: '', quantity: '' });
-	const [showProfileModal, setShowProfileModal] = useState(false);
+	// Removed showProfileModal state
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
+	const [showConfirmation, setShowConfirmation] = useState(false);
+	const [confirmationData, setConfirmationData] = useState(null);
+	const [acceptedTerms, setAcceptedTerms] = useState(false);
+	const [shareCardData, setShareCardData] = useState(null);
+	const shareCardRef = useRef(null);
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -279,6 +266,83 @@ export default function UserDashboard({ setPage }) {
 		setNotification({ show: true, type, title, message });
 	};
 
+	const handleShareListing = async (listing, company) => {
+		const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
+		const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+		
+		setShareCardData({
+			company: listing.company,
+			sector: company?.sector || 'Manufacturing',
+			seller: sellerUsername,
+			verified: true,
+			askPrice: listing.price,
+			quantity: listing.shares,
+			date: listingDate,
+			isin: listing.isin
+		});
+
+		// Wait for component to render
+		setTimeout(async () => {
+			try {
+				if (shareCardRef.current) {
+					const dataUrl = await toPng(shareCardRef.current, {
+						quality: 1.0,
+						pixelRatio: 2,
+						backgroundColor: '#fef3c7'
+					});
+					
+					// Convert to blob for sharing
+					const blob = await (await fetch(dataUrl)).blob();
+					const file = new File([blob], `${listing.company}-Share.png`, { type: 'image/png' });
+					
+					// Create caption with company link
+					const companySlug = listing.company.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+					const shareUrl = `${window.location.origin}/share/${companySlug}`;
+					const caption = `🚀 Check out this unlisted share of *${listing.company}* listed on *Nlist Planet*!
+
+📊 *Ask Price:* ₹${listing.price.toFixed(2)}
+📦 *Quantity:* ${(listing.shares / 100000).toFixed(2)} Lakh
+🏭 *Sector:* ${company?.sector || 'Manufacturing'}
+📅 *Listed:* ${listingDate}
+
+💰 Explore more unlisted shares and make your offer now!
+
+🔗 ${shareUrl}
+
+#UnlistedShare #NlistPlanet #${listing.company.replace(/\s+/g, '')}`;
+					
+					// Try native share
+					if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+						await navigator.share({
+							title: `${listing.company} - Unlisted Share`,
+							text: caption,
+							files: [file]
+						});
+					} else {
+						// Fallback: Copy caption to clipboard and download image
+						try {
+							await navigator.clipboard.writeText(caption);
+							showNotification('success', 'Caption Copied!', 'Share text copied to clipboard. Image will download now.');
+						} catch (clipErr) {
+							console.log('Clipboard copy failed:', clipErr);
+						}
+						
+						const link = document.createElement('a');
+						link.download = `${listing.company}-Share.png`;
+						link.href = dataUrl;
+						link.click();
+						showNotification('success', 'Ready to Share!', 'Image downloaded. Caption is copied - paste it with the image!');
+					}
+				}
+			} catch (error) {
+				console.error('Share error:', error);
+				showNotification('error', 'Share Failed', 'Could not generate share card. Please try again.');
+			} finally {
+				setShareCardData(null);
+			}
+		}, 100);
+	};
+
 	const getGreeting = () => {
 		const hour = new Date().getHours();
 		if (hour < 12) return 'Good Morning';
@@ -294,51 +358,101 @@ export default function UserDashboard({ setPage }) {
 		return motivationalQuotes[dayOfYear % motivationalQuotes.length];
 	};
 
+	const userIdentifiers = useMemo(() => {
+		if (!user) return [];
+		return [
+			user.email,
+			user.name,
+			user.username,
+			user.userId,
+			user._id,
+			user.id,
+			user.profileId
+		]
+			.filter(Boolean)
+			.map((value) => value.toString().trim().toLowerCase());
+	}, [user]);
+
+	const matchesCurrentUser = useCallback((value) => {
+		if (!value || userIdentifiers.length === 0) return false;
+		if (typeof value === 'object') {
+			return Object.values(value).some((nested) => matchesCurrentUser(nested));
+		}
+		const normalized = value.toString().trim().toLowerCase();
+		return userIdentifiers.includes(normalized);
+	}, [userIdentifiers]);
+
+	const listingBelongsToUser = useCallback((listing) => {
+		if (!listing) return false;
+		const candidateValues = [
+			listing.seller,
+			listing.sellerEmail,
+			listing.sellerId,
+			listing.sellerName,
+			listing.owner,
+			listing.ownerId,
+			listing.ownerEmail,
+			listing.userId,
+			listing.user,
+			listing.createdBy,
+			listing.createdById,
+			listing.createdByEmail,
+			listing.accountId,
+			listing?.seller?.id,
+			listing?.seller?.email,
+			listing?.seller?.name
+		];
+		return candidateValues.some(matchesCurrentUser);
+	}, [matchesCurrentUser]);
+
+	const requestBelongsToUser = useCallback((request) => {
+		if (!request) return false;
+		const candidateValues = [
+			request.buyer,
+			request.buyerEmail,
+			request.buyerId,
+			request.buyerName,
+			request.requestedBy,
+			request.requestedById,
+			request.createdBy,
+			request.createdById,
+			request.accountId,
+			request?.buyer?.id,
+			request?.buyer?.email,
+			request?.buyer?.name
+		];
+		return candidateValues.some(matchesCurrentUser);
+	}, [matchesCurrentUser]);
+
 	const myListings = useMemo(
-		() => user ? sellListings.filter((listing) => 
-			listing.seller === user.name || 
-			listing.seller === user.email ||
-			listing.sellerName === user.name
-		) : [],
-		[sellListings, user]
+		() => sellListings.filter(listingBelongsToUser),
+		[sellListings, listingBelongsToUser]
 	);
 	const myRequests = useMemo(
-		() => user ? buyRequests.filter((request) => 
-			request.buyer === user.name || 
-			request.buyer === user.email ||
-			request.buyerName === user.name
-		) : [],
-		[buyRequests, user]
+		() => {
+			const filtered = buyRequests.filter(requestBelongsToUser);
+			console.log('=== BUY REQUESTS DEBUG ===');
+			console.log('Total buyRequests:', buyRequests.length);
+			console.log('All buyRequests:', buyRequests);
+			console.log('Current user:', user);
+			console.log('Filtered myRequests:', filtered.length);
+			console.log('myRequests:', filtered);
+			console.log('========================');
+			return filtered;
+		},
+		[buyRequests, requestBelongsToUser, user]
 	);
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 
-			listing.status === 'active' && 
-			listing.seller !== user.name && 
-			listing.seller !== user.email &&
-			listing.sellerName !== user.name
+			listing.status === 'active' && !listingBelongsToUser(listing)
 		) : [],
-		[sellListings, user]
+		[sellListings, user, listingBelongsToUser]
 	);
 	const availableRequests = useMemo(
 		() => user ? buyRequests.filter((request) => 
-			request.status === 'active' && 
-			request.buyer !== user.name && 
-			request.buyer !== user.email &&
-			request.buyerName !== user.name
+			request.status === 'active' && !requestBelongsToUser(request)
 		) : [],
-		[buyRequests, user]
-	);
-	const myBids = useMemo(
-		() => user ? sellListings.filter((listing) => listing.bids?.some((bid) => 
-			bid.bidder === user.name || bid.bidder === user.email || bid.bidderName === user.name
-		)) : [],
-		[sellListings, user]
-	);
-	const myOffers = useMemo(
-		() => user ? buyRequests.filter((request) => request.offers?.some((offer) => 
-			offer.seller === user.name || offer.seller === user.email || offer.sellerName === user.name
-		)) : [],
-		[buyRequests, user]
+		[buyRequests, user, requestBelongsToUser]
 	);
 
 	useEffect(() => {
@@ -373,27 +487,48 @@ export default function UserDashboard({ setPage }) {
 
 	const handleCreateSellListing = async (e) => {
 		e.preventDefault();
-		try {
-			await createSellListing({ ...formData, seller: user.email, sellerName: user.name });
-			showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
-			setFormData({ company: '', isin: '', price: '', shares: '' });
-			setFormType(null);
-		} catch (error) {
-			console.error('Failed to create listing:', error);
-			showNotification('error', 'Failed to create listing', 'Please try again later.');
-		}
+		// Show confirmation modal first
+		setAcceptedTerms(false); // Reset checkbox
+		setConfirmationData({
+			type: 'sell',
+			data: { ...formData, seller: user.email, sellerName: user.name }
+		});
+		setShowConfirmation(true);
 	};
 
 	const handleCreateBuyRequest = async (e) => {
 		e.preventDefault();
+		// Show confirmation modal first
+		setAcceptedTerms(false); // Reset checkbox
+		setConfirmationData({
+			type: 'buy',
+			data: { ...formData, buyer: user.email, buyerName: user.name }
+		});
+		setShowConfirmation(true);
+	};
+
+	const confirmSubmit = async () => {
+		if (!acceptedTerms) {
+			showNotification('error', 'Terms not accepted', 'Please accept the terms and conditions to proceed.');
+			return;
+		}
+		
 		try {
-			await createBuyRequest({ ...formData, buyer: user.email, buyerName: user.name });
-			showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+			if (confirmationData.type === 'sell') {
+				await createSellListing(confirmationData.data);
+				showNotification('success', 'Shares listed! 🎉', `Your ${formData.shares} shares of ${formData.company} are now live.`);
+			} else {
+				await createBuyRequest(confirmationData.data);
+				showNotification('success', 'Buy request posted! 🎉', `Looking to buy ${formData.shares} shares of ${formData.company}.`);
+			}
 			setFormData({ company: '', isin: '', price: '', shares: '' });
 			setFormType(null);
+			setShowConfirmation(false);
+			setConfirmationData(null);
+			setAcceptedTerms(false); // Reset checkbox
 		} catch (error) {
-			console.error('Failed to create buy request:', error);
-			showNotification('error', 'Failed to create buy request', 'Please try again later.');
+			console.error('Failed to create listing:', error);
+			showNotification('error', 'Failed to submit', 'Please try again later.');
 		}
 	};
 
@@ -434,155 +569,25 @@ export default function UserDashboard({ setPage }) {
 		{ id: 'orders', label: 'Orders', icon: '📋' },
 		{ id: 'portfolio', label: 'Portfolio', icon: '💼' },
 		{ id: 'faq', label: 'FAQ', icon: '❓' },
-		{ id: 'support', label: 'Support', icon: '💬' }
+		{ id: 'support', label: 'Support', icon: '💬' },
+		{ id: 'profile', label: 'Profile', icon: '👤' }
 	];
-
-	const renderOverview = () => (
-		<div className="space-y-10">
-			<section className="space-y-6">
-				<SectionHeader
-					title="Trading Snapshot"
-					subtitle="Monitor everything you are selling, buying, and negotiating in one glance."
-				/>
-				<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-				<SummaryTile icon="📊" label="Sell Listings" value={myListings.length} helper="Listed by you" tone="emerald" />
-				<SummaryTile icon="💰" label="Buy Requests" value={myRequests.length} helper="Requests you posted" tone="blue" />
-				<SummaryTile icon="🎯" label="Active Bids" value={myBids.length} helper="Listings you bid on" tone="amber" />
-				<SummaryTile icon="✨" label="Active Offers" value={myOffers.length} helper="Requests you offered on" tone="purple" />
-			</div>
-		</section>			<section className="space-y-6">
-				<SectionHeader
-					title="Your Pipeline"
-					subtitle="Track everything you are selling and buying with real-time status."
-					actionLabel="Go to marketplace"
-					actionTone="secondary"
-					onAction={() => setActiveTab('browse')}
-				/>
-				<div className="grid gap-6 md:grid-cols-2">
-					<div className="bg-white border border-gray-200 rounded-2xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h3 className="text-lg font-semibold text-gray-900">You are selling</h3>
-								<p className="text-sm text-gray-500">Incoming bids, approvals, and next steps.</p>
-							</div>
-							<span className="text-sm font-semibold text-gray-600">{myListings.length} listings</span>
-						</div>
-						{myListings.length > 0 ? (
-							<div className="space-y-3">
-								{myListings.slice(0, 3).map((listing) => (
-									<button
-										key={listing.id}
-										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
-												<p className="text-xs text-gray-500 mt-1">Listed {formatDate(listing.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} � {formatShares(listing.shares)}</p>
-											</div>
-											<StatusBadge status={listing.status} />
-										</div>
-										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-											<span>{listing.bids?.length || 0} bids</span>
-											{listing.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
-										</div>
-									</button>
-								))}
-								{myListings.length > 3 && (
-									<button onClick={() => setActiveTab('myListings')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
-										View all listings ?
-									</button>
-								)}
-							</div>
-						) : (
-							<EmptyState
-								icon=""
-								title="No listings yet"
-								description="List your unlisted shares to invite bids from verified buyers."
-								actionLabel="Create listing"
-								onAction={() => setFormType('sell')}
-							/>
-						)}
-					</div>
-
-					<div className="bg-white border border-gray-200 rounded-2xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h3 className="text-lg font-semibold text-gray-900">You want to buy</h3>
-								<p className="text-sm text-gray-500">Offers from sellers and negotiation status.</p>
-							</div>
-							<span className="text-sm font-semibold text-gray-600">{myRequests.length} requests</span>
-						</div>
-						{myRequests.length > 0 ? (
-							<div className="space-y-3">
-								{myRequests.slice(0, 3).map((request) => (
-									<button
-										key={request.id}
-										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
-												<p className="text-xs text-gray-500 mt-1">Posted {formatDate(request.createdAt)}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} � {formatShares(request.shares)}</p>
-											</div>
-											<StatusBadge status={request.status} />
-										</div>
-										<div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-											<span>{request.offers?.length || 0} offers</span>
-											{request.status === 'pending_admin_approval' && <span>Awaiting admin review</span>}
-										</div>
-									</button>
-								))}
-								{myRequests.length > 3 && (
-									<button onClick={() => setActiveTab('myRequests')} className="w-full text-sm font-semibold text-purple-600 hover:text-purple-700">
-										View all requests ?
-									</button>
-								)}
-							</div>
-						) : (
-							<EmptyState
-								icon=""
-								title="No buy requests yet"
-								description="Tell sellers what you need so they can respond quickly."
-								actionLabel="Post request"
-								onAction={() => setFormType('buy')}
-							/>
-						)}
-					</div>
-				</div>
-			</section>
-
-			<section className="space-y-6">
-				<SectionHeader
-					title="Action Center"
-					subtitle="Launch a new listing or request in just a few clicks."
-				/>
-				<div className="grid gap-5 md:grid-cols-2">
-					<QuickActionCard
-						icon=""
-						title="List shares for sale"
-						description="Create a polished listing so buyers can bid instantly."
-						tone="emerald"
-						onClick={() => setFormType('sell')}
-					/>
-					<QuickActionCard
-						icon=""
-						title="Request shares to buy"
-						description="Set your desired price and quantity to attract sellers."
-						tone="blue"
-						onClick={() => setFormType('buy')}
-					/>
-				</div>
-			</section>
-		</div>
-	);
 
 	const renderMyListings = () => {
 		// Filter sell listings based on sub-tab  
-		const myActiveListings = myListings.filter(l => l.status === 'active');
+		const openSellStatuses = [
+			'active',
+			'pending_admin_approval',
+			'pending',
+			'under_review',
+			'submitted',
+			'awaiting_admin',
+			'processing',
+			'initiated',
+			'draft'
+		];
+		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
+		const myOpenListings = myListings.filter((l) => openSellStatuses.includes(getStatusKey(l.status)));
 		const bidsReceived = myListings.filter(l => l.bids && l.bids.length > 0);
 		const counterOfferListings = myListings.filter(l => 
 			l.bids?.some(b => b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder')
@@ -617,7 +622,7 @@ export default function UserDashboard({ setPage }) {
 								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
 						}`}
 					>
-						📋 Sell List ({myActiveListings.length})
+							📋 Sell List ({myOpenListings.length})
 					</button>
 					<button
 						onClick={() => setSellSubTab('bids')}
@@ -654,10 +659,10 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{sellSubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Sell Listings</h3>
-						{myActiveListings.length === 0 ? (
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Sell Listings</h3>
+						{myOpenListings.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No active sell listings</p>
+								<p className="text-gray-500">No live or pending sell listings yet</p>
 								<button
 									onClick={() => setFormType('sell')}
 									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
@@ -668,8 +673,8 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-								{myActiveListings.map((listing) => (
-									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+								{myOpenListings.map((listing) => (
+									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 										<div className="flex items-start justify-between">
 											<div>
 												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -714,7 +719,7 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="space-y-4">
 								{bidsReceived.map((listing) => (
-									<div key={listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
+									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
 										<div className="flex items-start justify-between mb-4">
 											<div>
 												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -725,7 +730,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="space-y-2">
 											<p className="text-sm font-semibold text-gray-700">Received Bids ({listing.bids?.length || 0}):</p>
 											{listing.bids?.map((bid) => (
-												<div key={bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+												<div key={bid._id || bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
 													<div>
 														<p className="text-sm font-semibold text-gray-900">
 															{bid.bidderName || bid.bidder}
@@ -767,7 +772,7 @@ export default function UserDashboard({ setPage }) {
 										b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder'
 									);
 									return (
-										<div key={listing.id} className="bg-white border border-orange-200 rounded-xl p-5">
+										<div key={listing._id || listing.id} className="bg-white border border-orange-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -779,7 +784,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 											<div className="space-y-2">
 												{counterBids?.map((bid) => (
-													<div key={bid.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+													<div key={bid._id || bid.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
 														<div className="flex items-start justify-between">
 															<div>
 																<p className="text-sm font-semibold text-gray-900">{bid.bidderName || bid.bidder}</p>
@@ -818,11 +823,11 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="grid gap-5 md:grid-cols-2">
 								{completedListings.map((listing) => {
-									const acceptedBid = listing.acceptedBid 
-										? listing.bids?.find(b => b.id === listing.acceptedBid)
+									const acceptedBid = listing.acceptedBid
+										? listing.bids?.find((b) => b._id === listing.acceptedBid || b.id === listing.acceptedBid)
 										: null;
 									return (
-										<div key={listing.id} className="bg-white border border-green-200 rounded-xl p-5">
+										<div key={listing._id || listing.id} className="bg-white border border-green-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{listing.company}</h4>
@@ -869,7 +874,19 @@ export default function UserDashboard({ setPage }) {
 
 	const renderMyRequests = () => {
 		// Filter buy requests based on sub-tab
-		const myActiveRequests = myRequests.filter(r => r.status === 'active');
+		const openBuyStatuses = [
+			'active',
+			'pending_admin_approval',
+			'pending',
+			'under_review',
+			'submitted',
+			'awaiting_admin',
+			'processing',
+			'initiated',
+			'draft'
+		];
+		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
+		const myOpenRequests = myRequests.filter((r) => openBuyStatuses.includes(getStatusKey(r.status)));
 		const offersReceived = myRequests.filter(r => r.offers && r.offers.length > 0);
 		const counterOfferRequests = myRequests.filter(r => 
 			r.offers?.some(o => o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer')
@@ -904,7 +921,7 @@ export default function UserDashboard({ setPage }) {
 								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
 						}`}
 					>
-						📋 Buy List ({myActiveRequests.length})
+							📋 Buy List ({myOpenRequests.length})
 					</button>
 					<button
 						onClick={() => setBuySubTab('offers')}
@@ -941,10 +958,10 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{buySubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Active Buy Requests</h3>
-						{myActiveRequests.length === 0 ? (
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Buy Requests</h3>
+						{myOpenRequests.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No active buy requests</p>
+								<p className="text-gray-500">No live or pending buy requests yet</p>
 								<button
 									onClick={() => setFormType('buy')}
 									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
@@ -955,8 +972,8 @@ export default function UserDashboard({ setPage }) {
 							</div>
 						) : (
 							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-								{myActiveRequests.map((request) => (
-									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+								{myOpenRequests.map((request) => (
+									<div key={request._id || request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 										<div className="flex items-start justify-between">
 											<div>
 												<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -1001,7 +1018,7 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="space-y-4">
 								{offersReceived.map((request) => (
-									<div key={request.id} className="bg-white border border-gray-200 rounded-xl p-5">
+									<div key={request._id || request.id} className="bg-white border border-gray-200 rounded-xl p-5">
 										<div className="flex items-start justify-between mb-4">
 											<div>
 												<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -1012,7 +1029,7 @@ export default function UserDashboard({ setPage }) {
 										<div className="space-y-2">
 											<p className="text-sm font-semibold text-gray-700">Received Offers ({request.offers?.length || 0}):</p>
 											{request.offers?.map((offer) => (
-												<div key={offer.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+												<div key={offer._id || offer.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
 													<div>
 														<p className="text-sm font-semibold text-gray-900">
 															{offer.sellerName || offer.seller}
@@ -1054,7 +1071,7 @@ export default function UserDashboard({ setPage }) {
 										o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer'
 									);
 									return (
-										<div key={request.id} className="bg-white border border-orange-200 rounded-xl p-5">
+										<div key={request._id || request.id} className="bg-white border border-orange-200 rounded-xl p-5">
 											<div className="flex items-start justify-between mb-4">
 												<div>
 													<h4 className="font-semibold text-gray-900">{request.company}</h4>
@@ -1066,7 +1083,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 											<div className="space-y-2">
 												{counterOffers?.map((offer) => (
-													<div key={offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+													<div key={offer._id || offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
 														<div className="flex items-start justify-between">
 															<div>
 																<p className="text-sm font-semibold text-gray-900">{offer.sellerName || offer.seller}</p>
@@ -1154,99 +1171,6 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
-	const renderActivity = () => (
-		<div className="space-y-8">
-			<SectionHeader title="Your Bids & Offers" subtitle="Follow up on every negotiation you started." />
-			<div className="grid gap-6 md:grid-cols-2">
-				<div className="bg-white border border-gray-200 rounded-2xl p-6">
-					<div className="flex items-center justify-between mb-4">
-						<div>
-							<h3 className="text-lg font-semibold text-gray-900">Bids on other sellers</h3>
-							<p className="text-sm text-gray-500">Respond to counters or check acceptance status.</p>
-						</div>
-						<span className="text-sm font-semibold text-gray-600">{myBids.length} listings</span>
-					</div>
-					{myBids.length === 0 ? (
-						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't placed any bids yet.</p>
-					) : (
-						<div className="space-y-3">
-							{myBids.map((listing) => {
-								const myInteractions = listing.bids?.filter((bid) => 
-									bid.bidder === user.name || bid.bidder === user.email || bid.bidderName === user.name
-								) || [];
-								const latestInteraction = myInteractions[myInteractions.length - 1];
-								return (
-									<button
-										key={listing.id}
-										onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-purple-200 hover:bg-purple-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{listing.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(listing.price)} ask � {formatShares(listing.shares)}</p>
-												{latestInteraction && (
-													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
-												)}
-											</div>
-											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
-										</div>
-										<div className="mt-2 text-xs text-gray-500">
-											{myInteractions.length} bid{myInteractions.length > 1 ? 's' : ''} placed by you
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					)}
-				</div>
-
-				<div className="bg-white border border-gray-200 rounded-2xl p-6">
-					<div className="flex items-center justify-between mb-4">
-						<div>
-							<h3 className="text-lg font-semibold text-gray-900">Offers to active buyers</h3>
-							<p className="text-sm text-gray-500">See which buyers have responded to your offers.</p>
-						</div>
-						<span className="text-sm font-semibold text-gray-600">{myOffers.length} requests</span>
-					</div>
-					{myOffers.length === 0 ? (
-						<p className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">You haven't made any offers yet.</p>
-					) : (
-						<div className="space-y-3">
-							{myOffers.map((request) => {
-								const myInteractions = request.offers?.filter((offer) => 
-									offer.seller === user.name || offer.seller === user.email || offer.sellerName === user.name
-								) || [];
-								const latestInteraction = myInteractions[myInteractions.length - 1];
-								return (
-									<button
-										key={request.id}
-										onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-										className="w-full text-left bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:bg-blue-50 transition"
-									>
-										<div className="flex items-start justify-between gap-4">
-											<div>
-												<p className="text-sm font-semibold text-gray-900">{request.company}</p>
-												<p className="text-xs text-gray-500 mt-1">{formatCurrency(request.price)} target � {formatShares(request.shares)}</p>
-												{latestInteraction && (
-													<p className="text-xs text-gray-400 mt-1">Last update {formatDateTime(latestInteraction.counterAt || latestInteraction.createdAt)}</p>
-												)}
-											</div>
-											{latestInteraction && <InteractionBadge status={latestInteraction.status} />}
-										</div>
-										<div className="mt-2 text-xs text-gray-500">
-											{myInteractions.length} offer{myInteractions.length > 1 ? 's' : ''} submitted by you
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					)}
-				</div>
-			</div>
-		</div>
-	);
-
 	const renderBrowse = () => (
 		<div className="space-y-8">
 			<SectionHeader
@@ -1277,7 +1201,7 @@ export default function UserDashboard({ setPage }) {
 				<span>Open Buy Requests</span>
 			</button>
 		</div>			{browseFilter === 'sell' ? (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 					{availableListings.length === 0 ? (
 						<EmptyState
 							icon=""
@@ -1291,118 +1215,97 @@ export default function UserDashboard({ setPage }) {
 							const company = companies.find((c) => c.isin === listing.isin || c.name.toLowerCase() === listing.company.toLowerCase());
 							const myBid = listing.bids?.find((bid) => bid.bidder === user.name || bid.bidder === user.email);
 							const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
-							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
 							
 							return (
-								<div key={listing.id || listing._id} className="bg-gradient-to-br from-white to-emerald-50/30 border-2 border-emerald-100 rounded-xl p-4 shadow-md hover:shadow-lg hover:border-emerald-200 transition-all duration-200">
-									<div className="flex items-start justify-between gap-3 mb-2">
-										<div className="flex-1">
-											<h3 className="text-base font-bold text-gray-900 mb-1.5">{listing.company}</h3>
-											<div className="flex flex-wrap items-center gap-1.5">
-												<div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 border border-emerald-200 rounded-md">
-													<span className="text-emerald-600 text-xs">👤</span>
-													<span className="text-xs font-semibold text-emerald-700">{sellerUsername}</span>
+								<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
+									{/* Green accent bar */}
+									<div className="h-1.5 bg-green-500"></div>
+									
+									<div className="p-3">
+										{/* Date and BUY tag on same line */}
+										<div className="flex items-center justify-between mb-2">
+											<div className="flex items-center gap-1 text-gray-500 text-[10px]">
+												<span>📅</span>
+												<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+											</div>
+											<span className="bg-green-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+										</div>
+										
+										{/* Company name with logo */}
+										<div className="flex items-center gap-2 mb-2">
+											<div className="w-8 h-8 rounded bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center flex-shrink-0 border border-green-200">
+												<span className="text-sm font-bold text-green-600">{listing.company.charAt(0)}</span>
+											</div>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-1">
+													<h3 className="text-sm font-bold text-gray-800 truncate relative group">
+														{listing.company}
+														<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
+														<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-1.5 shadow-lg z-10 whitespace-nowrap">
+															<p>ISIN: {listing.isin || 'N/A'}</p>
+														</div>
+													</h3>
 												</div>
-												{listingDate && (
-													<div className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md">
-														<span className="text-blue-500 text-xs">📅</span>
-														<span className="text-xs font-medium text-blue-700">{listingDate}</span>
-													</div>
-												)}
-												{company?.sector && (
-													<div className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 border border-purple-100 rounded-md">
-														<span className="text-purple-500 text-xs">🏢</span>
-														<span className="text-xs font-medium text-purple-700">{company.sector}</span>
-													</div>
-												)}
+												<div className="flex items-center gap-1 text-gray-500">
+													<Building2 className="w-3 h-3 text-green-600" />
+													<span className="text-[10px] truncate">{company?.sector || 'Financial Services'}</span>
+												</div>
+												<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
+													<User className="w-3 h-3 text-gray-400" />
+													<span className="truncate">@{sellerUsername}</span>
+													<CheckCircle className="w-3 h-3 text-green-600" />
+												</div>
 											</div>
 										</div>
-										<StatusBadge status={listing.status} />
-									</div>
-									<div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-										<div className="rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-2.5">
-											<p className="text-xs font-semibold text-emerald-800 uppercase tracking-wide mb-0.5">💰 Price</p>
-											<p className="text-base font-bold text-emerald-700">{formatCurrency(listing.price)}</p>
+										
+										{/* Price and Quantity */}
+										<div className="bg-green-50 rounded p-2 mb-2">
+											<div className="grid grid-cols-2 gap-2">
+												<div>
+													<p className="text-gray-500 text-[9px]">Ask Price</p>
+													<h4 className="text-sm font-semibold text-green-700">{formatCurrency(listing.price)}</h4>
+												</div>
+												<div className="text-right">
+													<p className="text-gray-500 text-[9px]">Quantity</p>
+													<h4 className="text-sm font-bold text-gray-800">{formatQty(listing.shares)}</h4>
+												</div>
+											</div>
 										</div>
-										<div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 p-2.5">
-											<p className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-0.5">📊 Shares</p>
-											<p className="text-base font-bold text-slate-800">{formatShares(listing.shares)}</p>
+										
+										{/* Action buttons - removed download */}
+										<div className="flex items-center gap-2">
+											<button
+												onClick={() => {
+													setTradeContext({ type: 'bid', item: listing });
+													setBidOfferData({ price: listing.price, quantity: listing.shares });
+												}}
+												className="flex-1 px-3 py-1.5 rounded text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition"
+											>
+												{myBid ? 'Update' : 'Bid'}
+											</button>
+											<button
+												onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+												className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
+											>
+												Details
+											</button>
+											<button
+												onClick={() => handleShareListing(listing, company)}
+												className="text-gray-500 hover:text-gray-700 transition p-1"
+												title="Share"
+											>
+												<Share2 className="w-4 h-4" />
+											</button>
 										</div>
-									</div>
-									<div className="mt-3 flex gap-1.5">
-										<button
-											onClick={() => {
-												setTradeContext({ type: 'bid', item: listing });
-												setBidOfferData({ price: listing.price, quantity: listing.shares });
-											}}
-											className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 shadow hover:shadow-md hover:scale-[1.02] transition-all duration-200"
-										>
-											<span>💰</span>
-											<span>{myBid ? 'Update' : 'Bid'}</span>
-										</button>
-										<button
-											onClick={() => {
-												const shareText = `Check out ${listing.company} shares on Nlist!\n\n💰 Price: ${formatCurrency(listing.price)}\n📊 Shares: ${formatShares(listing.shares)}\n🔗 Visit: ${window.location.origin}`;
-												if (navigator.share) {
-													navigator.share({ title: `${listing.company} - Nlist`, text: shareText, url: window.location.href });
-												} else {
-													navigator.clipboard.writeText(shareText);
-													alert('Link copied to clipboard!');
-												}
-											}}
-											className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-white bg-gradient-to-br from-blue-500 to-cyan-500 hover:shadow-md hover:scale-105 transition-all duration-200"
-											title="Share"
-										>
-											<span className="text-sm">📤</span>
-										</button>
-										<button
-											onClick={() => {
-												const reportContent = `
-===========================================
-NLIST - RESEARCH REPORT
-===========================================
-
-Company: ${listing.company}
-ISIN: ${listing.isin || 'N/A'}
-Sector: ${company?.sector || 'N/A'}
-
-LISTING DETAILS
---------------
-Seller: ${sellerUsername}
-Ask Price: ${formatCurrency(listing.price)}
-Available Shares: ${formatShares(listing.shares)}
-Listed Date: ${listingDate}
-Status: ${listing.status}
-
-Market Overview: ${company?.description || 'N/A'}
-
-===========================================
-Generated on: ${new Date().toLocaleString('en-IN')}
-Report ID: ${listing._id || listing.id}
-===========================================
-												`.trim();
-												
-												const blob = new Blob([reportContent], { type: 'text/plain' });
-												const url = URL.createObjectURL(blob);
-												const a = document.createElement('a');
-												a.href = url;
-												a.download = `${listing.company}-Research-Report.txt`;
-												a.click();
-												URL.revokeObjectURL(url);
-											}}
-											className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-white bg-gradient-to-br from-purple-500 to-pink-500 hover:shadow-md hover:scale-105 transition-all duration-200"
-											title="Download"
-										>
-											<span className="text-sm">📥</span>
-										</button>
-									</div>
 								</div>
+							</div>
 							);
 						})
 					)}
 				</div>
 			) : (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 					{availableRequests.length === 0 ? (
 						<EmptyState
 							icon=""
@@ -1412,49 +1315,113 @@ Report ID: ${listing._id || listing.id}
 							onAction={() => setFormType('sell')}
 						/>
 					) : (
-						availableRequests.map((request) => {
+						availableRequests.map((request, index) => {
 							const company = companies.find((c) => c.isin === request.isin || c.name.toLowerCase() === request.company.toLowerCase());
 							const myOffer = request.offers?.find((offer) => offer.seller === user.name || offer.seller === user.email);
+							const buyerUsername = request.userId?.username || request.buyerName || 'Unknown';
+							const requestDate = request.createdAt ? new Date(request.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+							
 							return (
-								<div key={request.id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-									<div className="flex items-start justify-between gap-4">
-										<div>
-											<h3 className="text-lg font-semibold text-gray-900">{request.company}</h3>
-											<p className="text-xs text-gray-500 mt-1">Buyer: {getUserDisplayName(request.buyer, request.buyer)}</p>
-											{company?.sector && <p className="text-xs text-gray-400 mt-1">Sector: {company.sector}</p>}
+								<motion.div 
+									key={request.id}
+									initial={{ opacity: 0, y: 30 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.6, delay: index * 0.1 }}
+								>
+									<div className="bg-white border border-yellow-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
+										{/* Orange accent bar */}
+										<div className="h-1.5 bg-gradient-to-r from-yellow-400 to-orange-400"></div>
+										
+										<div className="p-3">
+											{/* Date and SELL tag on same line */}
+											<div className="flex items-center justify-between mb-2">
+												<div className="flex items-center gap-1 text-gray-500 text-[10px]">
+													<CalendarDays className="w-3 h-3 text-gray-400" />
+													<span>{requestDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+												</div>
+												<span className="bg-orange-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">SELL</span>
+											</div>
+											
+											{/* Company logo and info */}
+											<div className="flex items-center gap-2 mb-2">
+												<div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200">
+													<span className="text-sm font-bold text-orange-600">{request.company.charAt(0)}</span>
+												</div>
+												<div className="flex-1 min-w-0">
+													<div className="flex items-center gap-1">
+														<h3 className="text-sm font-bold text-gray-800 truncate relative group">
+															{request.company}
+															<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
+															<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-1.5 shadow-lg z-10 whitespace-nowrap">
+																<p>ISIN: {request.isin || 'N/A'}</p>
+															</div>
+														</h3>
+													</div>
+													<div className="flex items-center gap-1 text-gray-500">
+														<Building2 className="w-3 h-3 text-orange-600" />
+														<span className="text-[10px] truncate">{company?.sector || 'Financial Services'}</span>
+													</div>
+													<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
+														<User className="w-3 h-3 text-gray-400" />
+														<span className="truncate">{buyerUsername}</span>
+														<CheckCircle className="w-3 h-3 text-orange-600" />
+													</div>
+												</div>
+											</div>
+											
+											{/* Price and Quantity */}
+											<div className="bg-yellow-50 rounded p-2 mb-2">
+												<div className="grid grid-cols-2 gap-2">
+													<div>
+														<p className="text-gray-500 text-[9px]">Ask Price</p>
+														<h4 className="text-sm font-semibold text-orange-700">{formatCurrency(request.price)}</h4>
+													</div>
+													<div className="text-right">
+														<p className="text-gray-500 text-[9px]">Quantity</p>
+														<h4 className="text-sm font-bold text-gray-800">{formatQty(request.shares)}</h4>
+													</div>
+												</div>
+											</div>
+											
+											{/* Action buttons */}
+											<div className="flex items-center gap-2">
+												<button
+													onClick={() => {
+														setTradeContext({ type: 'offer', item: request });
+														setBidOfferData({ price: request.price, quantity: request.shares });
+													}}
+													className="flex-1 px-3 py-1.5 rounded text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition"
+												>
+													{myOffer ? 'Update' : 'Offer'}
+												</button>
+												<button
+													onClick={() => setSelectedItem({ item: request, type: 'buy' })}
+													className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
+												>
+													Details
+												</button>
+												<button
+													onClick={() => {
+														const shareText = `Check out this ${request.company} unlisted share post on Nlist Planet!`;
+														if (navigator.share) {
+															navigator.share({
+																title: 'Nlist Planet',
+																text: shareText,
+																url: window.location.href,
+															});
+														} else {
+															navigator.clipboard.writeText(shareText);
+															alert('Link copied!');
+														}
+													}}
+													className="text-gray-500 hover:text-gray-700 transition p-1"
+												>
+													<Share2 className="w-4 h-4" />
+												</button>
+											</div>
 										</div>
-										<StatusBadge status={request.status} />
 									</div>
-									<div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-										<div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
-											<p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Target price</p>
-											<p className="mt-1 text-base font-semibold text-blue-700">{formatCurrency(request.price)}</p>
-										</div>
-										<div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-											<p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Shares needed</p>
-											<p className="mt-1 text-base font-semibold text-slate-700">{formatShares(request.shares)}</p>
-										</div>
-									</div>
-									<div className="mt-5 flex flex-col gap-3">
-										<button
-											onClick={() => {
-												setTradeContext({ type: 'offer', item: request });
-												setBidOfferData({ price: request.price, quantity: request.shares });
-											}}
-											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 to-cyan-500 shadow hover:shadow-lg transition"
-										>
-											<span></span>
-											<span>{myOffer ? 'Update offer' : 'Make offer'}</span>
-										</button>
-										<button
-											onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-											className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-purple-600 border border-purple-200 bg-purple-50/40 hover:bg-purple-50 transition"
-										>
-											<span></span>
-											<span>See offer history</span>
-										</button>
-									</div>
-								</div>
+								</motion.div>
 							);
 						})
 					)}
@@ -1496,7 +1463,6 @@ Report ID: ${listing._id || listing.id}
 						<div className="space-y-3">
 							{activeOrders.map((order) => {
 								const isSell = 'seller' in order || 'bids' in order;
-								const isBuy = 'buyer' in order || 'offers' in order;
 								
 								return (
 									<div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
@@ -1924,6 +1890,9 @@ Report ID: ${listing._id || listing.id}
 				return renderFAQ();
 			case 'support':
 				return renderSupport();
+			case 'profile':
+				console.log('[UserDashboard] Passing user to UserProfile:', user);
+				return <UserProfile currentUser={user} />;
 			default:
 				return renderBrowse();
 		}
@@ -2322,13 +2291,7 @@ Report ID: ${listing._id || listing.id}
 
 				{/* Bottom Actions */}
 				<div className="p-4 border-t border-white/10 space-y-2">
-					<button
-						onClick={() => setShowProfileModal(true)}
-						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white hover:bg-white/10 transition-all"
-					>
-						<span className="text-lg">👤</span>
-						<span>Profile</span>
-					</button>
+					   {/* Profile button removed: now handled as a sidebar tab */}
 					<button
 						onClick={() => setShowPasswordModal(true)}
 						className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-white hover:bg-white/10 transition-all"
@@ -2397,12 +2360,234 @@ Report ID: ${listing._id || listing.id}
 			{renderTradeModal()}
 			{renderNegotiationModal()}
 
-			{showProfileModal && (
-				<UserProfile onClose={() => setShowProfileModal(false)} />
-			)}
+			{/* Profile modal removed; now a dashboard page */}
 
 			{showPasswordModal && (
 				<ChangePassword onClose={() => setShowPasswordModal(false)} />
+			)}
+
+			{/* Confirmation Modal */}
+			{showConfirmation && confirmationData && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+					<div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fadeIn">
+						<div className="text-center mb-6">
+							<div className="text-5xl mb-4">
+								{confirmationData.type === 'sell' ? '📈' : '🛒'}
+							</div>
+							<h2 className="text-2xl font-bold text-gray-900 mb-2">
+								{confirmationData.type === 'sell' 
+									? `Do you want to list your "${formData.company}" for sell?`
+									: `Do you want to post buy request for "${formData.company}"?`
+								}
+							</h2>
+							<p className="text-sm text-gray-500">
+								Please review your details before submitting
+							</p>
+						</div>
+
+						<div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-5 mb-6 space-y-4">
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Company</span>
+								<span className="text-base font-bold text-gray-900">{formData.company}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">ISIN</span>
+								<span className="text-base font-semibold text-gray-700 font-mono">{formData.isin}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Price per Share</span>
+								<span className="text-lg font-bold text-green-600">₹{Number(formData.price).toLocaleString('en-IN')}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center">
+								<span className="text-sm font-medium text-gray-600">Number of Shares</span>
+								<span className="text-lg font-bold text-blue-600">{Number(formData.shares).toLocaleString('en-IN')}</span>
+							</div>
+							<div className="h-px bg-gray-200"></div>
+							<div className="flex justify-between items-center pt-2">
+								<span className="text-base font-semibold text-gray-800">Total Value</span>
+								<span className="text-xl font-bold text-purple-600">
+									₹{(Number(formData.price) * Number(formData.shares)).toLocaleString('en-IN')}
+								</span>
+							</div>
+						</div>
+
+						{/* Terms & Conditions Checkbox */}
+						<div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+							<label className="flex items-start gap-3 cursor-pointer">
+								<input
+									type="checkbox"
+									checked={acceptedTerms}
+									onChange={(e) => setAcceptedTerms(e.target.checked)}
+									className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+								/>
+								<div className="flex-1">
+									<p className="text-sm font-medium text-gray-800 mb-1">
+										⚠️ Terms & Conditions
+									</p>
+									<p className="text-xs text-gray-600 leading-relaxed">
+										I confirm that all information provided is accurate and complete. I understand that {confirmationData.type === 'sell' ? 'my shares will be listed publicly' : 'my buy request will be visible to all sellers'} and I accept full responsibility for this transaction. I agree to the platform's terms of service and trading policies.
+									</p>
+								</div>
+							</label>
+						</div>
+
+						<div className="flex gap-3">
+							<button
+								onClick={() => {
+									setShowConfirmation(false);
+									setConfirmationData(null);
+									setAcceptedTerms(false);
+								}}
+								className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={confirmSubmit}
+								disabled={!acceptedTerms}
+								className={`flex-1 px-5 py-3 rounded-xl font-semibold transition ${
+									acceptedTerms
+										? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg'
+										: 'bg-gray-300 text-gray-500 cursor-not-allowed'
+								}`}
+							>
+								✅ Confirm & Submit
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Hidden Share Card for Image Generation */}
+			{shareCardData && (
+				<div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+					<div
+						ref={shareCardRef}
+						style={{
+							width: '560px',
+							background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+							borderRadius: '24px',
+							padding: '32px',
+							boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+							fontFamily: 'system-ui, -apple-system, sans-serif'
+						}}
+					>
+						{/* Border with gradient */}
+						<div style={{
+							background: 'white',
+							borderRadius: '16px',
+							border: '3px solid #f59e0b',
+							padding: '24px',
+							position: 'relative'
+						}}>
+							{/* Date and Hashtag */}
+							<div style={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								marginBottom: '20px',
+								fontSize: '13px'
+							}}>
+								<div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6b7280' }}>
+									<span>📅</span>
+									<span>{shareCardData.date}</span>
+								</div>
+								<span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '14px' }}>#UnlistedShare</span>
+							</div>
+
+							{/* Company Name */}
+							<div style={{ marginBottom: '16px' }}>
+								<h2 style={{
+									fontSize: '28px',
+									fontWeight: 'bold',
+									color: '#111827',
+									margin: '0 0 8px 0'
+								}}>
+									{shareCardData.company}
+								</h2>
+							</div>
+
+							{/* Sector */}
+							<div style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px',
+								marginBottom: '12px',
+								color: '#f59e0b',
+								fontSize: '14px'
+							}}>
+								<span>🏭</span>
+								<span style={{ fontWeight: '500' }}>{shareCardData.sector}</span>
+							</div>
+
+							{/* Seller Info */}
+							<div style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px',
+								marginBottom: '20px',
+								fontSize: '14px',
+								color: '#4b5563'
+							}}>
+								<span>👤</span>
+								<span>@{shareCardData.seller}</span>
+								{shareCardData.verified && <span style={{ color: '#f59e0b' }}>✓ Verified</span>}
+							</div>
+
+							{/* Price and Quantity Box */}
+							<div style={{
+								background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%)',
+								borderRadius: '12px',
+								padding: '16px',
+								marginBottom: '20px'
+							}}>
+								<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+									<div>
+										<div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Ask Price</div>
+										<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>
+											₹{shareCardData.askPrice.toFixed(2)}
+										</div>
+									</div>
+									<div style={{ textAlign: 'right' }}>
+										<div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Quantity</div>
+										<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+											{(shareCardData.quantity / 100000).toFixed(2)} Lakh
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Call to Action */}
+							<div style={{
+								borderTop: '1px solid #e5e7eb',
+								paddingTop: '16px',
+								fontSize: '14px',
+								lineHeight: '1.6',
+								color: '#4b5563'
+							}}>
+								<p style={{ margin: '0 0 8px 0' }}>
+									Check out this unlisted share of <strong style={{ color: '#111827' }}>{shareCardData.company}</strong> listed on <strong style={{ color: '#f59e0b' }}>Nlist Planet</strong>. Explore more and make your offer now!
+								</p>
+							</div>
+
+							{/* Footer */}
+							<div style={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								marginTop: '16px',
+								fontSize: '12px',
+								color: '#9ca3af'
+							}}>
+								<span>nlistplanet.com/share/{shareCardData.company.toLowerCase().replace(/\s+/g, '-')}</span>
+								<span>{shareCardData.date}</span>
+							</div>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);
