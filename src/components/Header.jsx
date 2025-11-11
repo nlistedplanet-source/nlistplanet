@@ -43,23 +43,12 @@ export default function Header({ setPage, currentPage }) {
             onClick={() => setPage('home')} 
             className="flex items-center group cursor-pointer"
           >
-              {/* Mobile: static image to save bandwidth. Desktop/Tablet: animated video with WebM (alpha) + MP4 fallback */}
-              <img src="/images/logos/logo.png" alt="Nlist logo" className="block sm:hidden h-10 w-10 object-contain" />
-              <div className="hidden sm:block h-full flex items-center">
-                <video
-                  className="max-h-10 md:max-h-14 lg:max-h-16 w-auto object-contain bg-transparent"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  poster="/images/logos/logo.png"
-                >
-                  <source src="/images/logos/animated_logo.webm" type="video/webm" />
-                  <source src="/images/logos/animated_logo.mp4" type="video/mp4" />
-                  {/* Fallback to static image if video not supported */}
-                  <img src="/images/logos/logo.png" alt="Nlist logo" />
-                </video>
-              </div>
+              {/* Use the provided animated GIF as the header logo (keeps header compact) */}
+              <img
+                src="/images/logos/animated-logo-unscreen.gif"
+                alt="Nlist animated logo"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
+              />
           </button>
 
           {/* Navigation Links */}
