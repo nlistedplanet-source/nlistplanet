@@ -55,9 +55,12 @@ export function ListingProvider({ children }) {
       const response = await listingAPI.createBuyRequest(data);
       const newRequest = response.data.listing;
       
-      // Force refresh to ensure latest data from server
+      // Optimistic UI: add the new request locally so it appears immediately
+      setBuyRequests((prev) => [newRequest, ...(prev || [])]);
+
+      // Force refresh to ensure latest data from server (will reconcile state)
       await fetchListings();
-      
+
       return newRequest;
     } catch (error) {
       console.error('Failed to create buy request:', error);
