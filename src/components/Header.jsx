@@ -43,10 +43,10 @@ export default function Header({ setPage, currentPage }) {
             onClick={() => setPage('home')} 
             className="flex items-center group cursor-pointer"
           >
-              {/* Use the provided animated GIF as the header logo (keeps header compact) */}
+              {/* Use the provided static logo PNG */}
               <img
-                src="/images/logos/animated-logo-unscreen.gif"
-                alt="Nlist animated logo"
+                src="/images/logos/list-removebg-preview.png"
+                alt="Nlist logo"
                 className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
               />
           </button>
