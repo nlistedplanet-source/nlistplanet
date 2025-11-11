@@ -417,9 +417,16 @@ export default function UserDashboard({ setPage }) {
 			request.createdBy,
 			request.createdById,
 			request.accountId,
+			request.userId,
 			request?.buyer?.id,
 			request?.buyer?.email,
-			request?.buyer?.name
+			request?.buyer?.name,
+			request?.user?.id,
+			request?.user?._id,
+			request?.user?.email,
+			request?.userId?._id,
+			request?.userId?.id,
+			request?.userId?.email
 		];
 		return candidateValues.some(matchesCurrentUser);
 	}, [matchesCurrentUser]);
@@ -435,8 +442,30 @@ export default function UserDashboard({ setPage }) {
 			console.log('Total buyRequests:', buyRequests.length);
 			console.log('All buyRequests:', buyRequests);
 			console.log('Current user:', user);
+			console.log('User email:', user?.email);
+			console.log('User _id:', user?._id);
+			console.log('User id:', user?.id);
 			console.log('Filtered myRequests:', filtered.length);
 			console.log('myRequests:', filtered);
+			
+			// Debug each request to see why it's not matching
+			buyRequests.forEach((req, idx) => {
+				const matches = requestBelongsToUser(req);
+				console.log(`Request ${idx} (${req.company}):`, {
+					matches,
+					buyer: req.buyer,
+					buyerEmail: req.buyerEmail,
+					buyerId: req.buyerId,
+					buyerName: req.buyerName,
+					requestedBy: req.requestedBy,
+					requestedById: req.requestedById,
+					createdBy: req.createdBy,
+					createdById: req.createdById,
+					accountId: req.accountId,
+					userId: req.userId,
+					user: req.user
+				});
+			});
 			console.log('========================');
 			return filtered;
 		},
@@ -2285,23 +2314,23 @@ export default function UserDashboard({ setPage }) {
 				</div>
 
 				{/* Navigation Menu */}
-				<nav className="flex-1 p-4 space-y-2">
+				<nav className="flex-1 p-4 space-y-1">
 					{navItems.map((nav) => (
 						<button
 							key={nav.id}
 							onClick={() => setActiveTab(nav.id)}
-							className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+							className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-normal transition-all duration-200 ${
 								activeTab === nav.id
-									? 'bg-white text-purple-700 shadow-lg shadow-purple-200 scale-105'
-									: 'text-purple-700 hover:bg-white/20 hover:scale-105'
+									? 'bg-purple-100/80 text-purple-800'
+									: 'text-purple-700 hover:bg-white/20'
 							}`}
 						>
-							<span className="text-xl">{nav.icon}</span>
+							<span className="text-lg">{nav.icon}</span>
 							<span className="flex-1 text-left">{nav.label}</span>
 							{typeof nav.counter === 'number' && nav.counter > 0 && (
 								<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold ${
 									activeTab === nav.id 
-										? 'bg-purple-100 text-purple-700' 
+										? 'bg-purple-200 text-purple-800' 
 										: 'bg-white/60 text-purple-700 border border-white/30'
 								}`}>
 									{nav.counter}
@@ -2313,14 +2342,14 @@ export default function UserDashboard({ setPage }) {
 						{/* If a nav item has children and it is active, render submenu */}
 						{navItems.map((nav) => (
 							nav.children && activeTab === nav.id ? (
-								<div key={`${nav.id}-children`} className="pl-8 pr-4 mt-2 space-y-1">
+								<div key={`${nav.id}-children`} className="pl-8 pr-4 space-y-1">
 									{nav.children.map((child) => (
 										<button
 											key={child.id}
 											onClick={() => { setActiveTab(nav.id); setBuySubTab(child.id.replace('buy_', '')); }}
 											className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-normal transition ${
 												buySubTab === child.id.replace('buy_', '')
-													? 'bg-white text-purple-700 shadow'
+													? 'bg-purple-200/70 text-purple-900'
 													: 'text-purple-700 hover:bg-white/10'
 											}`}
 										>

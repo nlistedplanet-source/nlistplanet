@@ -77,6 +77,8 @@ export function ListingProvider({ children }) {
           createdBy: user.email || newRequest.createdBy,
           createdById: user._id || user.id || newRequest.createdById,
           accountId: user._id || user.id || newRequest.accountId,
+          userId: user._id || user.id || newRequest.userId,
+          user: user
         };
       }
       
