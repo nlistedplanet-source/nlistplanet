@@ -27,12 +27,13 @@ export default function Header({ setPage, currentPage }) {
             className="flex items-center group cursor-pointer pl-4 sm:pl-6"
             aria-label="Go to home"
           >
-              {/* Use the new logo PNG */}
-              <img
-                src="/images/logos/new_logo.png"
-                alt="Nlist logo"
-                className="h-14 sm:h-16 md:h-20 lg:h-24 w-auto object-contain rounded-md"
-              />
+                {/* Use SVG logo for crisp scaling; larger size for clarity */}
+                <img
+                  src="/images/logos/nlist_logo.svg"
+                  alt="Nlist logo"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-lg shadow-sm"
+                />
+                <span className="text-2xl font-bold tracking-tight text-gray-900">Nlist</span>
           </button>
 
           {/* Navigation Links */}
