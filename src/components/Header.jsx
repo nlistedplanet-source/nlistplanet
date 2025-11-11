@@ -32,7 +32,8 @@ export default function Header({ setPage, currentPage }) {
                   src="/images/logos/nlist_logo.svg"
                   alt="Nlist logo"
                   aria-label="Nlist logo"
-                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain scale-200"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                  style={{ transform: 'scale(5)', transformOrigin: 'left center' }}
                   onError={(e) => {
                     // If the SVG fails to load, fall back to the raster PNG
                     console.error('Logo failed to load, using PNG fallback');
