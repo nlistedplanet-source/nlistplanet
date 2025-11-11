@@ -1378,7 +1378,7 @@ export default function UserDashboard({ setPage }) {
 													</div>
 													<div className="text-right">
 														<p className="text-gray-500 text-[9px]">Quantity</p>
-														<h4 className="text-sm font-bold text-gray-800">{formatShares(request.shares)}</h4>
+														<h4 className="text-sm font-bold text-gray-800">{formatQty(request.shares)}</h4>
 													</div>
 												</div>
 											</div>
