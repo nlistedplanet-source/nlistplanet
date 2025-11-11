@@ -117,13 +117,20 @@ const formatShares = (value) => {
 	return `${numeric.toLocaleString('en-IN')} shares`;
 };
 
-// Compact quantity formatter (e.g., 1.80 Lakh, 2.5 Cr)
+// Compact quantity formatter (e.g., 1.8 Lakh, 2.5 Cr) - no trailing zeros
 const formatQty = (value) => {
 	const n = Number(value);
 	if (!Number.isFinite(n)) return String(value);
-	if (n >= 1e7) return `${(n / 1e7).toFixed(2)} Cr`;
-	if (n >= 1e5) return `${(n / 1e5).toFixed(2)} Lakh`;
-	if (n >= 1e3) return `${(n / 1e3).toFixed(2)} K`;
+	
+	// Helper to remove trailing zeros after decimal
+	const formatNum = (num) => {
+		const formatted = num.toFixed(2);
+		return formatted.endsWith('.00') ? formatted.slice(0, -3) : formatted.replace(/\.?0+$/, '');
+	};
+	
+	if (n >= 1e7) return `${formatNum(n / 1e7)} Cr`;
+	if (n >= 1e5) return `${formatNum(n / 1e5)} Lakh`;
+	if (n >= 1e3) return `${formatNum(n / 1e3)} K`;
 	return n.toLocaleString('en-IN');
 };
 
