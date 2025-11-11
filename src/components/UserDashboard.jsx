@@ -2316,33 +2316,31 @@ export default function UserDashboard({ setPage }) {
 				{/* Navigation Menu */}
 				<nav className="flex-1 p-4 space-y-1">
 					{navItems.map((nav) => (
-						<button
-							key={nav.id}
-							onClick={() => setActiveTab(nav.id)}
-							className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-normal transition-all duration-200 ${
-								activeTab === nav.id
-									? 'bg-purple-100/80 text-purple-800'
-									: 'text-purple-700 hover:bg-white/20'
-							}`}
-						>
-							<span className="text-lg">{nav.icon}</span>
-							<span className="flex-1 text-left">{nav.label}</span>
-							{typeof nav.counter === 'number' && nav.counter > 0 && (
-								<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold ${
-									activeTab === nav.id 
-										? 'bg-purple-200 text-purple-800' 
-										: 'bg-white/60 text-purple-700 border border-white/30'
-								}`}>
-									{nav.counter}
-								</span>
-							)}
-						</button>
-						))}
-
-						{/* If a nav item has children and it is active, render submenu */}
-						{navItems.map((nav) => (
-							nav.children && activeTab === nav.id ? (
-								<div key={`${nav.id}-children`} className="pl-8 pr-4 space-y-1">
+						<div key={nav.id}>
+							<button
+								onClick={() => setActiveTab(nav.id)}
+								className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-normal transition-all duration-200 ${
+									activeTab === nav.id
+										? 'bg-purple-100/80 text-purple-800'
+										: 'text-purple-700 hover:bg-white/20'
+								}`}
+							>
+								<span className="text-lg">{nav.icon}</span>
+								<span className="flex-1 text-left">{nav.label}</span>
+								{typeof nav.counter === 'number' && nav.counter > 0 && (
+									<span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold ${
+										activeTab === nav.id 
+											? 'bg-purple-200 text-purple-800' 
+											: 'bg-white/60 text-purple-700 border border-white/30'
+									}`}>
+										{nav.counter}
+									</span>
+								)}
+							</button>
+							
+							{/* Render submenu right under parent if it has children and is active */}
+							{nav.children && activeTab === nav.id && (
+								<div className="pl-8 pr-4 mt-1 space-y-1">
 									{nav.children.map((child) => (
 										<button
 											key={child.id}
@@ -2362,8 +2360,9 @@ export default function UserDashboard({ setPage }) {
 										</button>
 									))}
 								</div>
-							) : null
-						))}
+							)}
+						</div>
+					))}
 				</nav>
 
 				{/* Bottom Actions */}
