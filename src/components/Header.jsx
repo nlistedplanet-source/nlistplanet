@@ -45,9 +45,10 @@ export default function Header({ setPage, currentPage }) {
           >
               {/* Use the provided static logo PNG */}
               <img
-                src="/images/logos/logo.png"
+                src="/images/logos/new_logo.png"
                 alt="Nlist logo"
                 className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/logos/logo.png'; }}
               />
           </button>
 
