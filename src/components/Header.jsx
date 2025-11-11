@@ -40,7 +40,7 @@ export default function Header({ setPage, currentPage }) {
           {/* Logo Section */}
           <button 
             onClick={() => setPage('home')} 
-            className="flex items-center gap-2 group cursor-pointer"
+            className="flex items-center group cursor-pointer"
           >
             <video
               src="/images/logos/animated_logo.mp4"
@@ -48,9 +48,8 @@ export default function Header({ setPage, currentPage }) {
               loop
               muted
               playsInline
-              className="h-10 w-10 object-contain rounded-lg shadow-sm"
+              className="h-16 w-16 object-contain rounded-lg shadow-sm"
             />
-            <span className="text-xl font-bold tracking-tight text-gray-900">Nlist</span>
           </button>
 
           {/* Navigation Links */}
