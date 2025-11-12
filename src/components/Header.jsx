@@ -54,15 +54,15 @@ export default function Header({ setPage, currentPage }) {
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                Home
-              </button>
-              <button
-                onClick={() => setPage('about')}
-                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  currentPage === 'about'
-                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                <img
+                  src="/images/logos/list (1).png"
+                  alt="Nlist Logo"
+                  className="h-10 w-10 sm:h-12 sm:w-12 mr-2"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/images/logos/new_logo.png';
+                  }}
+                />
               >
                 About
               </button>
