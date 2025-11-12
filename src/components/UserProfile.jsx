@@ -3,8 +3,13 @@ import useUserProfile from '../hooks/useUserProfile';
 
 // Helper functions for DOB format conversion
 const formatDobForDisplay = (isoDate) => {
-  if (!isoDate) return '';
-  const [year, month, day] = isoDate.split('-');
+  if (!isoDate || typeof isoDate !== 'string') return '';
+  // Accept YYYY-MM-DD only
+  const parts = isoDate.split('-');
+  if (parts.length !== 3 || parts.some(p => !p)) return '';
+  const [year, month, day] = parts;
+  // If any part is not a number, return empty
+  if (isNaN(Number(day)) || isNaN(Number(month)) || isNaN(Number(year))) return '';
   return `${day}-${month}-${year}`;
 };
 
