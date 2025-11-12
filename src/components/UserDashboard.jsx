@@ -482,6 +482,39 @@ export default function UserDashboard({ setPage }) {
 	}, [myRequests]);
 
 	const buyCompletedCount = useMemo(() => myRequests.filter(r => r.status === 'approved' || r.status === 'closed').length, [myRequests]);
+	
+	// Derived counts for sell submenu
+	const openSellStatuses = [
+		'active',
+		'pending_admin_approval',
+		'pending',
+		'under_review',
+		'submitted',
+		'awaiting_admin',
+		'processing',
+		'initiated',
+		'draft'
+	];
+	
+	const sellListCount = useMemo(() => {
+		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
+		return myListings.filter((l) => openSellStatuses.includes(getStatusKey(l.status))).length;
+	}, [myListings]);
+	
+	const sellBidsCount = useMemo(() => {
+		return myListings.reduce((acc, l) => acc + (l.bids?.length || 0), 0);
+	}, [myListings]);
+	
+	const sellCounterOffersCount = useMemo(() => {
+		return myListings.filter(l => 
+			l.bids?.some(b => b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder')
+		).length;
+	}, [myListings]);
+	
+	const sellCompletedCount = useMemo(() => {
+		return myListings.filter(l => l.status === 'approved' || l.status === 'closed').length;
+	}, [myListings]);
+	
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 
 			listing.status === 'active' && !listingBelongsToUser(listing)
@@ -616,7 +649,18 @@ export default function UserDashboard({ setPage }) {
 				{ id: 'buy_completed', label: 'Completed', counter: buyCompletedCount }
 			]
 		},
-		{ id: 'sell', label: 'Sell', icon: '📈', counter: myListings.length },
+		{
+			id: 'sell',
+			label: 'Sell',
+			icon: '📈',
+			counter: myListings.length,
+			children: [
+				{ id: 'sell_list', label: 'Sell List', counter: sellListCount },
+				{ id: 'sell_bids', label: 'Bids Received', counter: sellBidsCount },
+				{ id: 'sell_counter', label: 'Counter Offers', counter: sellCounterOffersCount },
+				{ id: 'sell_completed', label: 'Completed', counter: sellCompletedCount }
+			]
+		},
 		{ id: 'orders', label: 'Orders', icon: '📋' },
 		{ id: 'portfolio', label: 'Portfolio', icon: '💼' },
 		{ id: 'faq', label: 'FAQ', icon: '❓' },
@@ -2344,9 +2388,17 @@ export default function UserDashboard({ setPage }) {
 									{nav.children.map((child) => (
 										<button
 											key={child.id}
-											onClick={() => { setActiveTab(nav.id); setBuySubTab(child.id.replace('buy_', '')); }}
+											onClick={() => { 
+												setActiveTab(nav.id);
+												if (child.id.startsWith('buy_')) {
+													setBuySubTab(child.id.replace('buy_', ''));
+												} else if (child.id.startsWith('sell_')) {
+													setSellSubTab(child.id.replace('sell_', ''));
+												}
+											}}
 											className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-normal transition ${
-												buySubTab === child.id.replace('buy_', '')
+												(child.id.startsWith('buy_') && buySubTab === child.id.replace('buy_', '')) ||
+												(child.id.startsWith('sell_') && sellSubTab === child.id.replace('sell_', ''))
 													? 'bg-purple-200/70 text-purple-900'
 													: 'text-purple-700 hover:bg-white/10'
 											}`}
