@@ -63,7 +63,6 @@ export default function Header({ setPage, currentPage }) {
                     e.target.src = '/images/logos/new_logo.png';
                   }}
                 />
-              >
                 About
               </button>
             </nav>
