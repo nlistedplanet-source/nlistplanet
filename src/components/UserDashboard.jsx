@@ -484,19 +484,18 @@ export default function UserDashboard({ setPage }) {
 	const buyCompletedCount = useMemo(() => myRequests.filter(r => r.status === 'approved' || r.status === 'closed').length, [myRequests]);
 	
 	// Derived counts for sell submenu
-	const openSellStatuses = [
-		'active',
-		'pending_admin_approval',
-		'pending',
-		'under_review',
-		'submitted',
-		'awaiting_admin',
-		'processing',
-		'initiated',
-		'draft'
-	];
-	
 	const sellListCount = useMemo(() => {
+		const openSellStatuses = [
+			'active',
+			'pending_admin_approval',
+			'pending',
+			'under_review',
+			'submitted',
+			'awaiting_admin',
+			'processing',
+			'initiated',
+			'draft'
+		];
 		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
 		return myListings.filter((l) => openSellStatuses.includes(getStatusKey(l.status))).length;
 	}, [myListings]);
