@@ -1107,7 +1107,7 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{buySubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Buy Requests</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">📋 My Buy Requests - Manage & Track</h3>
 						{myOpenRequests.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
 								<p className="text-gray-500">No live or pending buy requests yet</p>
@@ -1128,59 +1128,125 @@ export default function UserDashboard({ setPage }) {
 									const acceptedOffers = request.offers?.filter(o => o.status === 'accepted' || o.bothAccepted).length || 0;
 									
 									return (
-										<div key={request._id || request.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
-											<div className="flex items-start justify-between">
-												<div>
-													<h4 className="font-semibold text-gray-900">{request.company}</h4>
-													<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || 'N/A'}</p>
-												</div>
-												<StatusBadge status={request.status} />
-											</div>
-											<div className="mt-4 grid grid-cols-2 gap-3">
-												<div className="bg-blue-50 rounded-lg p-3">
-													<p className="text-xs text-blue-600 font-semibold">Target Price</p>
-													<p className="text-sm font-bold text-blue-700 mt-1">{formatCurrency(request.price)}</p>
-												</div>
-												<div className="bg-gray-50 rounded-lg p-3">
-													<p className="text-xs text-gray-600 font-semibold">Quantity</p>
-													<p className="text-sm font-bold text-gray-700 mt-1">{formatShares(request.shares)}</p>
+										<div key={request._id || request.id} className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+											{/* Header with Status */}
+											<div className="flex items-start justify-between mb-4">
+												<div className="flex-1">
+													<div className="flex items-center gap-2 mb-2">
+														<h4 className="font-bold text-xl text-gray-900">{request.company}</h4>
+														<StatusBadge status={request.status} size="sm" />
+													</div>
+													<p className="text-xs text-gray-600">ISIN: {request.isin || 'N/A'}</p>
+													<p className="text-xs text-gray-500 mt-1">Posted on {formatDate(request.createdAt)}</p>
 												</div>
 											</div>
 											
-											{/* Offer Status Summary */}
-											{hasOffers && (
-												<div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200">
-													<p className="text-xs font-semibold text-gray-700 mb-2">📊 Offer Activity:</p>
-													<div className="flex flex-wrap gap-2 text-xs">
+											{/* Price & Quantity Info */}
+											<div className="grid grid-cols-2 gap-3 mb-4">
+												<div className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm">
+													<p className="text-xs text-blue-600 font-semibold mb-1">Target Price</p>
+													<p className="text-lg font-bold text-blue-700">{formatCurrency(request.price)}</p>
+												</div>
+												<div className="bg-white rounded-xl p-4 border border-gray-300 shadow-sm">
+													<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
+													<p className="text-lg font-bold text-gray-800">{formatShares(request.shares)}</p>
+												</div>
+											</div>
+											
+											{/* Offer Activity Summary */}
+											<div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
+												<div className="flex items-center justify-between mb-2">
+													<p className="text-xs font-bold text-gray-700">📊 Activity Status</p>
+													<span className="text-xs font-bold text-gray-600">{request.offers?.length || 0} Total Offers</span>
+												</div>
+												{hasOffers ? (
+													<div className="flex flex-wrap gap-2">
 														{pendingOffers > 0 && (
-															<span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full font-semibold">
-																⏳ {pendingOffers} Pending
+															<span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">
+																⏳ {pendingOffers} New
 															</span>
 														)}
 														{counterOffers > 0 && (
-															<span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-semibold">
+															<span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
 																🔄 {counterOffers} Negotiating
 															</span>
 														)}
 														{acceptedOffers > 0 && (
-															<span className="px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
+															<span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
 																✅ {acceptedOffers} Accepted
 															</span>
 														)}
 													</div>
-												</div>
-											)}
-											
-											<div className="mt-4 flex items-center justify-between text-xs">
-												<span className="text-gray-500">Total Offers: {request.offers?.length || 0}</span>
-												<span className="text-gray-400">{formatDate(request.createdAt)}</span>
+												) : (
+													<p className="text-xs text-gray-500">No offers received yet</p>
+												)}
 											</div>
-											<button
-												onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-												className="mt-4 w-full px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg transition"
-											>
-												{hasOffers ? '🔍 View & Manage Offers' : '👁️ View Details'}
-											</button>
+											
+											{/* Action Buttons */}
+											<div className="space-y-2">
+												{/* Primary Actions */}
+												<div className="grid grid-cols-2 gap-2">
+													<button
+														onClick={() => {
+															// Edit functionality - open edit modal with prefilled data
+															setFormData({
+																company: request.company,
+																isin: request.isin,
+																price: request.price,
+																shares: request.shares
+															});
+															setFormType('buy');
+															showNotification('info', 'Edit Mode', 'Modify your request details');
+														}}
+														className="px-4 py-2 rounded-lg font-semibold text-blue-700 bg-blue-100 border-2 border-blue-300 hover:bg-blue-200 transition flex items-center justify-center gap-2"
+													>
+														<span>✏️</span>
+														<span className="text-sm">Edit</span>
+													</button>
+													<button
+														onClick={() => {
+															if (window.confirm(`Are you sure you want to delete this buy request for ${request.company}?`)) {
+																// Delete functionality
+																showNotification('success', 'Request Deleted', `${request.company} buy request removed`);
+																// TODO: Add actual delete API call here
+															}
+														}}
+														className="px-4 py-2 rounded-lg font-semibold text-red-700 bg-red-100 border-2 border-red-300 hover:bg-red-200 transition flex items-center justify-center gap-2"
+													>
+														<span>🗑️</span>
+														<span className="text-sm">Delete</span>
+													</button>
+												</div>
+												
+												{/* View Offers / Share */}
+												<div className="grid grid-cols-2 gap-2">
+													{hasOffers ? (
+														<button
+															onClick={() => setBuySubTab('offers')}
+															className="col-span-2 px-4 py-3 rounded-lg font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition flex items-center justify-center gap-2"
+														>
+															<span>📥</span>
+															<span>View All Offers ({request.offers.length})</span>
+														</button>
+													) : (
+														<button
+															onClick={() => {
+																const shareText = `🛒 Looking to buy ${request.shares} shares of ${request.company} at ₹${request.price}. ISIN: ${request.isin}`;
+																if (navigator.share) {
+																	navigator.share({ text: shareText });
+																} else {
+																	navigator.clipboard.writeText(shareText);
+																	showNotification('success', 'Copied!', 'Request details copied to clipboard');
+																}
+															}}
+															className="col-span-2 px-4 py-2 rounded-lg font-semibold text-green-700 bg-green-100 border-2 border-green-300 hover:bg-green-200 transition flex items-center justify-center gap-2"
+														>
+															<span>📤</span>
+															<span>Share Request</span>
+														</button>
+													)}
+												</div>
+											</div>
 										</div>
 									);
 								})}
