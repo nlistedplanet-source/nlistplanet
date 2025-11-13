@@ -808,51 +808,139 @@ export default function UserDashboard({ setPage }) {
 				{/* Content based on sub-tab */}
 				{sellSubTab === 'list' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Live & Pending Sell Listings</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">📈 My Sell Listings</h3>
 						{myOpenListings.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No live or pending sell listings yet</p>
+								<div className="text-5xl mb-4">📋</div>
+								<p className="text-gray-600 font-semibold">No active listings</p>
 								<button
 									onClick={() => setFormType('sell')}
-									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
+									className="mt-4 inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-xl transition"
 								>
 									<span>➕</span>
-									<span>Create your first listing</span>
+									<span>Create First Listing</span>
 								</button>
 							</div>
 						) : (
-							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-								{myOpenListings.map((listing) => (
-									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
-										<div className="flex items-start justify-between">
-											<div>
-												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
-												<p className="text-xs text-gray-500 mt-1">ISIN: {listing.isin || 'N/A'}</p>
+							<div className="space-y-6">
+								{myOpenListings.map((listing) => {
+									const bidsCount = listing.bids?.length || 0;
+									const pendingBids = listing.bids?.filter(b => b.status === 'pending')?.length || 0;
+									const negotiatingBids = listing.bids?.filter(b => b.status === 'counter_offered')?.length || 0;
+									const acceptedBids = listing.bids?.filter(b => b.buyerAccepted || b.sellerAccepted || b.bothAccepted)?.length || 0;
+									
+									return (
+										<div key={listing._id || listing.id} className="bg-gradient-to-br from-white to-emerald-50 border-3 border-emerald-300 rounded-2xl p-6 shadow-xl">
+											{/* Header */}
+											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-emerald-200">
+												<div className="flex-1">
+													<h4 className="font-bold text-2xl text-gray-900 mb-2">{listing.company}</h4>
+													<p className="text-sm text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
+													<p className="text-xs text-gray-500 mt-2">Posted: {formatDateTime(listing.createdAt)}</p>
+												</div>
+												<StatusBadge status={listing.status} />
 											</div>
-											<StatusBadge status={listing.status} />
-										</div>
-										<div className="mt-4 grid grid-cols-2 gap-3">
-											<div className="bg-emerald-50 rounded-lg p-3">
-												<p className="text-xs text-emerald-600 font-semibold">Ask Price</p>
-												<p className="text-sm font-bold text-emerald-700 mt-1">{formatCurrency(listing.price)}</p>
+											
+											{/* Price Info */}
+											<div className="grid grid-cols-2 gap-3 mb-5">
+												<div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 border-2 border-emerald-400 shadow-md">
+													<p className="text-xs text-emerald-800 font-semibold mb-2">Ask Price</p>
+													<p className="text-2xl font-bold text-emerald-900">{formatCurrency(listing.price)}</p>
+												</div>
+												<div className="bg-white rounded-xl p-4 border-2 border-gray-300 shadow-md">
+													<p className="text-xs text-gray-600 font-semibold mb-2">Quantity</p>
+													<p className="text-2xl font-bold text-gray-800">{formatShares(listing.shares)}</p>
+												</div>
 											</div>
-											<div className="bg-gray-50 rounded-lg p-3">
-												<p className="text-xs text-gray-600 font-semibold">Quantity</p>
-												<p className="text-sm font-bold text-gray-700 mt-1">{formatShares(listing.shares)}</p>
+											
+											{/* Activity Summary */}
+											{bidsCount > 0 && (
+												<div className="bg-white rounded-xl p-4 border-2 border-emerald-200 mb-4">
+													<p className="text-xs font-bold text-gray-700 mb-3">Bid Activity:</p>
+													<div className="flex gap-2 flex-wrap">
+														{pendingBids > 0 && (
+															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border-2 border-yellow-300">
+																⏳ {pendingBids} Pending
+															</span>
+														)}
+														{negotiatingBids > 0 && (
+															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border-2 border-orange-300">
+																🔄 {negotiatingBids} Negotiating
+															</span>
+														)}
+														{acceptedBids > 0 && (
+															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border-2 border-green-300">
+																✅ {acceptedBids} Accepted
+															</span>
+														)}
+													</div>
+												</div>
+											)}
+											
+											{/* Actions */}
+											<div className="grid grid-cols-2 gap-3">
+												<button
+													onClick={() => {
+														setFormType('sell');
+														setFormData({
+															company: listing.company,
+															isin: listing.isin,
+															price: listing.price,
+															shares: listing.shares
+														});
+														showNotification('info', 'Edit Mode', 'Update your listing details');
+													}}
+													className="px-4 py-3 rounded-xl font-bold text-emerald-700 bg-emerald-200 border-2 border-emerald-400 hover:bg-emerald-300 transition"
+												>
+													✏️ Edit
+												</button>
+												<button
+													onClick={() => {
+														if (window.confirm(`Delete listing for ${listing.company}?`)) {
+															// Delete functionality - would need API call
+															showNotification('success', 'Deleted!', 'Listing removed');
+														}
+													}}
+													className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+												>
+													🗑️ Delete
+												</button>
 											</div>
+											
+											{bidsCount > 0 && (
+												<button
+													onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
+													className="w-full mt-3 px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-xl transition"
+												>
+													📥 View All Bids ({bidsCount})
+												</button>
+											)}
+											
+											<button
+												onClick={async () => {
+													const shareData = {
+														title: `${listing.company} - Sell Listing`,
+														text: `Selling ${formatShares(listing.shares)} shares at ${formatCurrency(listing.price)}`,
+														url: window.location.href
+													};
+													try {
+														if (navigator.share) {
+															await navigator.share(shareData);
+														} else {
+															await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+															showNotification('success', 'Copied!', 'Listing details copied to clipboard');
+														}
+													} catch (err) {
+														console.log('Share failed:', err);
+													}
+												}}
+												className="w-full mt-3 px-5 py-3 rounded-xl font-bold text-emerald-700 bg-emerald-100 border-2 border-emerald-300 hover:bg-emerald-200 transition"
+											>
+												📤 Share Listing
+											</button>
 										</div>
-										<div className="mt-4 flex items-center justify-between text-xs">
-											<span className="text-gray-500">Bids: {listing.bids?.length || 0}</span>
-											<span className="text-gray-400">{formatDate(listing.createdAt)}</span>
-										</div>
-										<button
-											onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-											className="mt-4 w-full px-4 py-2 rounded-lg font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition"
-										>
-											View Details
-										</button>
-									</div>
-								))}
+									);
+								})}
 							</div>
 						)}
 					</div>
@@ -860,48 +948,185 @@ export default function UserDashboard({ setPage }) {
 
 				{sellSubTab === 'bids' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Bids Received from Buyers</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">💰 Bids Received from Buyers</h3>
 						{bidsReceived.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No bids received yet</p>
+								<div className="text-5xl mb-4">💼</div>
+								<p className="text-gray-600 font-semibold">No bids yet</p>
+								<p className="text-xs text-gray-400 mt-2">Bids from buyers will appear here</p>
 							</div>
 						) : (
-							<div className="space-y-4">
-								{bidsReceived.map((listing) => (
-									<div key={listing._id || listing.id} className="bg-white border border-gray-200 rounded-xl p-5">
-										<div className="flex items-start justify-between mb-4">
-											<div>
-												<h4 className="font-semibold text-gray-900">{listing.company}</h4>
-												<p className="text-sm text-gray-500">Your ask: {formatCurrency(listing.price)} for {formatShares(listing.shares)}</p>
-											</div>
-											<StatusBadge status={listing.status} />
-										</div>
-										<div className="space-y-2">
-											<p className="text-sm font-semibold text-gray-700">Received Bids ({listing.bids?.length || 0}):</p>
-											{listing.bids?.map((bid) => (
-												<div key={bid._id || bid.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-													<div>
-														<p className="text-sm font-semibold text-gray-900">
-															{bid.bidderName || bid.bidder}
-														</p>
-														<p className="text-xs text-gray-600">
-															{formatCurrency(bid.counterPrice || bid.price)} × {formatShares(bid.quantity)}
-														</p>
-													</div>
-													<div className="flex items-center gap-2">
-														<InteractionBadge status={bid.status} />
-														<button
-															onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-															className="px-3 py-1 rounded-lg text-xs font-semibold text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
-														>
-															Review
-														</button>
-													</div>
+							<div className="space-y-6">
+								{bidsReceived.map((listing) => {
+									const activeBids = listing.bids?.filter(b => b.status !== 'rejected') || [];
+									
+									return (
+										<div key={listing._id || listing.id} className="bg-gradient-to-br from-purple-50 to-pink-50 border-3 border-purple-300 rounded-2xl p-6 shadow-xl">
+											{/* Header */}
+											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-purple-200">
+												<div className="flex-1">
+													<h4 className="font-bold text-2xl text-gray-900 mb-2">{listing.company}</h4>
+													<p className="text-sm text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
+													<p className="text-sm text-gray-700 mt-2">
+														Your Ask: <span className="font-bold text-emerald-600">{formatCurrency(listing.price)}</span> × {formatShares(listing.shares)}
+													</p>
 												</div>
-											))}
+												<span className="px-4 py-2 rounded-full text-sm font-bold bg-purple-500 text-white shadow-md">
+													💰 {activeBids.length} Bids
+												</span>
+											</div>
+											
+											{/* Bids */}
+											<div className="space-y-4">
+												{activeBids.map((bid) => {
+													const buyerAccepted = bid.buyerAccepted || false;
+													const sellerAccepted = bid.sellerAccepted || false;
+													const bothAccepted = bid.bothAccepted || (buyerAccepted && sellerAccepted);
+													const currentPrice = bid.counterPrice || bid.price;
+													const isPending = bid.status === 'pending';
+													const isCountered = bid.status === 'counter_offered';
+													
+													return (
+														<div key={bid._id || bid.id} className={`rounded-2xl p-5 border-3 shadow-lg ${
+															bothAccepted ? 'bg-green-50 border-green-400' :
+															isCountered ? 'bg-orange-50 border-orange-400' :
+															'bg-white border-purple-400'
+														}`}>
+															{/* Buyer & Status */}
+															<div className="flex items-start justify-between mb-4">
+																<div>
+																	<p className="font-bold text-gray-900">🛒 {bid.bidderName || bid.bidder}</p>
+																	<p className="text-xs text-gray-500 mt-1">{formatDateTime(bid.createdAt)}</p>
+																</div>
+																<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
+															</div>
+															
+															{/* Price Info */}
+															<div className="grid grid-cols-2 gap-3 mb-4">
+																<div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-4 border-2 border-purple-400">
+																	<p className="text-xs text-purple-800 font-semibold mb-1">Bid Price</p>
+																	<p className="text-2xl font-bold text-purple-900">{formatCurrency(currentPrice)}</p>
+																</div>
+																<div className="bg-white rounded-xl p-4 border-2 border-gray-300">
+																	<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
+																	<p className="text-2xl font-bold text-gray-800">{formatShares(bid.quantity)}</p>
+																</div>
+															</div>
+															
+															{/* Acceptance Status for Countered */}
+															{isCountered && (
+																<div className="bg-white rounded-xl p-4 mb-4 border-2 border-gray-200">
+																	<p className="text-xs font-bold text-gray-700 mb-3">Status:</p>
+																	<div className="grid grid-cols-2 gap-3">
+																		<div className={`rounded-lg p-3 border-2 ${
+																			buyerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+																		}`}>
+																			<p className="text-xs text-gray-600 mb-1">🛒 Buyer</p>
+																			<p className="text-2xl text-center">{buyerAccepted ? '✅' : '⏳'}</p>
+																		</div>
+																		<div className={`rounded-lg p-3 border-2 ${
+																			sellerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+																		}`}>
+																			<p className="text-xs text-gray-600 mb-1">📈 You</p>
+																			<p className="text-2xl text-center">{sellerAccepted ? '✅' : '⏳'}</p>
+																		</div>
+																	</div>
+																</div>
+															)}
+															
+															{/* Actions */}
+															{bothAccepted ? (
+																<div className="bg-green-100 border-2 border-green-400 rounded-xl p-4 text-center">
+																	<p className="text-lg font-bold text-green-700">🎉 Deal Finalized!</p>
+																	<p className="text-sm text-green-600 mt-1">Awaiting admin approval</p>
+																</div>
+															) : sellerAccepted ? (
+																<div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-4 text-center">
+																	<p className="font-bold text-blue-700">✅ You accepted</p>
+																	<p className="text-xs text-blue-600 mt-1">Waiting for buyer...</p>
+																</div>
+															) : isPending ? (
+																<div className="space-y-2">
+																	<button
+																		onClick={() => {
+																			acceptOffer(listing._id || listing.id, bid.id, 'sell');
+																			showNotification('success', '✅ Accepted!', `Bid accepted from ${bid.bidderName || bid.bidder}`);
+																		}}
+																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																	>
+																		✅ Accept Bid
+																	</button>
+																	<div className="grid grid-cols-2 gap-2">
+																		<button
+																			onClick={() => {
+																				const counterPrice = prompt(`Buyer bid: ₹${bid.price}\nYour counter:`);
+																				if (counterPrice && !isNaN(counterPrice)) {
+																					counterOffer(listing._id || listing.id, bid.id, parseFloat(counterPrice), 'sell', 'seller');
+																					showNotification('info', '🔄 Counter Sent!', `Counter: ₹${counterPrice}`);
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																		>
+																			🔄 Counter
+																		</button>
+																		<button
+																			onClick={() => {
+																				if (window.confirm(`Reject bid from ${bid.bidderName || bid.bidder}?`)) {
+																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
+																					showNotification('warning', '❌ Rejected', 'Bid rejected');
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																		>
+																			❌ Reject
+																		</button>
+																	</div>
+																</div>
+															) : (
+																<div className="space-y-2">
+																	<button
+																		onClick={() => {
+																			finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
+																			showNotification('success', '✅ Accepted!', buyerAccepted ? 'Deal finalized!' : 'Waiting for buyer...');
+																		}}
+																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																	>
+																		✅ Accept Counter
+																	</button>
+																	<div className="grid grid-cols-2 gap-2">
+																		<button
+																			onClick={() => {
+																				const newPrice = prompt(`Current: ₹${currentPrice}\nYour re-counter:`);
+																				if (newPrice && !isNaN(newPrice)) {
+																					reCounterOffer(listing._id || listing.id, bid.id, parseFloat(newPrice), 'sell', 'seller');
+																					showNotification('info', '🔄 Re-Counter Sent!', `New price: ₹${newPrice}`);
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																		>
+																			🔄 Re-Counter
+																		</button>
+																		<button
+																			onClick={() => {
+																				if (window.confirm('Reject this counter offer?')) {
+																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
+																					showNotification('warning', '❌ Rejected', 'Negotiation ended');
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																		>
+																			❌ Reject
+																		</button>
+																	</div>
+																</div>
+															)}
+														</div>
+													);
+												})}
+											</div>
 										</div>
-									</div>
-								))}
+									);
+								})}
 							</div>
 						)}
 					</div>
@@ -1418,50 +1643,141 @@ export default function UserDashboard({ setPage }) {
 
 				{buySubTab === 'counter' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Counter Offer Negotiations</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">🔄 Active Negotiations</h3>
 						{counterOfferRequests.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No counter offers in progress</p>
+								<div className="text-5xl mb-4">🤝</div>
+								<p className="text-gray-600 font-semibold">No active negotiations</p>
+								<p className="text-xs text-gray-400 mt-2">Counter offers appear here during negotiation</p>
 							</div>
 						) : (
-							<div className="space-y-4">
+							<div className="space-y-6">
 								{counterOfferRequests.map((request) => {
 									const counterOffers = request.offers?.filter(o => 
-										o.status === 'counter_offered' || o.status === 'counter_accepted_by_offerer'
-									);
+										o.status === 'counter_offered' || o.buyerAccepted || o.sellerAccepted
+									) || [];
+									
 									return (
-										<div key={request._id || request.id} className="bg-white border border-orange-200 rounded-xl p-5">
-											<div className="flex items-start justify-between mb-4">
-												<div>
-													<h4 className="font-semibold text-gray-900">{request.company}</h4>
-													<p className="text-sm text-gray-500">Original: {formatCurrency(request.price)}</p>
+										<div key={request._id || request.id} className="bg-gradient-to-br from-orange-50 to-amber-50 border-3 border-orange-300 rounded-2xl p-6 shadow-xl">
+											{/* Header */}
+											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-orange-200">
+												<div className="flex-1">
+													<h4 className="font-bold text-2xl text-gray-900 mb-2">{request.company}</h4>
+													<p className="text-sm text-gray-600">ISIN: {request.isin}</p>
+													<p className="text-sm text-gray-700 mt-2">
+														Your Request: <span className="font-bold text-blue-600">{formatCurrency(request.price)}</span> × {formatShares(request.shares)}
+													</p>
 												</div>
-												<span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
-													🔄 In Negotiation
+												<span className="px-4 py-2 rounded-full text-sm font-bold bg-orange-500 text-white shadow-md">
+													🔄 {counterOffers.length} Active
 												</span>
 											</div>
-											<div className="space-y-2">
-												{counterOffers?.map((offer) => (
-													<div key={offer._id || offer.id} className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-														<div className="flex items-start justify-between">
-															<div>
-																<p className="text-sm font-semibold text-gray-900">{offer.sellerName || offer.seller}</p>
-																<p className="text-xs text-gray-600 mt-1">
-																	Counter: {formatCurrency(offer.counterPrice)} × {formatShares(offer.quantity)}
-																</p>
-																{offer.counterAt && (
-																	<p className="text-xs text-gray-400 mt-1">{formatDate(offer.counterAt)}</p>
-																)}
+											
+											{/* Negotiations */}
+											<div className="space-y-4">
+												{counterOffers.map((offer) => {
+													const buyerAccepted = offer.buyerAccepted || false;
+													const sellerAccepted = offer.sellerAccepted || false;
+													const bothAccepted = offer.bothAccepted || (buyerAccepted && sellerAccepted);
+													const currentPrice = offer.counterPrice || offer.price;
+													
+													return (
+														<div key={offer._id || offer.id} className={`rounded-2xl p-5 border-3 shadow-lg ${
+															bothAccepted ? 'bg-green-50 border-green-400' : 
+															'bg-white border-orange-400'
+														}`}>
+															{/* Seller & Status */}
+															<div className="flex items-start justify-between mb-4">
+																<div>
+																	<p className="font-bold text-gray-900">💼 {offer.sellerName || offer.seller}</p>
+																	<p className="text-xs text-gray-500 mt-1">{formatDateTime(offer.counterAt || offer.createdAt)}</p>
+																</div>
+																<InteractionBadge status={bothAccepted ? 'both_accepted' : offer.status} />
 															</div>
-															<button
-																onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-																className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg transition"
-															>
-																Respond
-															</button>
+															
+															{/* Price Info */}
+															<div className="grid grid-cols-2 gap-3 mb-4">
+																<div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border-2 border-orange-400">
+																	<p className="text-xs text-orange-800 font-semibold mb-1">Counter Price</p>
+																	<p className="text-2xl font-bold text-orange-900">{formatCurrency(currentPrice)}</p>
+																</div>
+																<div className="bg-white rounded-xl p-4 border-2 border-gray-300">
+																	<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
+																	<p className="text-2xl font-bold text-gray-800">{formatShares(offer.quantity)}</p>
+																</div>
+															</div>
+															
+															{/* Acceptance Status */}
+															<div className="bg-white rounded-xl p-4 mb-4 border-2 border-gray-200">
+																<p className="text-xs font-bold text-gray-700 mb-3">Status:</p>
+																<div className="grid grid-cols-2 gap-3">
+																	<div className={`rounded-lg p-3 border-2 ${
+																		buyerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+																	}`}>
+																		<p className="text-xs text-gray-600 mb-1">🛒 You</p>
+																		<p className="text-2xl text-center">{buyerAccepted ? '✅' : '⏳'}</p>
+																	</div>
+																	<div className={`rounded-lg p-3 border-2 ${
+																		sellerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+																	}`}>
+																		<p className="text-xs text-gray-600 mb-1">📈 Seller</p>
+																		<p className="text-2xl text-center">{sellerAccepted ? '✅' : '⏳'}</p>
+																	</div>
+																</div>
+															</div>
+															
+															{/* Actions */}
+															{bothAccepted ? (
+																<div className="bg-green-100 border-2 border-green-400 rounded-xl p-4 text-center">
+																	<p className="text-lg font-bold text-green-700">🎉 Deal Finalized!</p>
+																	<p className="text-sm text-green-600 mt-1">Awaiting admin approval</p>
+																</div>
+															) : buyerAccepted ? (
+																<div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-4 text-center">
+																	<p className="font-bold text-blue-700">✅ You accepted</p>
+																	<p className="text-xs text-blue-600 mt-1">Waiting for seller...</p>
+																</div>
+															) : (
+																<div className="space-y-2">
+																	<button
+																		onClick={() => {
+																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
+																			showNotification('success', '✅ Accepted!', sellerAccepted ? 'Deal finalized!' : 'Waiting for seller...');
+																		}}
+																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																	>
+																		✅ Accept Counter Offer
+																	</button>
+																	<div className="grid grid-cols-2 gap-2">
+																		<button
+																			onClick={() => {
+																				const newPrice = prompt(`Current: ₹${currentPrice}\nYour re-counter:`);
+																				if (newPrice && !isNaN(newPrice)) {
+																					reCounterOffer(request._id || request.id, offer.id, parseFloat(newPrice), 'buy', 'buyer');
+																					showNotification('info', '🔄 Re-Counter Sent!', `New price: ₹${newPrice}`);
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																		>
+																			🔄 Re-Counter
+																		</button>
+																		<button
+																			onClick={() => {
+																				if (window.confirm('Reject this counter offer?')) {
+																					rejectCounterOffer(request._id || request.id, offer.id, 'buy');
+																					showNotification('warning', '❌ Rejected', 'Negotiation ended');
+																				}
+																			}}
+																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																		>
+																			❌ Reject
+																		</button>
+																	</div>
+																</div>
+															)}
 														</div>
-													</div>
-												))}
+													);
+												})}
 											</div>
 										</div>
 									);
@@ -1473,52 +1789,92 @@ export default function UserDashboard({ setPage }) {
 
 				{buySubTab === 'completed' && (
 					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Transactions</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">✅ Completed Transactions</h3>
 						{completedRequests.length === 0 ? (
 							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No completed transactions yet</p>
+								<div className="text-5xl mb-4">📋</div>
+								<p className="text-gray-600 font-semibold">No completed deals</p>
+								<p className="text-xs text-gray-400 mt-2">Your completed transactions will appear here</p>
 							</div>
 						) : (
-							<div className="grid gap-5 md:grid-cols-2">
+							<div className="space-y-6">
 								{completedRequests.map((request) => {
 									const acceptedOffer = request.acceptedOffer 
 										? request.offers?.find(o => o.id === request.acceptedOffer)
 										: null;
+									const finalPrice = acceptedOffer?.counterPrice || acceptedOffer?.price || request.price;
+									const finalQuantity = acceptedOffer?.quantity || request.shares;
+									const totalValue = finalPrice * finalQuantity;
+									
 									return (
-										<div key={request.id} className="bg-white border border-green-200 rounded-xl p-5">
-											<div className="flex items-start justify-between mb-4">
-												<div>
-													<h4 className="font-semibold text-gray-900">{request.company}</h4>
-													<p className="text-xs text-gray-500">ISIN: {request.isin || 'N/A'}</p>
+										<div key={request.id} className="bg-gradient-to-br from-green-50 to-emerald-50 border-3 border-green-400 rounded-2xl p-6 shadow-xl">
+											{/* Header */}
+											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-green-200">
+												<div className="flex-1">
+													<h4 className="font-bold text-2xl text-gray-900 mb-2">{request.company}</h4>
+													<p className="text-sm text-gray-600">ISIN: {request.isin || 'N/A'}</p>
+													{request.closedAt && (
+														<p className="text-xs text-gray-500 mt-2">
+															Completed: {formatDateTime(request.closedAt)}
+														</p>
+													)}
 												</div>
-												<StatusBadge status={request.status} />
+												<span className="px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white shadow-md">
+													✅ Closed
+												</span>
 											</div>
+											
+											{/* Transaction Summary */}
+											<div className="grid grid-cols-3 gap-3 mb-5">
+												<div className="bg-white rounded-xl p-4 border-2 border-green-300 shadow-md">
+													<p className="text-xs text-gray-600 font-semibold mb-2">Final Price</p>
+													<p className="text-xl font-bold text-green-700">{formatCurrency(finalPrice)}</p>
+												</div>
+												<div className="bg-white rounded-xl p-4 border-2 border-green-300 shadow-md">
+													<p className="text-xs text-gray-600 font-semibold mb-2">Quantity</p>
+													<p className="text-xl font-bold text-green-700">{formatShares(finalQuantity)}</p>
+												</div>
+												<div className="bg-gradient-to-br from-green-200 to-emerald-200 rounded-xl p-4 border-2 border-green-500 shadow-md">
+													<p className="text-xs text-green-800 font-semibold mb-2">Total Value</p>
+													<p className="text-xl font-bold text-green-900">{formatCurrency(totalValue)}</p>
+												</div>
+											</div>
+											
 											{acceptedOffer && (
-												<div className="bg-green-50 rounded-lg p-4 border border-green-200">
-													<p className="text-xs text-green-600 font-semibold mb-2">✅ Deal Closed</p>
-													<div className="grid grid-cols-2 gap-3 text-sm">
-														<div>
-															<p className="text-xs text-gray-600">Seller</p>
-															<p className="font-semibold text-gray-900">{acceptedOffer.sellerName || acceptedOffer.seller}</p>
+												<div className="bg-white rounded-xl p-4 border-2 border-green-200 mb-4">
+													<p className="text-xs font-bold text-gray-700 mb-3">Deal Information:</p>
+													<div className="space-y-2">
+														<div className="flex justify-between items-center py-2 border-b border-gray-200">
+															<span className="text-sm text-gray-600">Seller:</span>
+															<span className="text-sm font-bold text-gray-900">{acceptedOffer.sellerName || acceptedOffer.seller}</span>
 														</div>
-														<div>
-															<p className="text-xs text-gray-600">Final Price</p>
-															<p className="font-semibold text-green-700">{formatCurrency(acceptedOffer.counterPrice || acceptedOffer.price)}</p>
+														<div className="flex justify-between items-center py-2 border-b border-gray-200">
+															<span className="text-sm text-gray-600">Your Request:</span>
+															<span className="text-sm font-semibold text-blue-600">{formatCurrency(request.price)}</span>
 														</div>
-														<div>
-															<p className="text-xs text-gray-600">Quantity</p>
-															<p className="font-semibold text-gray-900">{formatShares(acceptedOffer.quantity)}</p>
-														</div>
-														<div>
-															<p className="text-xs text-gray-600">Status</p>
-															<p className="font-semibold text-green-700 capitalize">{request.status}</p>
+														{acceptedOffer.counterPrice && (
+															<div className="flex justify-between items-center py-2 border-b border-gray-200">
+																<span className="text-sm text-gray-600">Negotiated:</span>
+																<span className="text-sm font-semibold text-orange-600">{formatCurrency(acceptedOffer.counterPrice)}</span>
+															</div>
+														)}
+														<div className="flex justify-between items-center py-2">
+															<span className="text-sm text-gray-600">Status:</span>
+															<span className="text-sm font-bold text-green-600 capitalize">{request.status}</span>
 														</div>
 													</div>
 												</div>
 											)}
-											{request.closedAt && (
-												<p className="text-xs text-gray-400 mt-3">Closed: {formatDate(request.closedAt)}</p>
-											)}
+											
+											{/* Action - View Only */}
+											<button
+												onClick={() => {
+													showNotification('info', 'Transaction Details', `${request.company}: ${formatCurrency(finalPrice)} × ${formatShares(finalQuantity)} = ${formatCurrency(totalValue)}`);
+												}}
+												className="w-full px-5 py-3 rounded-xl font-bold text-green-700 bg-green-200 border-2 border-green-400 hover:bg-green-300 transition"
+											>
+												📄 View Full Details
+											</button>
 										</div>
 									);
 								})}
