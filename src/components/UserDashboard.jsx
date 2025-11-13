@@ -28,6 +28,7 @@ const INTERACTION_META = {
 	counter_offered: { icon: '🔄', label: 'Countered', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
 	counter_accepted_by_bidder: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	counter_accepted_by_offerer: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+	both_accepted: { icon: '🎉', label: 'Both Accepted', classes: 'bg-green-100 text-green-700 border border-green-300' },
 	rejected: { icon: '❌', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' }
 };
 
@@ -160,7 +161,8 @@ export default function UserDashboard({ setPage }) {
 		acceptBid,
 		acceptOffer,
 		counterOffer,
-		acceptCounterOffer,
+		reCounterOffer,
+		finalAcceptByParty,
 		rejectCounterOffer
 	} = useListing();
 	const { companies, searchCompany } = useCompany();
@@ -2228,34 +2230,72 @@ export default function UserDashboard({ setPage }) {
 
 		const handleClose = () => setSelectedItem(null);
 
+		// Direct accept for pending bids/offers (no counter yet)
 		const onAccept = (interactionId) => {
 			if (type === 'sell') {
 				acceptBid(item.id, interactionId);
-				showNotification('success', 'Bid accepted ?', 'We have notified the bidder. Await admin approval.');
+				showNotification('success', 'Bid accepted ✅', 'We have notified the bidder. Await admin approval.');
 			} else {
 				acceptOffer(item.id, interactionId);
-				showNotification('success', 'Offer accepted ?', 'Seller will be notified immediately.');
+				showNotification('success', 'Offer accepted ✅', 'Seller will be notified immediately.');
 			}
 			setSelectedItem(null);
 		};
 
-		const onCounter = (interactionId) => {
+		// Send initial counter offer
+		const onCounter = (interactionId, interaction) => {
 			const newPrice = prompt('Enter your counter price');
-			if (!newPrice) return;
-			counterOffer(item.id, interactionId, newPrice, type);
-			showNotification('info', 'Counter submitted ', `Proposed new price: ?${newPrice}`);
+			if (!newPrice || isNaN(newPrice)) return;
+			const counterBy = type === 'sell' ? 'seller' : 'buyer';
+			counterOffer(item.id, interactionId, parseFloat(newPrice), type, counterBy);
+			showNotification('info', 'Counter submitted 🔄', `Proposed new price: ₹${newPrice}`);
 			setSelectedItem(null);
 		};
 
-		const onAcceptCounter = (interactionId) => {
-			acceptCounterOffer(item.id, interactionId, type);
-			showNotification('success', 'Counter accepted ', 'Admin will review the final terms.');
+		// Send re-counter offer (multiple rounds)
+		const onReCounter = (interactionId, interaction) => {
+			const newPrice = prompt(`Current counter: ₹${interaction.counterPrice || interaction.price}. Enter your re-counter price:`);
+			if (!newPrice || isNaN(newPrice)) return;
+			// Determine who is countering
+			const counterBy = type === 'sell' 
+				? (interaction.counterBy === 'seller' ? 'buyer' : 'seller')
+				: (interaction.counterBy === 'buyer' ? 'seller' : 'buyer');
+			reCounterOffer(item.id, interactionId, parseFloat(newPrice), type, counterBy);
+			showNotification('info', 'Re-counter submitted 🔄', `New proposed price: ₹${newPrice}`);
+			setSelectedItem(null);
+		};
+
+		// Accept counter offer (final acceptance by one party)
+		const onAcceptFinal = (interactionId, interaction) => {
+			const party = type === 'sell' ? 'buyer' : 'seller';
+			finalAcceptByParty(item.id, interactionId, type, party);
+			
+			const otherPartyAccepted = type === 'sell' ? interaction.sellerAccepted : interaction.buyerAccepted;
+			if (otherPartyAccepted) {
+				showNotification('success', 'Deal Finalized! 🎉', 'Both parties agreed. Admin will review now.');
+			} else {
+				showNotification('success', 'Accepted ✅', 'Waiting for other party to accept.');
+			}
+			setSelectedItem(null);
+		};
+
+		// Owner accepts their own counter (when other party already accepted)
+		const onOwnerAccept = (interactionId, interaction) => {
+			const party = type === 'sell' ? 'seller' : 'buyer';
+			finalAcceptByParty(item.id, interactionId, type, party);
+			
+			const otherPartyAccepted = type === 'sell' ? interaction.buyerAccepted : interaction.sellerAccepted;
+			if (otherPartyAccepted) {
+				showNotification('success', 'Deal Finalized! 🎉', 'Both parties agreed. Admin will review now.');
+			} else {
+				showNotification('success', 'Accepted ✅', 'Waiting for other party to accept.');
+			}
 			setSelectedItem(null);
 		};
 
 		const onRejectCounter = (interactionId) => {
 			rejectCounterOffer(item.id, interactionId, type);
-			showNotification('warning', 'Counter rejected', 'Let them know what price works for you.');
+			showNotification('warning', 'Counter rejected ❌', 'Let them know what price works for you.');
 			setSelectedItem(null);
 		};
 
@@ -2283,12 +2323,27 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							interactions.map((interaction) => {
 								const interactionOwner = type === 'sell' ? interaction.bidder : interaction.seller;
-								const canAcceptCounter = ['counter_offered'].includes(interaction.status) && !isOwner;
-								const canCounter = ['pending', 'counter_offered'].includes(interaction.status) && isOwner;
-								const canAccept = ['pending', 'counter_accepted_by_bidder', 'counter_accepted_by_offerer'].includes(interaction.status) && isOwner;
 								const displayPrice = interaction.counterPrice || interaction.price;
+								
+								// Determine current state and available actions
+								const isPending = interaction.status === 'pending';
+								const isCounterOffered = interaction.status === 'counter_offered';
+								const isBothAccepted = interaction.status === 'both_accepted' || interaction.bothAccepted;
+								
+								// Check acceptance status
+								const buyerAccepted = interaction.buyerAccepted || false;
+								const sellerAccepted = interaction.sellerAccepted || false;
+								const myPartyAccepted = type === 'sell' ? sellerAccepted : buyerAccepted;
+								
+								// Available actions
+								const canDirectAccept = isPending && isOwner;
+								const canInitialCounter = isPending && isOwner;
+								const canReCounter = isCounterOffered && !myPartyAccepted;
+								const canAcceptCounter = isCounterOffered && !myPartyAccepted;
+								const canReject = (isPending || isCounterOffered) && !isBothAccepted;
+								
 								return (
-									<div key={interaction.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+									<div key={interaction.id} className="border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
 										<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 											<div>
 												<p className="text-sm font-semibold text-gray-900">
@@ -2298,6 +2353,34 @@ export default function UserDashboard({ setPage }) {
 											</div>
 											<InteractionBadge status={interaction.status} />
 										</div>
+
+										{/* Counter Offer History */}
+										{interaction.counterHistory && interaction.counterHistory.length > 0 && (
+											<div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+												<p className="text-xs font-semibold text-blue-700 mb-2">📜 Negotiation History</p>
+												<div className="space-y-1">
+													{interaction.counterHistory.map((h, idx) => (
+														<p key={idx} className="text-xs text-blue-600">
+															{h.by === 'seller' ? '🏷️ Seller' : '🛒 Buyer'}: ₹{h.price} - {formatDateTime(h.at)}
+														</p>
+													))}
+												</div>
+											</div>
+										)}
+
+										{/* Acceptance Status */}
+										{isCounterOffered && (
+											<div className="mt-3 grid grid-cols-2 gap-2">
+												<div className={`p-2 rounded-lg border ${sellerAccepted ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
+													<p className="text-xs font-semibold text-gray-700">🏷️ Seller</p>
+													<p className="text-xs">{sellerAccepted ? '✅ Accepted' : '⏳ Pending'}</p>
+												</div>
+												<div className={`p-2 rounded-lg border ${buyerAccepted ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
+													<p className="text-xs font-semibold text-gray-700">🛒 Buyer</p>
+													<p className="text-xs">{buyerAccepted ? '✅ Accepted' : '⏳ Pending'}</p>
+												</div>
+											</div>
+										)}
 
 										<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
 											<div className="rounded-lg bg-white border border-gray-200 p-3">
@@ -2309,49 +2392,81 @@ export default function UserDashboard({ setPage }) {
 												<p className="mt-1 text-base font-semibold text-gray-900">{formatShares(interaction.quantity || interaction.shares)}</p>
 											</div>
 											<div className="rounded-lg bg-white border border-gray-200 p-3">
-												<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</p>
-												<p className="mt-1 text-base font-semibold text-gray-900">{getInteractionMeta(interaction.status).label}</p>
+												<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Value</p>
+												<p className="mt-1 text-base font-semibold text-gray-900">{formatCurrency(displayPrice * (interaction.quantity || interaction.shares))}</p>
 											</div>
 										</div>
 
-										<div className="mt-4 flex flex-wrap gap-3">
-											{isOwner && canAccept && (
-												<button
-													onClick={() => onAccept(interaction.id)}
-													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
-												>
-													<span>?</span>
-													<span>Accept</span>
-												</button>
-											)}
-											{isOwner && canCounter && (
-												<button
-													onClick={() => onCounter(interaction.id)}
-													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-orange-600 border border-orange-200 bg-orange-50/40 hover:bg-orange-50 transition"
-												>
-													<span></span>
-													<span>Counter offer</span>
-												</button>
-											)}
-											{!isOwner && canAcceptCounter && (
-												<button
-													onClick={() => onAcceptCounter(interaction.id)}
-													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
-												>
-													<span></span>
-													<span>Accept counter</span>
-												</button>
-											)}
-											{!isOwner && canAcceptCounter && (
-												<button
-													onClick={() => onRejectCounter(interaction.id)}
-													className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-rose-600 border border-rose-200 bg-rose-50/40 hover:bg-rose-50 transition"
-												>
-													<span>?</span>
-													<span>Reject counter</span>
-												</button>
-											)}
-										</div>
+										{/* Action Buttons */}
+										{!isBothAccepted && (
+											<div className="mt-4 flex flex-wrap gap-3">
+												{/* Direct Accept (for pending bids/offers) */}
+												{canDirectAccept && (
+													<button
+														onClick={() => onAccept(interaction.id)}
+														className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow hover:shadow-lg transition"
+													>
+														<span>✅</span>
+														<span>Accept</span>
+													</button>
+												)}
+												
+												{/* Initial Counter */}
+												{canInitialCounter && (
+													<button
+														onClick={() => onCounter(interaction.id, interaction)}
+														className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-orange-600 border border-orange-200 bg-orange-50/40 hover:bg-orange-50 transition"
+													>
+														<span>🔄</span>
+														<span>Counter Offer</span>
+													</button>
+												)}
+
+												{/* Accept Counter Offer */}
+												{canAcceptCounter && isCounterOffered && (
+													<button
+														onClick={() => isOwner ? onOwnerAccept(interaction.id, interaction) : onAcceptFinal(interaction.id, interaction)}
+														className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow hover:shadow-lg transition"
+													>
+														<span>✅</span>
+														<span>Accept ₹{displayPrice}</span>
+													</button>
+												)}
+
+												{/* Re-Counter */}
+												{canReCounter && (
+													<button
+														onClick={() => onReCounter(interaction.id, interaction)}
+														className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-blue-600 border border-blue-200 bg-blue-50/40 hover:bg-blue-50 transition"
+													>
+														<span>🔄</span>
+														<span>Re-Counter</span>
+													</button>
+												)}
+
+												{/* Reject */}
+												{canReject && (
+													<button
+														onClick={() => onRejectCounter(interaction.id)}
+														className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-rose-600 border border-rose-200 bg-rose-50/40 hover:bg-rose-50 transition"
+													>
+														<span>❌</span>
+														<span>Reject</span>
+													</button>
+												)}
+											</div>
+										)}
+
+										{/* Both Accepted Message */}
+										{isBothAccepted && (
+											<div className="mt-4 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
+												<p className="text-green-700 font-semibold flex items-center gap-2">
+													<span>🎉</span>
+													<span>Deal Finalized! Both parties agreed on ₹{displayPrice}</span>
+												</p>
+												<p className="text-xs text-green-600 mt-1">Waiting for admin approval to complete transaction.</p>
+											</div>
+										)}
 									</div>
 								);
 							})

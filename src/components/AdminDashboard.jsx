@@ -55,18 +55,24 @@ export default function AdminDashboard({ setPage }) {
   const approvedItems = allListings.filter(item => item.status === 'approved');
   const closedItems = allListings.filter(item => item.status === 'closed');
   
-  // Deal Closure Queue: Find all accepted bids/offers awaiting admin closure
+  // Deal Closure Queue: Find all deals where BOTH parties accepted (bothAccepted = true)
   const acceptedDeals = [
-    ...sellListings.filter(l => l.bids?.some(b => b.status === 'accepted')).map(l => ({
-      ...l,
-      type: 'sell',
-      acceptedBid: l.bids.find(b => b.status === 'accepted')
-    })),
-    ...buyRequests.filter(r => r.offers?.some(o => o.status === 'accepted')).map(r => ({
-      ...r,
-      type: 'buy',
-      acceptedOffer: r.offers.find(o => o.status === 'accepted')
-    }))
+    ...sellListings.filter(l => l.bids?.some(b => b.status === 'both_accepted' || b.bothAccepted || (b.status === 'accepted'))).map(l => {
+      const acceptedBid = l.bids.find(b => b.status === 'both_accepted' || b.bothAccepted || (b.status === 'accepted'));
+      return {
+        ...l,
+        type: 'sell',
+        acceptedBid
+      };
+    }),
+    ...buyRequests.filter(r => r.offers?.some(o => o.status === 'both_accepted' || o.bothAccepted || (o.status === 'accepted'))).map(r => {
+      const acceptedOffer = r.offers.find(o => o.status === 'both_accepted' || o.bothAccepted || (o.status === 'accepted'));
+      return {
+        ...r,
+        type: 'buy',
+        acceptedOffer
+      };
+    })
   ];
 
   // Admin's own listings and requests (for trading section)

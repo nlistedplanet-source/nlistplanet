@@ -1,13 +1,9 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { listingAPI } from '../services/api';
-import { AuthContext } from './AuthContext';
 
 export const ListingContext = createContext();
 
 export function ListingProvider({ children }) {
-  // Get current user from AuthContext for optimistic updates
-  const { user } = useContext(AuthContext);
-  
   // Sell Listings - Users/Admin want to SELL shares
   const [sellListings, setSellListings] = useState([]);
 
@@ -57,39 +53,11 @@ export function ListingProvider({ children }) {
   const createBuyRequest = async (data) => {
     try {
       const response = await listingAPI.createBuyRequest(data);
-      // Debug: log server response to ensure we pick the right payload field
-      console.log('createBuyRequest response:', response && response.data);
+      const newRequest = response.data.listing;
       
-      // Extract the new request from response (try multiple possible paths)
-      let newRequest = response?.data?.listing || response?.data || data;
-      
-      // Ensure the optimistic update has proper user identification
-      // Add all possible user identification fields to ensure requestBelongsToUser catches it
-      if (user) {
-        newRequest = {
-          ...newRequest,
-          buyer: user.email || newRequest.buyer,
-          buyerEmail: user.email || newRequest.buyerEmail,
-          buyerId: user._id || user.id || newRequest.buyerId,
-          buyerName: user.name || newRequest.buyerName,
-          requestedBy: user.email || newRequest.requestedBy,
-          requestedById: user._id || user.id || newRequest.requestedById,
-          createdBy: user.email || newRequest.createdBy,
-          createdById: user._id || user.id || newRequest.createdById,
-          accountId: user._id || user.id || newRequest.accountId,
-          userId: user._id || user.id || newRequest.userId,
-          user: user
-        };
-      }
-      
-      console.log('createBuyRequest - Optimistic newRequest with user fields:', newRequest);
-      
-      // Optimistic UI: add the new request locally so it appears immediately
-      setBuyRequests((prev) => [newRequest, ...(prev || [])]);
-
-      // Force refresh to ensure latest data from server (will reconcile state)
+      // Force refresh to ensure latest data from server
       await fetchListings();
-
+      
       return newRequest;
     } catch (error) {
       console.error('Failed to create buy request:', error);
@@ -189,8 +157,8 @@ export function ListingProvider({ children }) {
     }
   };
 
-  // Counter Offer (Negotiation)
-  const counterOffer = (listingId, bidId, newPrice, type) => {
+  // Counter Offer (Negotiation) - Enhanced with acceptance tracking
+  const counterOffer = (listingId, bidId, newPrice, type, counterBy = 'seller') => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
         if (listing._id === listingId) {
@@ -199,6 +167,10 @@ export function ListingProvider({ children }) {
               ...bid, 
               counterPrice: newPrice,
               status: 'counter_offered',
+              counterBy: counterBy, // 'seller' or 'buyer'
+              buyerAccepted: false,
+              sellerAccepted: false,
+              bothAccepted: false,
               counterAt: new Date().toISOString()
             } : bid
           );
@@ -214,10 +186,136 @@ export function ListingProvider({ children }) {
               ...offer, 
               counterPrice: newPrice,
               status: 'counter_offered',
+              counterBy: counterBy, // 'buyer' or 'seller'
+              buyerAccepted: false,
+              sellerAccepted: false,
+              bothAccepted: false,
               counterAt: new Date().toISOString()
             } : offer
           );
           return { ...request, offers: updatedOffers };
+        }
+        return request;
+      }));
+    }
+  };
+
+  // Re-Counter Offer - Allow multiple rounds of negotiation
+  const reCounterOffer = (listingId, bidId, newPrice, type, counterBy) => {
+    if (type === 'sell') {
+      setSellListings(sellListings.map(listing => {
+        if (listing._id === listingId) {
+          const updatedBids = listing.bids.map(bid => 
+            bid._id === bidId ? { 
+              ...bid, 
+              counterPrice: newPrice,
+              status: 'counter_offered',
+              counterBy: counterBy,
+              buyerAccepted: false,
+              sellerAccepted: false,
+              bothAccepted: false,
+              counterHistory: [...(bid.counterHistory || []), {
+                price: bid.counterPrice || bid.price,
+                by: bid.counterBy || 'initial',
+                at: new Date().toISOString()
+              }],
+              counterAt: new Date().toISOString()
+            } : bid
+          );
+          return { ...listing, bids: updatedBids };
+        }
+        return listing;
+      }));
+    } else {
+      setBuyRequests(buyRequests.map(request => {
+        if (request._id === listingId) {
+          const updatedOffers = (request.offers || []).map(offer => 
+            offer.id === bidId ? { 
+              ...offer, 
+              counterPrice: newPrice,
+              status: 'counter_offered',
+              counterBy: counterBy,
+              buyerAccepted: false,
+              sellerAccepted: false,
+              bothAccepted: false,
+              counterHistory: [...(offer.counterHistory || []), {
+                price: offer.counterPrice || offer.price,
+                by: offer.counterBy || 'initial',
+                at: new Date().toISOString()
+              }],
+              counterAt: new Date().toISOString()
+            } : offer
+          );
+          return { ...request, offers: updatedOffers };
+        }
+        return request;
+      }));
+    }
+  };
+
+  // Final Accept - Track which party accepted
+  const finalAcceptByParty = (listingId, bidId, type, party) => {
+    if (type === 'sell') {
+      setSellListings(sellListings.map(listing => {
+        if (listing._id === listingId) {
+          const updatedBids = listing.bids.map(bid => {
+            if (bid._id === bidId) {
+              const buyerAccepted = party === 'buyer' ? true : bid.buyerAccepted || false;
+              const sellerAccepted = party === 'seller' ? true : bid.sellerAccepted || false;
+              const bothAccepted = buyerAccepted && sellerAccepted;
+              
+              return {
+                ...bid,
+                buyerAccepted,
+                sellerAccepted,
+                bothAccepted,
+                status: bothAccepted ? 'both_accepted' : 'counter_offered',
+                [`${party}AcceptedAt`]: new Date().toISOString()
+              };
+            }
+            return bid;
+          });
+          
+          // If both accepted, mark listing for admin approval
+          const bothAcceptedBid = updatedBids.find(b => b.bothAccepted);
+          return { 
+            ...listing, 
+            bids: updatedBids,
+            status: bothAcceptedBid ? 'pending_admin_approval' : listing.status,
+            acceptedBid: bothAcceptedBid ? bidId : listing.acceptedBid
+          };
+        }
+        return listing;
+      }));
+    } else {
+      setBuyRequests(buyRequests.map(request => {
+        if (request._id === listingId) {
+          const updatedOffers = (request.offers || []).map(offer => {
+            if (offer.id === bidId) {
+              const buyerAccepted = party === 'buyer' ? true : offer.buyerAccepted || false;
+              const sellerAccepted = party === 'seller' ? true : offer.sellerAccepted || false;
+              const bothAccepted = buyerAccepted && sellerAccepted;
+              
+              return {
+                ...offer,
+                buyerAccepted,
+                sellerAccepted,
+                bothAccepted,
+                status: bothAccepted ? 'both_accepted' : 'counter_offered',
+                [`${party}AcceptedAt`]: new Date().toISOString()
+              };
+            }
+            return offer;
+          });
+          
+          // If both accepted, mark request for admin approval
+          const bothAcceptedOffer = updatedOffers.find(o => o.bothAccepted);
+          return { 
+            ...request, 
+            offers: updatedOffers,
+            status: bothAcceptedOffer ? 'pending_admin_approval' : request.status,
+            acceptedOffer: bothAcceptedOffer ? bidId : request.acceptedOffer
+          };
         }
         return request;
       }));
@@ -306,6 +404,8 @@ export function ListingProvider({ children }) {
       adminApprove,
       adminClose,
       counterOffer,
+      reCounterOffer,
+      finalAcceptByParty,
       acceptCounterOffer,
       rejectCounterOffer,
       fetchListings
