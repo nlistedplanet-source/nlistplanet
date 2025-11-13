@@ -44,8 +44,8 @@ export default function Header({ setPage, currentPage }) {
             <img
               src="/images/logos/list__1_-removebg-preview.png"
               alt="NList Logo"
-              className="h-24 w-auto object-contain"
-              style={{ maxHeight: '96px' }}
+              className="h-12 w-auto object-contain"
+              style={{ maxHeight: '48px' }}
             />
           </div>
 
