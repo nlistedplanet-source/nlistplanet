@@ -430,37 +430,6 @@ export default function HomePage({ setPage }) {
         </div>
       </div>
 
-      {/* Footer Section */}
-      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex gap-8 text-sm">
-              <a 
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm"
-              >
-                Privacy Policy
-              </a>
-              <a 
-                href="/terms-of-service"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm"
-              >
-                Terms of Service
-              </a>
-              <a 
-                href="/cookie-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-emerald-400 transition-colors duration-300 text-sm"
-              >
-                Cookie Policy
-              </a>
-            </div>
-
 
       {/* New Footer Section */}
       <footer className="bg-gray-900 text-gray-300 py-8 mt-12">
