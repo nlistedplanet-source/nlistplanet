@@ -822,7 +822,7 @@ export default function UserDashboard({ setPage }) {
 								</button>
 							</div>
 						) : (
-							<div className="space-y-6">
+							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 								{myOpenListings.map((listing) => {
 									const bidsCount = listing.bids?.length || 0;
 									const pendingBids = listing.bids?.filter(b => b.status === 'pending')?.length || 0;
@@ -830,55 +830,53 @@ export default function UserDashboard({ setPage }) {
 									const acceptedBids = listing.bids?.filter(b => b.buyerAccepted || b.sellerAccepted || b.bothAccepted)?.length || 0;
 									
 									return (
-										<div key={listing._id || listing.id} className="bg-gradient-to-br from-white to-emerald-50 border-3 border-emerald-300 rounded-2xl p-6 shadow-xl">
-											{/* Header */}
-											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-emerald-200">
-												<div className="flex-1">
-													<h4 className="font-bold text-2xl text-gray-900 mb-2">{listing.company}</h4>
-													<p className="text-sm text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
-													<p className="text-xs text-gray-500 mt-2">Posted: {formatDateTime(listing.createdAt)}</p>
-												</div>
-												<StatusBadge status={listing.status} />
-											</div>
-											
-											{/* Price Info */}
-											<div className="grid grid-cols-2 gap-3 mb-5">
-												<div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl p-4 border-2 border-emerald-400 shadow-md">
-													<p className="text-xs text-emerald-800 font-semibold mb-2">Ask Price</p>
-													<p className="text-2xl font-bold text-emerald-900">{formatCurrency(listing.price)}</p>
-												</div>
-												<div className="bg-white rounded-xl p-4 border-2 border-gray-300 shadow-md">
-													<p className="text-xs text-gray-600 font-semibold mb-2">Quantity</p>
-													<p className="text-2xl font-bold text-gray-800">{formatShares(listing.shares)}</p>
-												</div>
-											</div>
-											
-											{/* Activity Summary */}
-											{bidsCount > 0 && (
-												<div className="bg-white rounded-xl p-4 border-2 border-emerald-200 mb-4">
-													<p className="text-xs font-bold text-gray-700 mb-3">Bid Activity:</p>
-													<div className="flex gap-2 flex-wrap">
-														{pendingBids > 0 && (
-															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border-2 border-yellow-300">
-																⏳ {pendingBids} Pending
-															</span>
-														)}
-														{negotiatingBids > 0 && (
-															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border-2 border-orange-300">
-																🔄 {negotiatingBids} Negotiating
-															</span>
-														)}
-														{acceptedBids > 0 && (
-															<span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border-2 border-green-300">
-																✅ {acceptedBids} Accepted
-															</span>
-														)}
+										<div key={listing._id || listing.id} className="bg-white border border-emerald-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
+											{/* Compact Header */}
+											<div className="flex items-start justify-between mb-3">
+												<div className="flex-1 min-w-0">
+													<div className="flex items-center gap-2 mb-1">
+														<h4 className="font-bold text-base text-gray-900 truncate">{listing.company}</h4>
+														<StatusBadge status={listing.status} size="sm" />
 													</div>
+													<p className="text-xs text-gray-500">ISIN: {listing.isin || 'N/A'}</p>
+												</div>
+											</div>
+											
+											{/* Compact Price Grid */}
+											<div className="grid grid-cols-2 gap-2 mb-3">
+												<div className="bg-emerald-50 rounded-lg p-2 border border-emerald-200">
+													<p className="text-[10px] text-emerald-600 font-semibold mb-0.5">Ask Price</p>
+													<p className="text-sm font-bold text-emerald-700">{formatCurrency(listing.price)}</p>
+												</div>
+												<div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+													<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+													<p className="text-sm font-bold text-gray-800">{formatShares(listing.shares)}</p>
+												</div>
+											</div>
+											
+											{/* Compact Activity */}
+											{bidsCount > 0 && (
+												<div className="flex gap-1.5 mb-3 flex-wrap">
+													{pendingBids > 0 && (
+														<span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[10px] font-semibold">
+															⏳ {pendingBids}
+														</span>
+													)}
+													{negotiatingBids > 0 && (
+														<span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] font-semibold">
+															🔄 {negotiatingBids}
+														</span>
+													)}
+													{acceptedBids > 0 && (
+														<span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-semibold">
+															✅ {acceptedBids}
+														</span>
+													)}
 												</div>
 											)}
 											
-											{/* Actions */}
-											<div className="grid grid-cols-2 gap-3">
+											{/* Compact Action Buttons */}
+											<div className="grid grid-cols-3 gap-1.5">
 												<button
 													onClick={() => {
 														setFormType('sell');
@@ -888,56 +886,46 @@ export default function UserDashboard({ setPage }) {
 															price: listing.price,
 															shares: listing.shares
 														});
-														showNotification('info', 'Edit Mode', 'Update your listing details');
 													}}
-													className="px-4 py-3 rounded-xl font-bold text-emerald-700 bg-emerald-200 border-2 border-emerald-400 hover:bg-emerald-300 transition"
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition"
 												>
-													✏️ Edit
+													✏️
 												</button>
 												<button
 													onClick={() => {
-														if (window.confirm(`Delete listing for ${listing.company}?`)) {
-															// Delete functionality - would need API call
-															showNotification('success', 'Deleted!', 'Listing removed');
+														if (window.confirm(`Delete ${listing.company}?`)) {
+															showNotification('success', 'Deleted', 'Listing removed');
 														}
 													}}
-													className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-300 hover:bg-red-100 transition"
 												>
-													🗑️ Delete
+													🗑️
+												</button>
+												<button
+													onClick={async () => {
+														const shareText = `📈 ${listing.company}: ₹${listing.price}`;
+														try {
+															if (navigator.share) await navigator.share({ text: shareText });
+															else {
+																await navigator.clipboard.writeText(shareText);
+																showNotification('success', 'Copied!', 'Copied to clipboard');
+															}
+														} catch (err) {}
+													}}
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
+												>
+													📤
 												</button>
 											</div>
 											
 											{bidsCount > 0 && (
 												<button
-													onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-													className="w-full mt-3 px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-xl transition"
+													onClick={() => setSellSubTab('bids')}
+													className="w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-md transition"
 												>
-													📥 View All Bids ({bidsCount})
+													� View {bidsCount} Bid{bidsCount > 1 ? 's' : ''}
 												</button>
 											)}
-											
-											<button
-												onClick={async () => {
-													const shareData = {
-														title: `${listing.company} - Sell Listing`,
-														text: `Selling ${formatShares(listing.shares)} shares at ${formatCurrency(listing.price)}`,
-														url: window.location.href
-													};
-													try {
-														if (navigator.share) {
-															await navigator.share(shareData);
-														} else {
-															await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
-															showNotification('success', 'Copied!', 'Listing details copied to clipboard');
-														}
-													} catch (err) {
-														console.log('Share failed:', err);
-													}
-												}}
-												className="w-full mt-3 px-5 py-3 rounded-xl font-bold text-emerald-700 bg-emerald-100 border-2 border-emerald-300 hover:bg-emerald-200 transition"
-											>
-												📤 Share Listing
-											</button>
 										</div>
 									);
 								})}
@@ -956,28 +944,26 @@ export default function UserDashboard({ setPage }) {
 								<p className="text-xs text-gray-400 mt-2">Bids from buyers will appear here</p>
 							</div>
 						) : (
-							<div className="space-y-6">
+							<div className="space-y-3">
 								{bidsReceived.map((listing) => {
 									const activeBids = listing.bids?.filter(b => b.status !== 'rejected') || [];
 									
 									return (
-										<div key={listing._id || listing.id} className="bg-gradient-to-br from-purple-50 to-pink-50 border-3 border-purple-300 rounded-2xl p-6 shadow-xl">
-											{/* Header */}
-											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-purple-200">
-												<div className="flex-1">
-													<h4 className="font-bold text-2xl text-gray-900 mb-2">{listing.company}</h4>
-													<p className="text-sm text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
-													<p className="text-sm text-gray-700 mt-2">
+										<div key={listing._id || listing.id} className="bg-white border border-purple-200 rounded-xl p-4 shadow-md">
+											<div className="flex items-start justify-between mb-3 pb-2 border-b border-purple-200">
+												<div className="flex-1 min-w-0">
+													<h4 className="font-bold text-base text-gray-900 truncate">{listing.company}</h4>
+													<p className="text-xs text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
+													<p className="text-xs text-gray-700 mt-0.5">
 														Your Ask: <span className="font-bold text-emerald-600">{formatCurrency(listing.price)}</span> × {formatShares(listing.shares)}
 													</p>
 												</div>
-												<span className="px-4 py-2 rounded-full text-sm font-bold bg-purple-500 text-white shadow-md">
-													💰 {activeBids.length} Bids
+												<span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500 text-white">
+													💰 {activeBids.length}
 												</span>
 											</div>
 											
-											{/* Bids */}
-											<div className="space-y-4">
+											<div className="space-y-2">
 												{activeBids.map((bid) => {
 													const buyerAccepted = bid.buyerAccepted || false;
 													const sellerAccepted = bid.sellerAccepted || false;
@@ -987,133 +973,125 @@ export default function UserDashboard({ setPage }) {
 													const isCountered = bid.status === 'counter_offered';
 													
 													return (
-														<div key={bid._id || bid.id} className={`rounded-2xl p-5 border-3 shadow-lg ${
-															bothAccepted ? 'bg-green-50 border-green-400' :
-															isCountered ? 'bg-orange-50 border-orange-400' :
-															'bg-white border-purple-400'
+														<div key={bid._id || bid.id} className={`rounded-lg p-3 border ${
+															bothAccepted ? 'bg-green-50 border-green-300' :
+															isCountered ? 'bg-orange-50 border-orange-300' :
+															'bg-purple-50 border-purple-300'
 														}`}>
-															{/* Buyer & Status */}
-															<div className="flex items-start justify-between mb-4">
-																<div>
-																	<p className="font-bold text-gray-900">🛒 {bid.bidderName || bid.bidder}</p>
-																	<p className="text-xs text-gray-500 mt-1">{formatDateTime(bid.createdAt)}</p>
+															<div className="flex items-start justify-between mb-2">
+																<div className="flex-1">
+																	<p className="text-sm font-bold text-gray-900">🛒 {bid.bidderName || bid.bidder}</p>
+																	<p className="text-[10px] text-gray-500">{formatDateTime(bid.createdAt)}</p>
 																</div>
 																<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
 															</div>
 															
-															{/* Price Info */}
-															<div className="grid grid-cols-2 gap-3 mb-4">
-																<div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-4 border-2 border-purple-400">
-																	<p className="text-xs text-purple-800 font-semibold mb-1">Bid Price</p>
-																	<p className="text-2xl font-bold text-purple-900">{formatCurrency(currentPrice)}</p>
+															<div className="grid grid-cols-2 gap-2 mb-2">
+																<div className="bg-white rounded p-2 border border-purple-300">
+																	<p className="text-[10px] text-purple-700 font-semibold mb-0.5">Bid</p>
+																	<p className="text-sm font-bold text-purple-800">{formatCurrency(currentPrice)}</p>
 																</div>
-																<div className="bg-white rounded-xl p-4 border-2 border-gray-300">
-																	<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
-																	<p className="text-2xl font-bold text-gray-800">{formatShares(bid.quantity)}</p>
+																<div className="bg-white rounded p-2 border border-gray-300">
+																	<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+																	<p className="text-sm font-bold text-gray-800">{formatShares(bid.quantity)}</p>
 																</div>
 															</div>
 															
-															{/* Acceptance Status for Countered */}
 															{isCountered && (
-																<div className="bg-white rounded-xl p-4 mb-4 border-2 border-gray-200">
-																	<p className="text-xs font-bold text-gray-700 mb-3">Status:</p>
-																	<div className="grid grid-cols-2 gap-3">
-																		<div className={`rounded-lg p-3 border-2 ${
-																			buyerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
-																		}`}>
-																			<p className="text-xs text-gray-600 mb-1">🛒 Buyer</p>
-																			<p className="text-2xl text-center">{buyerAccepted ? '✅' : '⏳'}</p>
+																<div className="bg-white rounded p-2 mb-2 border border-gray-200">
+																	<p className="text-[10px] font-bold text-gray-700 mb-1.5">Status:</p>
+																	<div className="grid grid-cols-2 gap-1.5">
+																		<div className={`rounded p-1.5 border text-center ${buyerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'}`}>
+																			<p className="text-[10px] text-gray-600">🛒 Buyer</p>
+																			<p className="text-lg">{buyerAccepted ? '✅' : '⏳'}</p>
 																		</div>
-																		<div className={`rounded-lg p-3 border-2 ${
-																			sellerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
-																		}`}>
-																			<p className="text-xs text-gray-600 mb-1">📈 You</p>
-																			<p className="text-2xl text-center">{sellerAccepted ? '✅' : '⏳'}</p>
+																		<div className={`rounded p-1.5 border text-center ${sellerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'}`}>
+																			<p className="text-[10px] text-gray-600">📈 You</p>
+																			<p className="text-lg">{sellerAccepted ? '✅' : '⏳'}</p>
 																		</div>
 																	</div>
 																</div>
 															)}
 															
-															{/* Actions */}
 															{bothAccepted ? (
-																<div className="bg-green-100 border-2 border-green-400 rounded-xl p-4 text-center">
-																	<p className="text-lg font-bold text-green-700">🎉 Deal Finalized!</p>
-																	<p className="text-sm text-green-600 mt-1">Awaiting admin approval</p>
+																<div className="bg-green-100 border border-green-300 rounded p-2 text-center">
+																	<p className="text-xs font-bold text-green-700">🎉 Deal Done!</p>
+																	<p className="text-[10px] text-green-600">Admin approval pending</p>
 																</div>
 															) : sellerAccepted ? (
-																<div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-4 text-center">
-																	<p className="font-bold text-blue-700">✅ You accepted</p>
-																	<p className="text-xs text-blue-600 mt-1">Waiting for buyer...</p>
+																<div className="bg-blue-100 border border-blue-300 rounded p-2 text-center">
+																	<p className="text-xs font-bold text-blue-700">✅ You accepted</p>
+																	<p className="text-[10px] text-blue-600">Waiting buyer...</p>
 																</div>
 															) : isPending ? (
-																<div className="space-y-2">
+																<div className="space-y-1.5">
 																	<button
 																		onClick={() => {
 																			acceptOffer(listing._id || listing.id, bid.id, 'sell');
-																			showNotification('success', '✅ Accepted!', `Bid accepted from ${bid.bidderName || bid.bidder}`);
+																			showNotification('success', '✅ Accepted!', `From ${bid.bidderName || bid.bidder}`);
 																		}}
-																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
 																	>
 																		✅ Accept Bid
 																	</button>
-																	<div className="grid grid-cols-2 gap-2">
+																	<div className="grid grid-cols-2 gap-1.5">
 																		<button
 																			onClick={() => {
-																				const counterPrice = prompt(`Buyer bid: ₹${bid.price}\nYour counter:`);
+																				const counterPrice = prompt(`Bid: ₹${bid.price}\nCounter:`);
 																				if (counterPrice && !isNaN(counterPrice)) {
 																					counterOffer(listing._id || listing.id, bid.id, parseFloat(counterPrice), 'sell', 'seller');
-																					showNotification('info', '🔄 Counter Sent!', `Counter: ₹${counterPrice}`);
+																					showNotification('info', '🔄 Counter!', `₹${counterPrice}`);
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
 																		>
 																			🔄 Counter
 																		</button>
 																		<button
 																			onClick={() => {
-																				if (window.confirm(`Reject bid from ${bid.bidderName || bid.bidder}?`)) {
+																				if (window.confirm(`Reject ${bid.bidderName || bid.bidder}?`)) {
 																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																					showNotification('warning', '❌ Rejected', 'Bid rejected');
+																					showNotification('warning', '❌ Rejected', 'Done');
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
 																		>
 																			❌ Reject
 																		</button>
 																	</div>
 																</div>
 															) : (
-																<div className="space-y-2">
+																<div className="space-y-1.5">
 																	<button
 																		onClick={() => {
 																			finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
-																			showNotification('success', '✅ Accepted!', buyerAccepted ? 'Deal finalized!' : 'Waiting for buyer...');
+																			showNotification('success', '✅ Accepted!', buyerAccepted ? 'Done!' : 'Waiting buyer...');
 																		}}
-																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
 																	>
 																		✅ Accept Counter
 																	</button>
-																	<div className="grid grid-cols-2 gap-2">
+																	<div className="grid grid-cols-2 gap-1.5">
 																		<button
 																			onClick={() => {
-																				const newPrice = prompt(`Current: ₹${currentPrice}\nYour re-counter:`);
+																				const newPrice = prompt(`Current: ₹${currentPrice}\nRe-counter:`);
 																				if (newPrice && !isNaN(newPrice)) {
 																					reCounterOffer(listing._id || listing.id, bid.id, parseFloat(newPrice), 'sell', 'seller');
-																					showNotification('info', '🔄 Re-Counter Sent!', `New price: ₹${newPrice}`);
+																					showNotification('info', '🔄 Re-Counter!', `₹${newPrice}`);
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
 																		>
 																			🔄 Re-Counter
 																		</button>
 																		<button
 																			onClick={() => {
-																				if (window.confirm('Reject this counter offer?')) {
+																				if (window.confirm('Reject?')) {
 																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																					showNotification('warning', '❌ Rejected', 'Negotiation ended');
+																					showNotification('warning', '❌ Rejected', 'Ended');
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
 																		>
 																			❌ Reject
 																		</button>
@@ -1345,7 +1323,7 @@ export default function UserDashboard({ setPage }) {
 								</button>
 							</div>
 						) : (
-							<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 								{myOpenRequests.map((request) => {
 									const hasOffers = request.offers && request.offers.length > 0;
 									const pendingOffers = request.offers?.filter(o => o.status === 'pending').length || 0;
@@ -1353,125 +1331,102 @@ export default function UserDashboard({ setPage }) {
 									const acceptedOffers = request.offers?.filter(o => o.status === 'accepted' || o.bothAccepted).length || 0;
 									
 									return (
-										<div key={request._id || request.id} className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-											{/* Header with Status */}
-											<div className="flex items-start justify-between mb-4">
-												<div className="flex-1">
-													<div className="flex items-center gap-2 mb-2">
-														<h4 className="font-bold text-xl text-gray-900">{request.company}</h4>
+										<div key={request._id || request.id} className="bg-white border border-blue-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
+											{/* Compact Header */}
+											<div className="flex items-start justify-between mb-3">
+												<div className="flex-1 min-w-0">
+													<div className="flex items-center gap-2 mb-1">
+														<h4 className="font-bold text-base text-gray-900 truncate">{request.company}</h4>
 														<StatusBadge status={request.status} size="sm" />
 													</div>
-													<p className="text-xs text-gray-600">ISIN: {request.isin || 'N/A'}</p>
-													<p className="text-xs text-gray-500 mt-1">Posted on {formatDate(request.createdAt)}</p>
+													<p className="text-xs text-gray-500">ISIN: {request.isin || 'N/A'}</p>
 												</div>
 											</div>
 											
-											{/* Price & Quantity Info */}
-											<div className="grid grid-cols-2 gap-3 mb-4">
-												<div className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm">
-													<p className="text-xs text-blue-600 font-semibold mb-1">Target Price</p>
-													<p className="text-lg font-bold text-blue-700">{formatCurrency(request.price)}</p>
+											{/* Compact Price Grid */}
+											<div className="grid grid-cols-2 gap-2 mb-3">
+												<div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+													<p className="text-[10px] text-blue-600 font-semibold mb-0.5">Price</p>
+													<p className="text-sm font-bold text-blue-700">{formatCurrency(request.price)}</p>
 												</div>
-												<div className="bg-white rounded-xl p-4 border border-gray-300 shadow-sm">
-													<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
-													<p className="text-lg font-bold text-gray-800">{formatShares(request.shares)}</p>
+												<div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+													<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+													<p className="text-sm font-bold text-gray-800">{formatShares(request.shares)}</p>
 												</div>
 											</div>
 											
-											{/* Offer Activity Summary */}
-											<div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-												<div className="flex items-center justify-between mb-2">
-													<p className="text-xs font-bold text-gray-700">📊 Activity Status</p>
-													<span className="text-xs font-bold text-gray-600">{request.offers?.length || 0} Total Offers</span>
-												</div>
-												{hasOffers ? (
-													<div className="flex flex-wrap gap-2">
-														{pendingOffers > 0 && (
-															<span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">
-																⏳ {pendingOffers} New
-															</span>
-														)}
-														{counterOffers > 0 && (
-															<span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-																🔄 {counterOffers} Negotiating
-															</span>
-														)}
-														{acceptedOffers > 0 && (
-															<span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-																✅ {acceptedOffers} Accepted
-															</span>
-														)}
-													</div>
-												) : (
-													<p className="text-xs text-gray-500">No offers received yet</p>
-												)}
-											</div>
-											
-											{/* Action Buttons */}
-											<div className="space-y-2">
-												{/* Primary Actions */}
-												<div className="grid grid-cols-2 gap-2">
-													<button
-														onClick={() => {
-															// Edit functionality - open edit modal with prefilled data
-															setFormData({
-																company: request.company,
-																isin: request.isin,
-																price: request.price,
-																shares: request.shares
-															});
-															setFormType('buy');
-															showNotification('info', 'Edit Mode', 'Modify your request details');
-														}}
-														className="px-4 py-2 rounded-lg font-semibold text-blue-700 bg-blue-100 border-2 border-blue-300 hover:bg-blue-200 transition flex items-center justify-center gap-2"
-													>
-														<span>✏️</span>
-														<span className="text-sm">Edit</span>
-													</button>
-													<button
-														onClick={() => {
-															if (window.confirm(`Are you sure you want to delete this buy request for ${request.company}?`)) {
-																// Delete functionality
-																showNotification('success', 'Request Deleted', `${request.company} buy request removed`);
-																// TODO: Add actual delete API call here
-															}
-														}}
-														className="px-4 py-2 rounded-lg font-semibold text-red-700 bg-red-100 border-2 border-red-300 hover:bg-red-200 transition flex items-center justify-center gap-2"
-													>
-														<span>🗑️</span>
-														<span className="text-sm">Delete</span>
-													</button>
-												</div>
-												
-												{/* View Offers / Share */}
-												<div className="grid grid-cols-2 gap-2">
-													{hasOffers ? (
-														<button
-															onClick={() => setBuySubTab('offers')}
-															className="col-span-2 px-4 py-3 rounded-lg font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition flex items-center justify-center gap-2"
-														>
-															<span>📥</span>
-															<span>View All Offers ({request.offers.length})</span>
-														</button>
-													) : (
-														<button
-															onClick={() => {
-																const shareText = `🛒 Looking to buy ${request.shares} shares of ${request.company} at ₹${request.price}. ISIN: ${request.isin}`;
-																if (navigator.share) {
-																	navigator.share({ text: shareText });
-																} else {
-																	navigator.clipboard.writeText(shareText);
-																	showNotification('success', 'Copied!', 'Request details copied to clipboard');
-																}
-															}}
-															className="col-span-2 px-4 py-2 rounded-lg font-semibold text-green-700 bg-green-100 border-2 border-green-300 hover:bg-green-200 transition flex items-center justify-center gap-2"
-														>
-															<span>📤</span>
-															<span>Share Request</span>
-														</button>
+											{/* Compact Activity */}
+											{hasOffers && (
+												<div className="flex gap-1.5 mb-3 flex-wrap">
+													{pendingOffers > 0 && (
+														<span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-semibold">
+															⏳ {pendingOffers}
+														</span>
+													)}
+													{counterOffers > 0 && (
+														<span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] font-semibold">
+															🔄 {counterOffers}
+														</span>
+													)}
+													{acceptedOffers > 0 && (
+														<span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-semibold">
+															✅ {acceptedOffers}
+														</span>
 													)}
 												</div>
+											)}
+											
+											{/* Compact Action Buttons */}
+											<div className="grid grid-cols-3 gap-1.5">
+												<button
+													onClick={() => {
+														setFormData({
+															company: request.company,
+															isin: request.isin,
+															price: request.price,
+															shares: request.shares
+														});
+														setFormType('buy');
+													}}
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 transition"
+												>
+													✏️
+												</button>
+												<button
+													onClick={() => {
+														if (window.confirm(`Delete ${request.company}?`)) {
+															showNotification('success', 'Deleted', 'Request removed');
+														}
+													}}
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-300 hover:bg-red-100 transition"
+												>
+													🗑️
+												</button>
+												<button
+													onClick={async () => {
+														const shareText = `� ${request.company}: ₹${request.price}`;
+														try {
+															if (navigator.share) await navigator.share({ text: shareText });
+															else {
+																await navigator.clipboard.writeText(shareText);
+																showNotification('success', 'Copied!', 'Copied to clipboard');
+															}
+														} catch (err) {}
+													}}
+													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
+												>
+													📤
+												</button>
 											</div>
+											
+											{hasOffers && (
+												<button
+													onClick={() => setBuySubTab('offers')}
+													className="w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-md transition"
+												>
+													📥 View {request.offers.length} Offer{request.offers.length > 1 ? 's' : ''}
+												</button>
+											)}
 										</div>
 									);
 								})}
@@ -1488,19 +1443,19 @@ export default function UserDashboard({ setPage }) {
 								<p className="text-gray-500">No offers received yet</p>
 							</div>
 						) : (
-							<div className="space-y-4">
+							<div className="space-y-3">
 								{offersReceived.map((request) => (
-									<div key={request._id || request.id} className="bg-white border-2 border-blue-200 rounded-xl p-6 shadow-md">
-										<div className="flex items-start justify-between mb-4">
-											<div>
-												<h4 className="font-bold text-xl text-gray-900">{request.company}</h4>
-												<p className="text-sm text-gray-600 mt-1">Your request: {formatCurrency(request.price)} for {formatShares(request.shares)}</p>
-												<p className="text-xs text-gray-500 mt-1">ISIN: {request.isin || 'N/A'}</p>
+									<div key={request._id || request.id} className="bg-white border border-blue-200 rounded-xl p-4 shadow-md">
+										<div className="flex items-start justify-between mb-3">
+											<div className="flex-1 min-w-0">
+												<h4 className="font-bold text-base text-gray-900 truncate">{request.company}</h4>
+												<p className="text-xs text-gray-600 mt-0.5">Your request: {formatCurrency(request.price)} × {formatShares(request.shares)}</p>
+												<p className="text-[10px] text-gray-500">ISIN: {request.isin || 'N/A'}</p>
 											</div>
-											<StatusBadge status={request.status} size="lg" />
+											<StatusBadge status={request.status} size="sm" />
 										</div>
-										<div className="space-y-3">
-											<p className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">📥 Received Offers ({request.offers?.length || 0}):</p>
+										<div className="space-y-2">
+											<p className="text-xs font-bold text-gray-700 pb-1 border-b border-gray-200">📥 {request.offers?.length || 0} Offer{(request.offers?.length || 0) > 1 ? 's' : ''}</p>
 											{request.offers?.map((offer) => {
 												const isPending = offer.status === 'pending';
 												const isCountered = offer.status === 'counter_offered';
@@ -1509,84 +1464,76 @@ export default function UserDashboard({ setPage }) {
 												const sellerAccepted = offer.sellerAccepted || false;
 												
 												return (
-													<div key={offer._id || offer.id} className={`rounded-xl p-4 border-2 ${
+													<div key={offer._id || offer.id} className={`rounded-lg p-3 border ${
 														isBothAccepted ? 'bg-green-50 border-green-300' :
 														isCountered ? 'bg-orange-50 border-orange-300' :
 														'bg-gray-50 border-gray-300'
 													}`}>
-														<div className="flex items-start justify-between mb-3">
+														<div className="flex items-start justify-between mb-2">
 															<div className="flex-1">
-																<p className="text-sm font-bold text-gray-900">
-																	{offer.sellerName || offer.seller}
-																</p>
-																<div className="mt-2 flex items-center gap-3">
-																	<div className="bg-white rounded-lg px-3 py-2 border border-gray-200">
-																		<p className="text-xs text-gray-500">Price</p>
-																		<p className="text-base font-bold text-blue-600">{formatCurrency(offer.counterPrice || offer.price)}</p>
+																<p className="text-sm font-bold text-gray-900">{offer.sellerName || offer.seller}</p>
+																<div className="mt-1.5 flex items-center gap-2">
+																	<div className="bg-white rounded px-2 py-1 border border-gray-200">
+																		<p className="text-[10px] text-gray-500">Price</p>
+																		<p className="text-sm font-bold text-blue-600">{formatCurrency(offer.counterPrice || offer.price)}</p>
 																	</div>
-																	<div className="bg-white rounded-lg px-3 py-2 border border-gray-200">
-																		<p className="text-xs text-gray-500">Quantity</p>
-																		<p className="text-base font-bold text-gray-700">{formatShares(offer.quantity)}</p>
+																	<div className="bg-white rounded px-2 py-1 border border-gray-200">
+																		<p className="text-[10px] text-gray-500">Qty</p>
+																		<p className="text-sm font-bold text-gray-700">{formatShares(offer.quantity)}</p>
 																	</div>
 																</div>
 															</div>
 															<InteractionBadge status={offer.status} />
 														</div>
 														
-														{/* Acceptance Status */}
 														{isCountered && (
-															<div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
-																<p className="text-xs font-semibold text-gray-600 mb-2">Acceptance Status:</p>
-																<div className="flex gap-3 text-xs">
-																	<span className={`px-2 py-1 rounded-full font-semibold ${
-																		buyerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-																	}`}>
-																		🛒 Buyer {buyerAccepted ? '✅' : '⏳'}
+															<div className="bg-white rounded p-2 mb-2 border border-gray-200">
+																<p className="text-[10px] font-semibold text-gray-600 mb-1">Status:</p>
+																<div className="flex gap-1.5 text-[10px]">
+																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${buyerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+																		🛒 {buyerAccepted ? '✅' : '⏳'}
 																	</span>
-																	<span className={`px-2 py-1 rounded-full font-semibold ${
-																		sellerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-																	}`}>
-																		📈 Seller {sellerAccepted ? '✅' : '⏳'}
+																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${sellerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+																		📈 {sellerAccepted ? '✅' : '⏳'}
 																	</span>
 																</div>
 															</div>
 														)}
 														
-														{/* Action Buttons */}
-														<div className="flex flex-wrap gap-2 mt-3">
+														<div className="flex flex-wrap gap-1.5 mt-2">
 															{isBothAccepted ? (
-																<div className="w-full bg-green-100 border border-green-300 rounded-lg p-3 text-center">
-																	<p className="text-sm font-bold text-green-700">🎉 Both parties accepted! Awaiting admin approval.</p>
+																<div className="w-full bg-green-100 border border-green-300 rounded p-2 text-center">
+																	<p className="text-xs font-bold text-green-700">🎉 Both accepted!</p>
 																</div>
 															) : isPending ? (
 																<>
 																	<button
 																		onClick={() => {
 																			acceptOffer(request._id || request.id, offer.id);
-																			showNotification('success', 'Offer Accepted! ✅', 'The seller will be notified.');
+																			showNotification('success', 'Accepted! ✅', 'Seller notified.');
 																		}}
-																		className="flex-1 px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-lg transition"
+																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
 																	>
 																		✅ Accept
 																	</button>
 																	<button
 																		onClick={() => {
-																			const newPrice = prompt(`Current offer: ₹${offer.price}. Enter your counter price:`);
+																			const newPrice = prompt(`Current: ₹${offer.price}. Counter price:`);
 																			if (newPrice && !isNaN(newPrice)) {
 																				counterOffer(request._id || request.id, offer.id, parseFloat(newPrice), 'buy', 'buyer');
-																				showNotification('info', 'Counter Sent! 🔄', `New price: ₹${newPrice}`);
+																				showNotification('info', 'Counter Sent! 🔄', `₹${newPrice}`);
 																			}
 																		}}
-																		className="flex-1 px-4 py-2 rounded-lg font-semibold text-orange-700 bg-orange-100 border-2 border-orange-300 hover:bg-orange-200 transition"
+																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
 																	>
 																		🔄 Counter
 																	</button>
 																	<button
 																		onClick={() => {
 																			rejectCounterOffer(request._id || request.id, offer.id, 'buy');
-																			showNotification('warning', 'Offer Rejected ❌', 'The seller will be notified.');
+																			showNotification('warning', 'Rejected ❌', 'Seller notified.');
 																		}}
-																		className="px-4 py-2 rounded-lg font-semibold text-red-700 bg-red-100 border-2 border-red-300 hover:bg-red-200 transition"
+																		className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
 																	>
 																		❌
 																	</button>
@@ -1596,37 +1543,37 @@ export default function UserDashboard({ setPage }) {
 																	<button
 																		onClick={() => {
 																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
-																			showNotification('success', sellerAccepted ? 'Deal Finalized! 🎉' : 'Accepted! ✅', sellerAccepted ? 'Both parties agreed!' : 'Waiting for seller...');
+																			showNotification('success', sellerAccepted ? 'Deal Done! 🎉' : 'Accepted! ✅', sellerAccepted ? 'Both agreed!' : 'Waiting seller...');
 																		}}
-																		className="flex-1 px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition"
+																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-md transition"
 																	>
-																		✅ Accept Counter
+																		✅ Accept
 																	</button>
 																	<button
 																		onClick={() => {
-																			const newPrice = prompt(`Current counter: ₹${offer.counterPrice}. Enter your re-counter price:`);
+																			const newPrice = prompt(`Current: ₹${offer.counterPrice}. Re-counter:`);
 																			if (newPrice && !isNaN(newPrice)) {
 																				reCounterOffer(request._id || request.id, offer.id, parseFloat(newPrice), 'buy', 'buyer');
-																				showNotification('info', 'Re-Counter Sent! 🔄', `New price: ₹${newPrice}`);
+																				showNotification('info', 'Re-Counter! 🔄', `₹${newPrice}`);
 																			}
 																		}}
-																		className="flex-1 px-4 py-2 rounded-lg font-semibold text-orange-700 bg-orange-100 border-2 border-orange-300 hover:bg-orange-200 transition"
+																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
 																	>
 																		🔄 Re-Counter
 																	</button>
 																	<button
 																		onClick={() => {
 																			rejectCounterOffer(request._id || request.id, offer.id, 'buy');
-																			showNotification('warning', 'Counter Rejected ❌', 'Negotiation ended.');
+																			showNotification('warning', 'Rejected ❌', 'Ended.');
 																		}}
-																		className="px-4 py-2 rounded-lg font-semibold text-red-700 bg-red-100 border-2 border-red-300 hover:bg-red-200 transition"
+																		className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
 																	>
 																		❌
 																	</button>
 																</>
 															) : buyerAccepted ? (
-																<div className="w-full bg-blue-100 border border-blue-300 rounded-lg p-3 text-center">
-																	<p className="text-sm font-semibold text-blue-700">⏳ You accepted. Waiting for seller to accept...</p>
+																<div className="w-full bg-blue-100 border border-blue-300 rounded p-2 text-center">
+																	<p className="text-xs font-semibold text-blue-700">⏳ Waiting for seller...</p>
 																</div>
 															) : null}
 														</div>
@@ -1651,30 +1598,28 @@ export default function UserDashboard({ setPage }) {
 								<p className="text-xs text-gray-400 mt-2">Counter offers appear here during negotiation</p>
 							</div>
 						) : (
-							<div className="space-y-6">
+							<div className="space-y-3">
 								{counterOfferRequests.map((request) => {
 									const counterOffers = request.offers?.filter(o => 
 										o.status === 'counter_offered' || o.buyerAccepted || o.sellerAccepted
 									) || [];
 									
 									return (
-										<div key={request._id || request.id} className="bg-gradient-to-br from-orange-50 to-amber-50 border-3 border-orange-300 rounded-2xl p-6 shadow-xl">
-											{/* Header */}
-											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-orange-200">
-												<div className="flex-1">
-													<h4 className="font-bold text-2xl text-gray-900 mb-2">{request.company}</h4>
-													<p className="text-sm text-gray-600">ISIN: {request.isin}</p>
-													<p className="text-sm text-gray-700 mt-2">
-														Your Request: <span className="font-bold text-blue-600">{formatCurrency(request.price)}</span> × {formatShares(request.shares)}
+										<div key={request._id || request.id} className="bg-white border border-orange-200 rounded-xl p-4 shadow-md">
+											<div className="flex items-start justify-between mb-3 pb-2 border-b border-orange-200">
+												<div className="flex-1 min-w-0">
+													<h4 className="font-bold text-base text-gray-900 truncate">{request.company}</h4>
+													<p className="text-xs text-gray-600">ISIN: {request.isin}</p>
+													<p className="text-xs text-gray-700 mt-0.5">
+														Your: <span className="font-bold text-blue-600">{formatCurrency(request.price)}</span> × {formatShares(request.shares)}
 													</p>
 												</div>
-												<span className="px-4 py-2 rounded-full text-sm font-bold bg-orange-500 text-white shadow-md">
-													🔄 {counterOffers.length} Active
+												<span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500 text-white">
+													🔄 {counterOffers.length}
 												</span>
 											</div>
 											
-											{/* Negotiations */}
-											<div className="space-y-4">
+											<div className="space-y-2">
 												{counterOffers.map((offer) => {
 													const buyerAccepted = offer.buyerAccepted || false;
 													const sellerAccepted = offer.sellerAccepted || false;
@@ -1682,93 +1627,88 @@ export default function UserDashboard({ setPage }) {
 													const currentPrice = offer.counterPrice || offer.price;
 													
 													return (
-														<div key={offer._id || offer.id} className={`rounded-2xl p-5 border-3 shadow-lg ${
-															bothAccepted ? 'bg-green-50 border-green-400' : 
-															'bg-white border-orange-400'
+														<div key={offer._id || offer.id} className={`rounded-lg p-3 border ${
+															bothAccepted ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300'
 														}`}>
-															{/* Seller & Status */}
-															<div className="flex items-start justify-between mb-4">
-																<div>
-																	<p className="font-bold text-gray-900">💼 {offer.sellerName || offer.seller}</p>
-																	<p className="text-xs text-gray-500 mt-1">{formatDateTime(offer.counterAt || offer.createdAt)}</p>
+															<div className="flex items-start justify-between mb-2">
+																<div className="flex-1">
+																	<p className="text-sm font-bold text-gray-900">💼 {offer.sellerName || offer.seller}</p>
+																	<p className="text-[10px] text-gray-500">{formatDateTime(offer.counterAt || offer.createdAt)}</p>
 																</div>
 																<InteractionBadge status={bothAccepted ? 'both_accepted' : offer.status} />
 															</div>
 															
-															{/* Price Info */}
-															<div className="grid grid-cols-2 gap-3 mb-4">
-																<div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border-2 border-orange-400">
-																	<p className="text-xs text-orange-800 font-semibold mb-1">Counter Price</p>
-																	<p className="text-2xl font-bold text-orange-900">{formatCurrency(currentPrice)}</p>
+															<div className="grid grid-cols-2 gap-2 mb-2">
+																<div className="bg-white rounded p-2 border border-orange-300">
+																	<p className="text-[10px] text-orange-700 font-semibold mb-0.5">Counter</p>
+																	<p className="text-sm font-bold text-orange-800">{formatCurrency(currentPrice)}</p>
 																</div>
-																<div className="bg-white rounded-xl p-4 border-2 border-gray-300">
-																	<p className="text-xs text-gray-600 font-semibold mb-1">Quantity</p>
-																	<p className="text-2xl font-bold text-gray-800">{formatShares(offer.quantity)}</p>
+																<div className="bg-white rounded p-2 border border-gray-300">
+																	<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+																	<p className="text-sm font-bold text-gray-800">{formatShares(offer.quantity)}</p>
 																</div>
 															</div>
 															
-															{/* Acceptance Status */}
-															<div className="bg-white rounded-xl p-4 mb-4 border-2 border-gray-200">
-																<p className="text-xs font-bold text-gray-700 mb-3">Status:</p>
-																<div className="grid grid-cols-2 gap-3">
-																	<div className={`rounded-lg p-3 border-2 ${
-																		buyerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+															<div className="bg-white rounded p-2 mb-2 border border-gray-200">
+																<p className="text-[10px] font-bold text-gray-700 mb-1.5">Status:</p>
+																<div className="grid grid-cols-2 gap-1.5">
+																	<div className={`rounded p-1.5 border text-center ${
+																		buyerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
 																	}`}>
-																		<p className="text-xs text-gray-600 mb-1">🛒 You</p>
-																		<p className="text-2xl text-center">{buyerAccepted ? '✅' : '⏳'}</p>
+																		<p className="text-[10px] text-gray-600">🛒 You</p>
+																		<p className="text-lg">{buyerAccepted ? '✅' : '⏳'}</p>
 																	</div>
-																	<div className={`rounded-lg p-3 border-2 ${
-																		sellerAccepted ? 'bg-green-100 border-green-400' : 'bg-gray-100 border-gray-300'
+																	<div className={`rounded p-1.5 border text-center ${
+																		sellerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
 																	}`}>
-																		<p className="text-xs text-gray-600 mb-1">📈 Seller</p>
-																		<p className="text-2xl text-center">{sellerAccepted ? '✅' : '⏳'}</p>
+																		<p className="text-[10px] text-gray-600">📈 Seller</p>
+																		<p className="text-lg">{sellerAccepted ? '✅' : '⏳'}</p>
 																	</div>
 																</div>
 															</div>
 															
-															{/* Actions */}
 															{bothAccepted ? (
-																<div className="bg-green-100 border-2 border-green-400 rounded-xl p-4 text-center">
-																	<p className="text-lg font-bold text-green-700">🎉 Deal Finalized!</p>
-																	<p className="text-sm text-green-600 mt-1">Awaiting admin approval</p>
+																<div className="bg-green-100 border border-green-300 rounded p-2 text-center">
+																	<p className="text-xs font-bold text-green-700">🎉 Deal Done!</p>
+																	<p className="text-[10px] text-green-600">Admin approval pending</p>
 																</div>
 															) : buyerAccepted ? (
-																<div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-4 text-center">
-																	<p className="font-bold text-blue-700">✅ You accepted</p>
-																	<p className="text-xs text-blue-600 mt-1">Waiting for seller...</p>
+																<div className="bg-blue-100 border border-blue-300 rounded p-2 text-center">
+																	<p className="text-xs font-bold text-blue-700">✅ You accepted</p>
+																	<p className="text-[10px] text-blue-600">Waiting seller...</p>
 																</div>
 															) : (
-																<div className="space-y-2">
+																<div className="space-y-1.5">
 																	<button
 																		onClick={() => {
 																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
-																			showNotification('success', '✅ Accepted!', sellerAccepted ? 'Deal finalized!' : 'Waiting for seller...');
+																			showNotification('success', '✅ Accepted!', sellerAccepted ? 'Done!' : 'Waiting seller...');
 																		}}
-																		className="w-full px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-xl transition"
+																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
 																	>
-																		✅ Accept Counter Offer
+																		✅ Accept Counter
 																	</button>
-																	<div className="grid grid-cols-2 gap-2">
+																	<div className="grid grid-cols-2 gap-1.5">
 																		<button
 																			onClick={() => {
-																				const newPrice = prompt(`Current: ₹${currentPrice}\nYour re-counter:`);
+																				const newPrice = prompt(`Current: ₹${currentPrice}\nRe-counter:`);
 																				if (newPrice && !isNaN(newPrice)) {
 																					reCounterOffer(request._id || request.id, offer.id, parseFloat(newPrice), 'buy', 'buyer');
-																					showNotification('info', '🔄 Re-Counter Sent!', `New price: ₹${newPrice}`);
+																					showNotification('info', '🔄 Re-Counter!', `₹${newPrice}`);
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-orange-700 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
 																		>
 																			🔄 Re-Counter
 																		</button>
 																		<button
 																			onClick={() => {
-																				if (window.confirm('Reject this counter offer?')) {
+																				if (window.confirm('Reject?')) {
 																					rejectCounterOffer(request._id || request.id, offer.id, 'buy');
-																					showNotification('warning', '❌ Rejected', 'Negotiation ended');
+																					showNotification('warning', '❌ Rejected', 'Ended');
 																				}
 																			}}
-																			className="px-4 py-3 rounded-xl font-bold text-red-700 bg-red-200 border-2 border-red-400 hover:bg-red-300 transition"
+																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
 																		>
 																			❌ Reject
 																		</button>
@@ -1797,7 +1737,7 @@ export default function UserDashboard({ setPage }) {
 								<p className="text-xs text-gray-400 mt-2">Your completed transactions will appear here</p>
 							</div>
 						) : (
-							<div className="space-y-6">
+							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 								{completedRequests.map((request) => {
 									const acceptedOffer = request.acceptedOffer 
 										? request.offers?.find(o => o.id === request.acceptedOffer)
@@ -1807,73 +1747,60 @@ export default function UserDashboard({ setPage }) {
 									const totalValue = finalPrice * finalQuantity;
 									
 									return (
-										<div key={request.id} className="bg-gradient-to-br from-green-50 to-emerald-50 border-3 border-green-400 rounded-2xl p-6 shadow-xl">
-											{/* Header */}
-											<div className="flex items-start justify-between mb-5 pb-4 border-b-2 border-green-200">
-												<div className="flex-1">
-													<h4 className="font-bold text-2xl text-gray-900 mb-2">{request.company}</h4>
-													<p className="text-sm text-gray-600">ISIN: {request.isin || 'N/A'}</p>
+										<div key={request.id} className="bg-white border border-green-200 rounded-xl p-4 shadow-md">
+											<div className="flex items-start justify-between mb-3 pb-2 border-b border-green-200">
+												<div className="flex-1 min-w-0">
+													<h4 className="font-bold text-base text-gray-900 truncate">{request.company}</h4>
+													<p className="text-xs text-gray-600">ISIN: {request.isin || 'N/A'}</p>
 													{request.closedAt && (
-														<p className="text-xs text-gray-500 mt-2">
-															Completed: {formatDateTime(request.closedAt)}
+														<p className="text-[10px] text-gray-500 mt-0.5">
+															{formatDateTime(request.closedAt)}
 														</p>
 													)}
 												</div>
-												<span className="px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white shadow-md">
-													✅ Closed
+												<span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-600 text-white">
+													✅
 												</span>
 											</div>
 											
-											{/* Transaction Summary */}
-											<div className="grid grid-cols-3 gap-3 mb-5">
-												<div className="bg-white rounded-xl p-4 border-2 border-green-300 shadow-md">
-													<p className="text-xs text-gray-600 font-semibold mb-2">Final Price</p>
-													<p className="text-xl font-bold text-green-700">{formatCurrency(finalPrice)}</p>
+											<div className="grid grid-cols-3 gap-2 mb-3">
+												<div className="bg-green-50 rounded p-2 border border-green-300">
+													<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Price</p>
+													<p className="text-sm font-bold text-green-700">{formatCurrency(finalPrice)}</p>
 												</div>
-												<div className="bg-white rounded-xl p-4 border-2 border-green-300 shadow-md">
-													<p className="text-xs text-gray-600 font-semibold mb-2">Quantity</p>
-													<p className="text-xl font-bold text-green-700">{formatShares(finalQuantity)}</p>
+												<div className="bg-green-50 rounded p-2 border border-green-300">
+													<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+													<p className="text-sm font-bold text-green-700">{formatShares(finalQuantity)}</p>
 												</div>
-												<div className="bg-gradient-to-br from-green-200 to-emerald-200 rounded-xl p-4 border-2 border-green-500 shadow-md">
-													<p className="text-xs text-green-800 font-semibold mb-2">Total Value</p>
-													<p className="text-xl font-bold text-green-900">{formatCurrency(totalValue)}</p>
+												<div className="bg-green-100 rounded p-2 border border-green-400">
+													<p className="text-[10px] text-green-800 font-semibold mb-0.5">Total</p>
+													<p className="text-sm font-bold text-green-900">{formatCurrency(totalValue)}</p>
 												</div>
 											</div>
 											
 											{acceptedOffer && (
-												<div className="bg-white rounded-xl p-4 border-2 border-green-200 mb-4">
-													<p className="text-xs font-bold text-gray-700 mb-3">Deal Information:</p>
-													<div className="space-y-2">
-														<div className="flex justify-between items-center py-2 border-b border-gray-200">
-															<span className="text-sm text-gray-600">Seller:</span>
-															<span className="text-sm font-bold text-gray-900">{acceptedOffer.sellerName || acceptedOffer.seller}</span>
+												<div className="bg-gray-50 rounded p-2 border border-gray-200 mb-3">
+													<p className="text-[10px] font-bold text-gray-700 mb-1.5">Details:</p>
+													<div className="space-y-1">
+														<div className="flex justify-between items-center py-1 border-b border-gray-200">
+															<span className="text-xs text-gray-600">Seller:</span>
+															<span className="text-xs font-bold text-gray-900 truncate ml-2">{acceptedOffer.sellerName || acceptedOffer.seller}</span>
 														</div>
-														<div className="flex justify-between items-center py-2 border-b border-gray-200">
-															<span className="text-sm text-gray-600">Your Request:</span>
-															<span className="text-sm font-semibold text-blue-600">{formatCurrency(request.price)}</span>
-														</div>
-														{acceptedOffer.counterPrice && (
-															<div className="flex justify-between items-center py-2 border-b border-gray-200">
-																<span className="text-sm text-gray-600">Negotiated:</span>
-																<span className="text-sm font-semibold text-orange-600">{formatCurrency(acceptedOffer.counterPrice)}</span>
-															</div>
-														)}
-														<div className="flex justify-between items-center py-2">
-															<span className="text-sm text-gray-600">Status:</span>
-															<span className="text-sm font-bold text-green-600 capitalize">{request.status}</span>
+														<div className="flex justify-between items-center py-1">
+															<span className="text-xs text-gray-600">Status:</span>
+															<span className="text-xs font-bold text-green-600 capitalize">{request.status}</span>
 														</div>
 													</div>
 												</div>
 											)}
 											
-											{/* Action - View Only */}
 											<button
 												onClick={() => {
-													showNotification('info', 'Transaction Details', `${request.company}: ${formatCurrency(finalPrice)} × ${formatShares(finalQuantity)} = ${formatCurrency(totalValue)}`);
+													showNotification('info', 'Details', `${request.company}: ${formatCurrency(totalValue)}`);
 												}}
-												className="w-full px-5 py-3 rounded-xl font-bold text-green-700 bg-green-200 border-2 border-green-400 hover:bg-green-300 transition"
+												className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-green-700 bg-green-100 border border-green-300 hover:bg-green-200 transition"
 											>
-												📄 View Full Details
+												📄 View Details
 											</button>
 										</div>
 									);
