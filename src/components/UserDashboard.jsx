@@ -660,6 +660,7 @@ export default function UserDashboard({ setPage }) {
 				{ id: 'sell_completed', label: 'Completed', counter: sellCompletedCount }
 			]
 		},
+		{ id: 'my_bids', label: 'My Bids', icon: '🎯' },
 		{ id: 'orders', label: 'Orders', icon: '📋' },
 		{ id: 'portfolio', label: 'Portfolio', icon: '💼' },
 		{ id: 'faq', label: 'FAQ', icon: '❓' },
@@ -1805,6 +1806,229 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
+	const renderMyBids = () => {
+		// Get all bids placed by the current user on sell listings (marketplace buy posts)
+		const myBidsOnSellListings = useMemo(() => {
+			const bids = [];
+			sellListings.forEach(listing => {
+				if (listing.bids && listing.bids.length > 0) {
+					listing.bids.forEach(bid => {
+						// Check if this bid belongs to current user
+						if (bid.bidder === user.email || bid.bidderName === user.name || bid.bidderId === user._id || bid.bidderId === user.id) {
+							bids.push({
+								...bid,
+								listingId: listing._id || listing.id,
+								company: listing.company,
+								isin: listing.isin,
+								askingPrice: listing.price,
+								totalShares: listing.shares,
+								seller: listing.sellerName || listing.seller,
+								listingStatus: listing.status,
+								type: 'bid'
+							});
+						}
+					});
+				}
+			});
+			return bids;
+		}, [sellListings, user]);
+
+		// Get all offers made by the current user on buy requests (marketplace sell posts)
+		const myOffersOnBuyRequests = useMemo(() => {
+			const offers = [];
+			buyRequests.forEach(request => {
+				if (request.offers && request.offers.length > 0) {
+					request.offers.forEach(offer => {
+						// Check if this offer belongs to current user
+						if (offer.seller === user.email || offer.sellerName === user.name || offer.sellerId === user._id || offer.sellerId === user.id) {
+							offers.push({
+								...offer,
+								requestId: request._id || request.id,
+								company: request.company,
+								isin: request.isin,
+								requestedPrice: request.price,
+								totalShares: request.shares,
+								buyer: request.buyerName || request.buyer,
+								requestStatus: request.status,
+								type: 'offer'
+							});
+						}
+					});
+				}
+			});
+			return offers;
+		}, [buyRequests, user]);
+
+		const getStatusMeta = (status) => {
+			const meta = {
+				pending: { icon: '⏳', label: 'Pending', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+				accepted: { icon: '✅', label: 'Accepted', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+				rejected: { icon: '❌', label: 'Rejected', color: 'text-red-600 bg-red-50 border-red-200' },
+				counter_offered: { icon: '🔄', label: 'Counter Offered', color: 'text-blue-600 bg-blue-50 border-blue-200' },
+				counter_accepted_by_bidder: { icon: '🤝', label: 'Counter Accepted', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+				counter_accepted_by_offerer: { icon: '🤝', label: 'Counter Accepted', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' }
+			};
+			return meta[status] || { icon: '❓', label: status, color: 'text-gray-600 bg-gray-50 border-gray-200' };
+		};
+
+		return (
+			<div className="space-y-6">
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900">🎯 My Bids & Offers</h2>
+						<p className="text-sm text-gray-500 mt-1">Track all your bids on buy posts and offers on sell posts</p>
+					</div>
+				</div>
+
+				{/* Bids Section - Bids placed on Sell Listings (Buy Posts) */}
+				<div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+					<div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+						<h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+							<span>🛒</span>
+							<span>My Bids on Buy Posts</span>
+							<span className="ml-2 px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">{myBidsOnSellListings.length}</span>
+						</h3>
+						<p className="text-sm text-gray-600 mt-1">Bids you placed on marketplace sell listings</p>
+					</div>
+					<div className="p-6">
+						{myBidsOnSellListings.length === 0 ? (
+							<div className="text-center py-12">
+								<div className="text-6xl mb-4">🎯</div>
+								<p className="text-gray-500 text-lg">No bids placed yet</p>
+								<p className="text-gray-400 text-sm mt-2">Browse the marketplace and place bids on sell listings</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{myBidsOnSellListings.map((bid, idx) => {
+									const statusMeta = getStatusMeta(bid.status);
+									return (
+										<div key={idx} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow bg-gradient-to-r from-gray-50 to-white">
+											<div className="flex items-start justify-between mb-3">
+												<div className="flex-1">
+													<h4 className="font-bold text-lg text-gray-900">{bid.company}</h4>
+													<p className="text-xs text-gray-500 mt-1">ISIN: {bid.isin || 'N/A'}</p>
+												</div>
+												<span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusMeta.color} flex items-center gap-1`}>
+													<span>{statusMeta.icon}</span>
+													<span>{statusMeta.label}</span>
+												</span>
+											</div>
+											
+											<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+												<div>
+													<p className="text-xs text-gray-500">Your Bid Price</p>
+													<p className="text-sm font-bold text-blue-600">₹{bid.price}</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Asking Price</p>
+													<p className="text-sm font-semibold text-gray-700">₹{bid.askingPrice}</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Quantity</p>
+													<p className="text-sm font-semibold text-gray-700">{bid.quantity} shares</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Seller</p>
+													<p className="text-sm font-semibold text-gray-700">{bid.seller}</p>
+												</div>
+											</div>
+
+											{bid.counterPrice && (
+												<div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+													<p className="text-xs font-semibold text-orange-700">Counter Offer: ₹{bid.counterPrice} for {bid.counterQuantity} shares</p>
+												</div>
+											)}
+
+											<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+												<p className="text-xs text-gray-400">
+													Bid placed on {bid.timestamp ? new Date(bid.timestamp).toLocaleDateString() : 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">Listing Status: {bid.listingStatus || 'Active'}</p>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				</div>
+
+				{/* Offers Section - Offers made on Buy Requests (Sell Posts) */}
+				<div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+					<div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-gray-200">
+						<h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+							<span>📈</span>
+							<span>My Offers on Sell Posts</span>
+							<span className="ml-2 px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded-full">{myOffersOnBuyRequests.length}</span>
+						</h3>
+						<p className="text-sm text-gray-600 mt-1">Offers you made on marketplace buy requests</p>
+					</div>
+					<div className="p-6">
+						{myOffersOnBuyRequests.length === 0 ? (
+							<div className="text-center py-12">
+								<div className="text-6xl mb-4">📊</div>
+								<p className="text-gray-500 text-lg">No offers made yet</p>
+								<p className="text-gray-400 text-sm mt-2">Browse the marketplace and make offers on buy requests</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{myOffersOnBuyRequests.map((offer, idx) => {
+									const statusMeta = getStatusMeta(offer.status);
+									return (
+										<div key={idx} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow bg-gradient-to-r from-gray-50 to-white">
+											<div className="flex items-start justify-between mb-3">
+												<div className="flex-1">
+													<h4 className="font-bold text-lg text-gray-900">{offer.company}</h4>
+													<p className="text-xs text-gray-500 mt-1">ISIN: {offer.isin || 'N/A'}</p>
+												</div>
+												<span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusMeta.color} flex items-center gap-1`}>
+													<span>{statusMeta.icon}</span>
+													<span>{statusMeta.label}</span>
+												</span>
+											</div>
+											
+											<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+												<div>
+													<p className="text-xs text-gray-500">Your Offer Price</p>
+													<p className="text-sm font-bold text-emerald-600">₹{offer.price}</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Requested Price</p>
+													<p className="text-sm font-semibold text-gray-700">₹{offer.requestedPrice}</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Quantity</p>
+													<p className="text-sm font-semibold text-gray-700">{offer.quantity} shares</p>
+												</div>
+												<div>
+													<p className="text-xs text-gray-500">Buyer</p>
+													<p className="text-sm font-semibold text-gray-700">{offer.buyer}</p>
+												</div>
+											</div>
+
+											{offer.counterPrice && (
+												<div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+													<p className="text-xs font-semibold text-orange-700">Counter Offer: ₹{offer.counterPrice} for {offer.counterQuantity} shares</p>
+												</div>
+											)}
+
+											<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+												<p className="text-xs text-gray-400">
+													Offer made on {offer.timestamp ? new Date(offer.timestamp).toLocaleDateString() : 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">Request Status: {offer.requestStatus || 'Active'}</p>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	};
+
 	const renderFAQ = () => {
 		const faqs = [
 			{
@@ -1976,6 +2200,8 @@ export default function UserDashboard({ setPage }) {
 				return renderMyRequests();
 			case 'sell':
 				return renderMyListings();
+			case 'my_bids':
+				return renderMyBids();
 			case 'orders':
 				return renderOrders();
 			case 'portfolio':
