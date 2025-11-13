@@ -340,7 +340,7 @@ export default function HomePage({ setPage }) {
                 alt="List Logo" 
                 className="h-28 w-28 inline-block object-contain -mx-5"
               />
-              <span className="text-emerald-500">list</span>
+              <span className="text-emerald-500">list planet</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               India's most trusted platform for unlisted shares trading with transparency, security, and innovation
