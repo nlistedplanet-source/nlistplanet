@@ -187,6 +187,10 @@ export default function UserDashboard({ setPage }) {
 	const [shareCardData, setShareCardData] = useState(null);
 	const shareCardRef = useRef(null);
 	
+	// Search and filter states
+	const [searchQuery, setSearchQuery] = useState('');
+	const [selectedIndustries, setSelectedIndustries] = useState([]);
+	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
 	const [newPrice, setNewPrice] = useState('');
@@ -689,7 +693,7 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const navItems = [
-		{ id: 'marketplace', label: 'Nlist Zone', icon: '🏪' },
+		{ id: 'marketplace', label: 'Unlist Mall', icon: '🏪' },
 		{
 			id: 'buy',
 			label: 'Buy',
@@ -1813,12 +1817,100 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
-	const renderBrowse = () => (
+	const renderBrowse = () => {
+		// Get all unique industries from companies
+		const allIndustries = [...new Set(companies.map(c => c.Sector || c.sector).filter(Boolean))].sort();
+		
+		// Filter function
+		const filterListings = (items) => {
+			return items.filter(item => {
+				// Search filter (company name or username)
+				const searchLower = searchQuery.toLowerCase();
+				const companyMatch = item.company?.toLowerCase().includes(searchLower);
+				const usernameMatch = (item.userId?.username || item.sellerName || item.buyerName || '')
+					.toLowerCase().includes(searchLower);
+				const searchMatch = !searchQuery || companyMatch || usernameMatch;
+				
+				// Industry filter
+				const company = companies.find(c => 
+					c.ISIN === item.isin || 
+					c.CompanyName?.toLowerCase() === item.company?.toLowerCase() ||
+					c.ScripName?.toLowerCase() === item.company?.toLowerCase()
+				);
+				const itemIndustry = company?.Sector || company?.sector;
+				const industryMatch = selectedIndustries.length === 0 || 
+					selectedIndustries.includes(itemIndustry);
+				
+				return searchMatch && industryMatch;
+			});
+		};
+		
+		const filteredListings = filterListings(availableListings);
+		const filteredRequests = filterListings(availableRequests);
+		
+		return (
 		<div className="space-y-8">
 			<SectionHeader
 				title="Explore Marketplace"
 				subtitle="Discover fresh opportunities and respond instantly with bids or offers."
 			/>
+			
+			{/* Search and Filter Section */}
+			<div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
+				{/* Search Box */}
+				<div className="relative">
+					<input
+						type="text"
+						placeholder="🔍 Search by company name or username..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+					/>
+					{searchQuery && (
+						<button
+							onClick={() => setSearchQuery('')}
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+						>
+							✕
+						</button>
+					)}
+				</div>
+				
+				{/* Industry Filter */}
+				<div>
+					<p className="text-xs font-semibold text-gray-600 mb-2">Filter by Industry:</p>
+					<div className="flex flex-wrap gap-2">
+						{allIndustries.map(industry => (
+							<button
+								key={industry}
+								onClick={() => {
+									setSelectedIndustries(prev => 
+										prev.includes(industry)
+											? prev.filter(i => i !== industry)
+											: [...prev, industry]
+									);
+								}}
+								className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+									selectedIndustries.includes(industry)
+										? 'bg-blue-600 text-white'
+										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+								}`}
+							>
+								{industry}
+							</button>
+						))}
+						{selectedIndustries.length > 0 && (
+							<button
+								onClick={() => setSelectedIndustries([])}
+								className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200"
+							>
+								Clear All ✕
+							</button>
+						)}
+					</div>
+				</div>
+			</div>
+			
 		<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
 			<button
 				onClick={() => setBrowseFilter('sell')}
@@ -1844,16 +1936,18 @@ export default function UserDashboard({ setPage }) {
 			</button>
 		</div>			{browseFilter === 'sell' ? (
 				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-					{availableListings.length === 0 ? (
-						<EmptyState
-							icon=""
-							title="No active listings from others"
-							description="Check back soon or post a buy request to let sellers know what you need."
-							actionLabel="Post buy request"
-							onAction={() => setFormType('buy')}
-						/>
+					{filteredListings.length === 0 ? (
+						<div className="col-span-full">
+							<EmptyState
+								icon="🔍"
+								title={searchQuery || selectedIndustries.length > 0 ? "No matching listings" : "No active listings from others"}
+								description={searchQuery || selectedIndustries.length > 0 ? "Try adjusting your filters" : "Check back soon or post a buy request to let sellers know what you need."}
+								actionLabel={searchQuery || selectedIndustries.length > 0 ? null : "Post buy request"}
+								onAction={searchQuery || selectedIndustries.length > 0 ? null : () => setFormType('buy')}
+							/>
+						</div>
 					) : (
-						availableListings.map((listing) => {
+						filteredListings.map((listing) => {
 							const company = companies.find((c) => c.isin === listing.isin || c.name.toLowerCase() === listing.company.toLowerCase());
 							const myBid = listing.bids?.find((bid) => bid.bidder === user.name || bid.bidder === user.email);
 							const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
@@ -1948,16 +2042,18 @@ export default function UserDashboard({ setPage }) {
 				</div>
 			) : (
 				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-					{availableRequests.length === 0 ? (
-						<EmptyState
-							icon=""
-							title="No open requests from others"
-							description="List your shares for sale and reach serious buyers faster."
-							actionLabel="Create listing"
-							onAction={() => setFormType('sell')}
-						/>
+					{filteredRequests.length === 0 ? (
+						<div className="col-span-full">
+							<EmptyState
+								icon="🔍"
+								title={searchQuery || selectedIndustries.length > 0 ? "No matching requests" : "No open requests from others"}
+								description={searchQuery || selectedIndustries.length > 0 ? "Try adjusting your filters" : "List your shares for sale and reach serious buyers faster."}
+								actionLabel={searchQuery || selectedIndustries.length > 0 ? null : "Create listing"}
+								onAction={searchQuery || selectedIndustries.length > 0 ? null : () => setFormType('sell')}
+							/>
+						</div>
 					) : (
-						availableRequests.map((request, index) => {
+						filteredRequests.map((request, index) => {
 							const company = companies.find((c) => c.isin === request.isin || c.name.toLowerCase() === request.company.toLowerCase());
 							const myOffer = request.offers?.find((offer) => offer.seller === user.name || offer.seller === user.email);
 							const buyerUsername = request.userId?.username || request.buyerName || 'Unknown';
@@ -2070,7 +2166,8 @@ export default function UserDashboard({ setPage }) {
 				</div>
 			)}
 		</div>
-	);
+		);
+	};
 
 	const renderOrders = () => {
 		// Combine all active and previous orders
