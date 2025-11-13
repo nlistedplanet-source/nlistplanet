@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UserProfile from './UserProfile';
 import ChangePassword from './ChangePassword';
@@ -11,41 +11,47 @@ export default function Header({ setPage, currentPage }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  // scrolled state removed (header is now non-sticky/transparent)
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Hide navigation on dashboard and admin pages
   const isDashboardPage = currentPage === 'dashboard' || currentPage === 'admin';
 
   return (
-  <header className="w-full absolute left-0 top-3 sm:top-4 z-50 transition-all duration-300 bg-transparent">
+    <header
+      className={`w-full sticky top-0 z-50 transition-all duration-300 backdrop-blur-md ${
+        isDashboardPage
+          ? scrolled
+            ? 'bg-white/80 border-b border-gray-200 shadow-sm'
+            : 'bg-transparent'
+          : scrolled
+            ? 'bg-white/85 border-b border-gray-200 shadow-sm'
+            : 'bg-white/60'
+      }`}
+    >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
-          <div className="flex justify-between items-center h-16 overflow-visible">
-          {/* Logo Section */}
-          <button 
-            onClick={() => setPage('home')} 
-            className="flex items-center group cursor-pointer pl-4 sm:pl-6"
-            aria-label="Go to home"
-          >
-                {/* Original nlist_logo.svg with proper error handling */}
-                <img
-                  src="/images/logos/nlist_logo.svg"
-                  alt="Nlist logo"
-                  aria-label="Nlist logo"
-                  className="h-10 w-10 sm:h-12 sm:w-12 object-contain mr-2"
-                  style={{ transform: 'scale(4)', transformOrigin: 'left center' }}
-                  onError={(e) => {
-                    // If the SVG fails to load, fall back to the raster PNG
-                    console.error('Logo failed to load, using PNG fallback');
-                    e.target.onerror = null; // prevent infinite loop
-                    e.target.src = '/images/logos/new_logo.png';
-                  }}
-                />
-          </button>
+          <div className="flex justify-between items-center h-16">
+
+          {/* Logo Section - replaced with new logo file */}
+          <div className="flex items-center gap-2">
+            <img
+              src="/images/logos/nlist_logo.svg"
+              alt="NList Logo"
+              className="h-12 w-auto object-contain"
+              style={{ maxHeight: '48px' }}
+            />
+          </div>
 
           {/* Navigation Links */}
           {!isDashboardPage && (
-            <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+            <nav className="hidden md:flex items-center gap-1">
               <button
                 onClick={() => setPage('home')}
                 className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
@@ -54,15 +60,16 @@ export default function Header({ setPage, currentPage }) {
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <img
-                  src="/images/logos/list (1).png"
-                  alt="Nlist Logo"
-                  className="h-10 w-10 sm:h-12 sm:w-12 mr-2"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/images/logos/new_logo.png';
-                  }}
-                />
+                Home
+              </button>
+              <button
+                onClick={() => setPage('about')}
+                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  currentPage === 'about'
+                    ? 'text-purple-700 bg-purple-50 border border-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
                 About
               </button>
             </nav>
