@@ -38,7 +38,16 @@ export default function Header({ setPage, currentPage }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16">
-          {/* Logo Section Removed from nav as requested */}
+
+          {/* Logo Section - new logo added */}
+          <div className="flex items-center gap-2">
+            <img
+              src="/images/logos/list (1).png"
+              alt="NList Logo"
+              className="h-12 w-auto object-contain"
+              style={{ maxHeight: '48px' }}
+            />
+          </div>
 
           {/* Navigation Links */}
           {!isDashboardPage && (
