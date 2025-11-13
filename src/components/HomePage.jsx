@@ -460,28 +460,23 @@ export default function HomePage({ setPage }) {
                 Cookie Policy
               </a>
             </div>
-            <div className="text-xs text-gray-500 mt-4 md:mt-0 text-center">© 2025 Nlist Planet. All rights reserved.</div>
+
+
+      {/* New Footer Section */}
+      <footer className="bg-gray-900 text-gray-300 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
+            <a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
+            <a href="/terms-of-service" className="hover:text-emerald-400 transition-colors">Terms of Service</a>
+            <a href="/cookie-policy" className="hover:text-emerald-400 transition-colors">Cookie Policy</a>
+            <a href="/how-it-works" className="hover:text-emerald-400 transition-colors">How It Works</a>
+            <a href="/faqs" className="hover:text-emerald-400 transition-colors">FAQs</a>
+            <a href="/blog" className="hover:text-emerald-400 transition-colors">Blog</a>
+            <a href="/terms-and-conditions" className="hover:text-emerald-400 transition-colors">Terms & Conditions</a>
           </div>
+          <div className="text-xs text-gray-500 mt-6 md:mt-0 text-center md:text-right">© 2025 Nlist Planet. All rights reserved.</div>
         </div>
       </footer>
-
-      {/* Resources Section */}
-      <section className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h4 className="text-2xl font-bold text-emerald-400 mb-4">Resources</h4>
-              <ul className="space-y-3">
-                <li><a href="/how-it-works" className="hover:text-emerald-400 transition-colors">How It Works</a></li>
-                <li><a href="/faqs" className="hover:text-emerald-400 transition-colors">FAQs</a></li>
-                <li><a href="/blog" className="hover:text-emerald-400 transition-colors">Blog</a></li>
-                <li><a href="/terms-and-conditions" className="hover:text-emerald-400 transition-colors">Terms & Conditions</a></li>
-                <li><a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Login Modal */}
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} setPage={setPage} />

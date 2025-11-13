@@ -2573,18 +2573,21 @@ export default function UserDashboard({ setPage }) {
 								</p>
 							</div>
 
-							{/* Footer */}
-							<div style={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-								marginTop: '16px',
-								fontSize: '12px',
-								color: '#9ca3af'
-							}}>
-								<span>nlistplanet.com/share/{shareCardData.company.toLowerCase().replace(/\s+/g, '-')}</span>
-								<span>{shareCardData.date}</span>
-							</div>
+														{/* New Footer Section */}
+														<footer className="bg-gray-900 text-gray-300 py-8 mt-12">
+															<div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+																<div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
+																	<a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
+																	<a href="/terms-of-service" className="hover:text-emerald-400 transition-colors">Terms of Service</a>
+																	<a href="/cookie-policy" className="hover:text-emerald-400 transition-colors">Cookie Policy</a>
+																	<a href="/how-it-works" className="hover:text-emerald-400 transition-colors">How It Works</a>
+																	<a href="/faqs" className="hover:text-emerald-400 transition-colors">FAQs</a>
+																	<a href="/blog" className="hover:text-emerald-400 transition-colors">Blog</a>
+																	<a href="/terms-and-conditions" className="hover:text-emerald-400 transition-colors">Terms & Conditions</a>
+																</div>
+																<div className="text-xs text-gray-500 mt-6 md:mt-0 text-center md:text-right">© 2025 Nlist Planet. All rights reserved.</div>
+															</div>
+														</footer>
 						</div>
 					</div>
 				</div>
