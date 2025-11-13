@@ -38,19 +38,7 @@ export default function Header({ setPage, currentPage }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16">
-          {/* Logo Section */}
-          <button 
-            onClick={() => setPage('home')} 
-            className="flex items-center group cursor-pointer"
-          >
-              {/* Use the provided static logo PNG */}
-              <img
-                src="/images/logos/new_logo.png"
-                alt="Nlist logo"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain"
-                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/logos/logo.png'; }}
-              />
-          </button>
+          {/* Logo Section Removed from nav as requested */}
 
           {/* Navigation Links */}
           {!isDashboardPage && (
