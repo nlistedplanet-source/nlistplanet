@@ -1,24 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import useUserProfile from '../hooks/useUserProfile';
 
-// Helper functions for DOB format conversion
-const formatDobForDisplay = (isoDate) => {
-  if (!isoDate || typeof isoDate !== 'string') return '';
-  // Accept YYYY-MM-DD only
-  const parts = isoDate.split('-');
-  if (parts.length !== 3 || parts.some(p => !p)) return '';
-  const [year, month, day] = parts;
-  // If any part is not a number, return empty
-  if (isNaN(Number(day)) || isNaN(Number(month)) || isNaN(Number(year))) return '';
-  return `${day}-${month}-${year}`;
-};
-
-const formatDobForStorage = (ddmmyyyy) => {
-  if (!ddmmyyyy) return '';
-  const [day, month, year] = ddmmyyyy.split('-');
-  return `${year}-${month}-${day}`;
-};
-
 const PERSONAL_FIELDS = ['dob', 'gender', 'address', 'city', 'state', 'pincode'];
 const BANK_FIELDS = ['accountHolderName', 'bankName', 'accountNumber', 'ifsc', 'branchName', 'accountType'];
 const DEMAT_FIELDS = ['dpName', 'dpId', 'clientId', 'brokingHouse', 'tradingExperience'];
@@ -112,6 +94,22 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
       if (apiProfile.demat) setDematEditData(apiProfile.demat);
     }
   }, [apiProfile]);
+  
+  // Sync currentUser prop changes to formData (important for mobile number from signup)
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        ...currentUser,
+        mobile: currentUser.mobile || prev.mobile || '',
+        email: currentUser.email || prev.email || '',
+        personal: currentUser.personal || prev.personal || {},
+        bank: currentUser.bank || prev.bank || {},
+        demat: currentUser.demat || prev.demat || {},
+        documents: currentUser.documents || prev.documents || {}
+      }));
+    }
+  }, [currentUser]);
   
   const [editingEmail, setEditingEmail] = useState(false);
   const [editingMobile, setEditingMobile] = useState(false);
@@ -388,29 +386,8 @@ export default function UserProfileWithEditOptions({ currentUser = mockUser }) {
               <div className="space-y-4 sm:space-y-6 animate-fadeIn">
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth (DD-MM-YYYY)</label>
-                    <input 
-                      type="text" 
-                      placeholder="DD-MM-YYYY"
-                      value={formatDobForDisplay(formData.personal.dob)} 
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9-]/g, '');
-                        // Allow user to type, convert on blur or when complete
-                        if (val.length === 10 && val.match(/^\d{2}-\d{2}-\d{4}$/)) {
-                          updateSectionField('personal', 'dob', formatDobForStorage(val));
-                        } else {
-                          // Store intermediate input temporarily
-                          updateSectionField('personal', 'dob', val);
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (val.length === 10 && val.match(/^\d{2}-\d{2}-\d{4}$/)) {
-                          updateSectionField('personal', 'dob', formatDobForStorage(val));
-                        }
-                      }}
-                      className={inputClass} 
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                    <input type="date" value={formData.personal.dob} onChange={(e) => updateSectionField('personal', 'dob', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
