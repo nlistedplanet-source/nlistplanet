@@ -527,6 +527,58 @@ export default function UserDashboard({ setPage }) {
 		[buyRequests, user, requestBelongsToUser]
 	);
 
+	// My Bids data - bids placed by user on sell listings (marketplace buy posts)
+	const myBidsOnSellListings = useMemo(() => {
+		const bids = [];
+		sellListings.forEach(listing => {
+			if (listing.bids && listing.bids.length > 0) {
+				listing.bids.forEach(bid => {
+					// Check if this bid belongs to current user
+					if (bid.bidder === user.email || bid.bidderName === user.name || bid.bidderId === user._id || bid.bidderId === user.id) {
+						bids.push({
+							...bid,
+							listingId: listing._id || listing.id,
+							company: listing.company,
+							isin: listing.isin,
+							askingPrice: listing.price,
+							totalShares: listing.shares,
+							seller: listing.sellerName || listing.seller,
+							listingStatus: listing.status,
+							type: 'bid'
+						});
+					}
+				});
+			}
+		});
+		return bids;
+	}, [sellListings, user]);
+
+	// My Offers data - offers made by user on buy requests (marketplace sell posts)
+	const myOffersOnBuyRequests = useMemo(() => {
+		const offers = [];
+		buyRequests.forEach(request => {
+			if (request.offers && request.offers.length > 0) {
+				request.offers.forEach(offer => {
+					// Check if this offer belongs to current user
+					if (offer.seller === user.email || offer.sellerName === user.name || offer.sellerId === user._id || offer.sellerId === user.id) {
+						offers.push({
+							...offer,
+							requestId: request._id || request.id,
+							company: request.company,
+							isin: request.isin,
+							requestedPrice: request.price,
+							totalShares: request.shares,
+							buyer: request.buyerName || request.buyer,
+							requestStatus: request.status,
+							type: 'offer'
+						});
+					}
+				});
+			}
+		});
+		return offers;
+	}, [buyRequests, user]);
+
 	useEffect(() => {
 		if (!user) {
 			setPage('signin');
@@ -1807,58 +1859,6 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const renderMyBids = () => {
-		// Get all bids placed by the current user on sell listings (marketplace buy posts)
-		const myBidsOnSellListings = useMemo(() => {
-			const bids = [];
-			sellListings.forEach(listing => {
-				if (listing.bids && listing.bids.length > 0) {
-					listing.bids.forEach(bid => {
-						// Check if this bid belongs to current user
-						if (bid.bidder === user.email || bid.bidderName === user.name || bid.bidderId === user._id || bid.bidderId === user.id) {
-							bids.push({
-								...bid,
-								listingId: listing._id || listing.id,
-								company: listing.company,
-								isin: listing.isin,
-								askingPrice: listing.price,
-								totalShares: listing.shares,
-								seller: listing.sellerName || listing.seller,
-								listingStatus: listing.status,
-								type: 'bid'
-							});
-						}
-					});
-				}
-			});
-			return bids;
-		}, [sellListings, user]);
-
-		// Get all offers made by the current user on buy requests (marketplace sell posts)
-		const myOffersOnBuyRequests = useMemo(() => {
-			const offers = [];
-			buyRequests.forEach(request => {
-				if (request.offers && request.offers.length > 0) {
-					request.offers.forEach(offer => {
-						// Check if this offer belongs to current user
-						if (offer.seller === user.email || offer.sellerName === user.name || offer.sellerId === user._id || offer.sellerId === user.id) {
-							offers.push({
-								...offer,
-								requestId: request._id || request.id,
-								company: request.company,
-								isin: request.isin,
-								requestedPrice: request.price,
-								totalShares: request.shares,
-								buyer: request.buyerName || request.buyer,
-								requestStatus: request.status,
-								type: 'offer'
-							});
-						}
-					});
-				}
-			});
-			return offers;
-		}, [buyRequests, user]);
-
 		const getStatusMeta = (status) => {
 			const meta = {
 				pending: { icon: '⏳', label: 'Pending', color: 'text-amber-600 bg-amber-50 border-amber-200' },
