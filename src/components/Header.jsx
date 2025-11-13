@@ -39,10 +39,10 @@ export default function Header({ setPage, currentPage }) {
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16">
 
-          {/* Logo Section - new logo added, size increased 200% */}
+          {/* Logo Section - replaced with new logo file */}
           <div className="flex items-center gap-2">
             <img
-              src="/images/logos/list (1).png"
+              src="/images/logos/list__1_-removebg-preview.png"
               alt="NList Logo"
               className="h-24 w-auto object-contain"
               style={{ maxHeight: '96px' }}
