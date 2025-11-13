@@ -44,8 +44,8 @@ export default function Header({ setPage, currentPage }) {
             <img
               src="/images/logos/nlist_logo.svg"
               alt="NList Logo"
-              className="h-12 w-auto object-contain"
-              style={{ maxHeight: '48px' }}
+              className="h-24 w-auto object-contain"
+              style={{ maxHeight: '96px' }}
             />
           </div>
 
