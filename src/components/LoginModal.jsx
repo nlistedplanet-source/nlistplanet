@@ -222,7 +222,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
               placeholder="Enter your full name"
             />
-            <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
               👤 Full Name
             </label>
           </div>
@@ -237,7 +237,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
               placeholder="your.email@example.com"
             />
-            <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
               📧 Email Address
             </label>
           </div>
@@ -252,7 +252,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
               placeholder="Create a strong password"
             />
-            <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
               🔒 Password
             </label>
             <button
@@ -283,7 +283,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
               placeholder="9580118412"
             />
-            <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
               📱 Mobile Number
             </label>
           </div>
@@ -306,7 +306,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
                   className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
                   placeholder="your.email@example.com"
                 />
-                <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+                <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
                   📧 Registered Email
                 </label>
               </div>
@@ -321,7 +321,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
                   className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
                   placeholder="9580118412"
                 />
-                <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+                <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
                   📱 Registered Mobile
                 </label>
               </div>
@@ -339,24 +339,24 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
                   className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-center tracking-widest peer placeholder-transparent"
                   placeholder="000000"
                 />
-                <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+                <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
                   🔢 OTP
                 </label>
               </div>
 
               <div className="relative">
-                <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all z-10 bg-white px-1">
-                  🔒 New Password
-                </label>
                 <input
                   type={showNewPassword ? "text" : "password"}
                   name="newPassword"
                   value={forgotData.newPassword}
                   onChange={handleForgotChange}
                   required
-                  className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
                   placeholder="Enter new password"
                 />
+                <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
+                  🔒 New Password
+                </label>
                 <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
@@ -376,18 +376,18 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
               </div>
 
               <div className="relative">
-                <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all z-10 bg-white px-1">
-                  ✅ Confirm Password
-                </label>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   value={forgotData.confirmPassword}
                   onChange={handleForgotChange}
                   required
-                  className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
                   placeholder="Re-enter new password"
                 />
+                <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
+                  ✅ Confirm Password
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -423,7 +423,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
             className="w-full px-4 pt-6 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
             placeholder="your.email@example.com"
           />
-          <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+          <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
             📧 Email Address
           </label>
         </div>
@@ -438,7 +438,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
             className="w-full px-4 pt-6 pb-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition peer placeholder-transparent"
             placeholder="Enter your password"
           />
-          <label className="absolute left-4 top-2 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-600">
+          <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-purple-600 peer-focus:bg-white">
             🔒 Password
           </label>
             <button
