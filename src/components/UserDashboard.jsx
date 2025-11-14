@@ -1856,7 +1856,7 @@ export default function UserDashboard({ setPage }) {
 					)}
 				</div>
 			</div>			{browseFilter === 'sell' ? (
-				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+				<div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 					{filteredListings.length === 0 ? (
 						<div className="col-span-full">
 							<EmptyState
@@ -1947,7 +1947,7 @@ export default function UserDashboard({ setPage }) {
 											</button>
 											<button
 												onClick={() => handleShareListing(listing, company)}
-												className="flex items-center gap-1 border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
+												className="flex-1 flex items-center justify-center gap-1 border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded text-xs font-semibold transition"
 												title="Share"
 											>
 												<Share2 className="w-3.5 h-3.5" />
@@ -1961,7 +1961,7 @@ export default function UserDashboard({ setPage }) {
 					)}
 				</div>
 			) : (
-				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+				<div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 					{filteredRequests.length === 0 ? (
 						<div className="col-span-full">
 							<EmptyState
@@ -2070,7 +2070,7 @@ export default function UserDashboard({ setPage }) {
 															alert('Link copied!');
 														}
 													}}
-													className="flex items-center gap-1 border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
+													className="flex-1 flex items-center justify-center gap-1 border-2 border-orange-600 text-orange-600 hover:bg-orange-50 px-3 py-1.5 rounded text-xs font-semibold transition"
 													title="Share"
 												>
 													<Share2 className="w-3.5 h-3.5" />
