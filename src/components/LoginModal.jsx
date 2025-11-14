@@ -472,8 +472,14 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 relative z-[10000]">
+    <div 
+      className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 relative z-[10000]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
