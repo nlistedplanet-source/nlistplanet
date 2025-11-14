@@ -3172,7 +3172,7 @@ export default function UserDashboard({ setPage }) {
 	};
 
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-white flex">
+			<div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex">
 			<Notification
 				show={notification.show}
 				type={notification.type}
