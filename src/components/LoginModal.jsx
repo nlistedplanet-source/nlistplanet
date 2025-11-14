@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 
 const initialFormState = {
@@ -471,7 +472,7 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-[9999] p-4 overflow-y-auto"
       onClick={handleClose}
@@ -583,7 +584,8 @@ const LoginModal = ({ isOpen, onClose, setPage }) => {
           )}
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
