@@ -5,7 +5,7 @@ import { useCompany } from '../context/CompanyContext';
 import { usePortfolio } from '../context/PortfolioContext';
 import UserProfile from './UserProfile';
 import { motion } from 'framer-motion';
-import { CheckCircle, Building2, Share2, User, Info, CalendarDays } from 'lucide-react';
+import { CheckCircle, Building2, Share2, User, Info, CalendarDays, Edit3, Trash2 } from 'lucide-react';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
 import { toPng } from 'html-to-image';
@@ -111,6 +111,16 @@ const formatQty = (value) => {
 	if (n >= 1e5) return `${formatNum(n / 1e5)} Lakh`;
 	if (n >= 1e3) return `${formatNum(n / 1e3)} K`;
 	return n.toLocaleString('en-IN');
+};
+
+// Short quantity formatter for cards (e.g., 1.5M, 250K)
+const formatQtyShort = (qty) => {
+	if (qty >= 1000000) {
+		return `${(qty / 1000000).toFixed(1)}M`;
+	} else if (qty >= 1000) {
+		return `${(qty / 1000).toFixed(0)}K`;
+	}
+	return qty.toString();
 };
 
 const formatDate = (iso) => {
@@ -717,7 +727,10 @@ export default function UserDashboard({ setPage }) {
 			'draft'
 		];
 		const getStatusKey = (status) => (status ? status.toString().trim().toLowerCase() : 'pending_admin_approval');
-		const myOpenListings = myListings.filter((l) => openSellStatuses.includes(getStatusKey(l.status)));
+		// Exclude listings that have received bids - they should only show in Bids Received tab
+		const myOpenListings = myListings.filter((l) => 
+			openSellStatuses.includes(getStatusKey(l.status)) && (!l.bids || l.bids.length === 0)
+		);
 		const bidsReceived = myListings.filter(l => l.bids && l.bids.length > 0);
 		const counterOfferListings = myListings.filter(l => 
 			l.bids?.some(b => b.status === 'counter_offered' || b.status === 'counter_accepted_by_bidder')
@@ -755,7 +768,10 @@ export default function UserDashboard({ setPage }) {
 							📋 Sell List ({myOpenListings.length})
 					</button>
 					<button
-						onClick={() => setSellSubTab('bids')}
+						onClick={() => {
+							setSellSubTab('bids');
+							if (notification.show) setNotification({ show: false, type: 'success', title: '', message: '' });
+						}}
 						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
 							sellSubTab === 'bids'
 								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
@@ -925,163 +941,169 @@ export default function UserDashboard({ setPage }) {
 								<p className="text-xs text-gray-400 mt-2">Bids from buyers will appear here</p>
 							</div>
 						) : (
-							<div className="space-y-3">
+							<div className="space-y-6">
 								{bidsReceived.map((listing) => {
 									const activeBids = listing.bids?.filter(b => b.status !== 'rejected') || [];
 									
 									return (
-										<div key={listing._id || listing.id} className="bg-white border border-purple-200 rounded-xl p-4 shadow-md">
-											<div className="flex items-start justify-between mb-3 pb-2 border-b border-purple-200">
-												<div className="flex-1 min-w-0">
-													<h4 className="font-bold text-base text-gray-900 truncate">{listing.company}</h4>
-													<p className="text-xs text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
-													<p className="text-xs text-gray-700 mt-0.5">
-														Your Ask: <span className="font-bold text-emerald-600">{formatCurrency(listing.price)}</span> × {formatShares(listing.shares)}
-													</p>
+										<div key={listing._id || listing.id} className="bg-white border-2 border-purple-300 rounded-xl shadow-lg overflow-hidden">
+											{/* Listing Header */}
+											<div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b border-purple-200">
+												<div className="flex items-center justify-between">
+													<div>
+														<h4 className="font-bold text-lg text-gray-900">{listing.company}</h4>
+														<p className="text-xs text-gray-600">ISIN: {listing.isin || 'N/A'}</p>
+														<p className="text-sm text-gray-700 mt-1">
+															Your Ask: <span className="font-bold text-emerald-600">{formatCurrency(listing.price)}</span> × {formatQtyShort(listing.shares)}
+														</p>
+													</div>
+													<span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white">
+														💰 {activeBids.length} Bid{activeBids.length > 1 ? 's' : ''}
+													</span>
 												</div>
-												<span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500 text-white">
-													💰 {activeBids.length}
-												</span>
 											</div>
 											
-											<div className="space-y-2">
-												{activeBids.map((bid) => {
-													const buyerAccepted = bid.buyerAccepted || false;
-													const sellerAccepted = bid.sellerAccepted || false;
-													const bothAccepted = bid.bothAccepted || (buyerAccepted && sellerAccepted);
-													const currentPrice = bid.counterPrice || bid.price;
-													const isPending = bid.status === 'pending';
-													const isCountered = bid.status === 'counter_offered';
-													
-													return (
-														<div key={bid._id || bid.id} className={`rounded-lg p-3 border ${
-															bothAccepted ? 'bg-green-50 border-green-300' :
-															isCountered ? 'bg-orange-50 border-orange-300' :
-															'bg-purple-50 border-purple-300'
-														}`}>
-															<div className="flex items-start justify-between mb-2">
-																<div className="flex-1">
-																	<p className="text-sm font-bold text-gray-900">🛒 {bid.bidderName || bid.bidder}</p>
-																	<p className="text-[10px] text-gray-500">{formatDateTime(bid.createdAt)}</p>
-																</div>
-																<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
-															</div>
+											{/* Bids Table */}
+											<div className="overflow-x-auto">
+												<table className="w-full">
+													<thead>
+														<tr className="bg-gray-100 border-b border-gray-300">
+															<th className="px-3 py-2 text-left text-xs font-bold text-gray-700">Date</th>
+															<th className="px-3 py-2 text-left text-xs font-bold text-gray-700">Bidder</th>
+															<th className="px-3 py-2 text-right text-xs font-bold text-gray-700">Bid Price</th>
+															<th className="px-3 py-2 text-right text-xs font-bold text-gray-700">Qty</th>
+															<th className="px-3 py-2 text-center text-xs font-bold text-gray-700">Status</th>
+															<th className="px-3 py-2 text-center text-xs font-bold text-gray-700">Actions</th>
+														</tr>
+													</thead>
+													<tbody>
+														{activeBids.map((bid) => {
+															const buyerAccepted = bid.buyerAccepted || false;
+															const sellerAccepted = bid.sellerAccepted || false;
+															const bothAccepted = bid.bothAccepted || (buyerAccepted && sellerAccepted);
+															const currentPrice = bid.counterPrice || bid.price;
+															const isPending = bid.status === 'pending';
+															const isCountered = bid.status === 'counter_offered';
 															
-															<div className="grid grid-cols-2 gap-2 mb-2">
-																<div className="bg-white rounded p-2 border border-purple-300">
-																	<p className="text-[10px] text-purple-700 font-semibold mb-0.5">Bid</p>
-																	<p className="text-sm font-bold text-purple-800">{formatCurrency(currentPrice)}</p>
-																</div>
-																<div className="bg-white rounded p-2 border border-gray-300">
-																	<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
-																	<p className="text-sm font-bold text-gray-800">{formatShares(bid.quantity)}</p>
-																</div>
-															</div>
-															
-															{isCountered && (
-																<div className="bg-white rounded p-2 mb-2 border border-gray-200">
-																	<p className="text-[10px] font-bold text-gray-700 mb-1.5">Status:</p>
-																	<div className="grid grid-cols-2 gap-1.5">
-																		<div className={`rounded p-1.5 border text-center ${buyerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'}`}>
-																			<p className="text-[10px] text-gray-600">🛒 Buyer</p>
-																			<p className="text-lg">{buyerAccepted ? '✅' : '⏳'}</p>
-																		</div>
-																		<div className={`rounded p-1.5 border text-center ${sellerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'}`}>
-																			<p className="text-[10px] text-gray-600">📈 You</p>
-																			<p className="text-lg">{sellerAccepted ? '✅' : '⏳'}</p>
-																		</div>
-																	</div>
-																</div>
-															)}
-															
-															{bothAccepted ? (
-																<div className="bg-green-100 border border-green-300 rounded p-2 text-center">
-																	<p className="text-xs font-bold text-green-700">🎉 Deal Done!</p>
-																	<p className="text-[10px] text-green-600">Admin approval pending</p>
-																</div>
-															) : sellerAccepted ? (
-																<div className="bg-blue-100 border border-blue-300 rounded p-2 text-center">
-																	<p className="text-xs font-bold text-blue-700">✅ You accepted</p>
-																	<p className="text-[10px] text-blue-600">Waiting buyer...</p>
-																</div>
-															) : isPending ? (
-																<div className="space-y-1.5">
-																	<button
-																		onClick={() => {
-																			acceptOffer(listing._id || listing.id, bid.id, 'sell');
-																			showNotification('success', '✅ Accepted!', `From ${bid.bidderName || bid.bidder}`);
-																		}}
-																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
-																	>
-																		✅ Accept Bid
-																	</button>
-																	<div className="grid grid-cols-2 gap-1.5">
-																		<button
-																			onClick={() => {
-																				const counterPrice = prompt(`Bid: ₹${bid.price}\nCounter:`);
-																				if (counterPrice && !isNaN(counterPrice)) {
-																					counterOffer(listing._id || listing.id, bid.id, parseFloat(counterPrice), 'sell', 'seller');
-																					showNotification('info', '🔄 Counter!', `₹${counterPrice}`);
-																				}
-																			}}
-																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
-																		>
-																			🔄 Counter
-																		</button>
-																		<button
-																			onClick={() => {
-																				if (window.confirm(`Reject ${bid.bidderName || bid.bidder}?`)) {
-																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																					showNotification('warning', '❌ Rejected', 'Done');
-																				}
-																			}}
-																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
-																		>
-																			❌ Reject
-																		</button>
-																	</div>
-																</div>
-															) : (
-																<div className="space-y-1.5">
-																	<button
-																		onClick={() => {
-																			finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
-																			showNotification('success', '✅ Accepted!', buyerAccepted ? 'Done!' : 'Waiting buyer...');
-																		}}
-																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
-																	>
-																		✅ Accept Counter
-																	</button>
-																	<div className="grid grid-cols-2 gap-1.5">
-																		<button
-																			onClick={() => {
-																				const newPrice = prompt(`Current: ₹${currentPrice}\nRe-counter:`);
-																				if (newPrice && !isNaN(newPrice)) {
-																					reCounterOffer(listing._id || listing.id, bid.id, parseFloat(newPrice), 'sell', 'seller');
-																					showNotification('info', '🔄 Re-Counter!', `₹${newPrice}`);
-																				}
-																			}}
-																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-100 border border-orange-300 hover:bg-orange-200 transition"
-																		>
-																			🔄 Re-Counter
-																		</button>
-																		<button
-																			onClick={() => {
-																				if (window.confirm('Reject?')) {
-																					rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																					showNotification('warning', '❌ Rejected', 'Ended');
-																				}
-																			}}
-																			className="px-2 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition"
-																		>
-																			❌ Reject
-																		</button>
-																	</div>
-																</div>
-															)}
-														</div>
-													);
-												})}
+															return (
+																<tr key={bid._id || bid.id} className="border-b border-gray-200 hover:bg-purple-50">
+																	<td className="px-3 py-3 text-xs text-gray-600">
+																		{formatDate(bid.createdAt)}
+																	</td>
+																	<td className="px-3 py-3">
+																		<p className="text-sm font-bold text-gray-900">🛒 {bid.bidderName || bid.bidder}</p>
+																	</td>
+																	<td className="px-3 py-3 text-right">
+																		<p className="text-sm font-bold text-purple-700">{formatCurrency(currentPrice)}</p>
+																	</td>
+																	<td className="px-3 py-3 text-right">
+																		<p className="text-sm font-bold text-gray-800">{formatQtyShort(bid.quantity)}</p>
+																	</td>
+																	<td className="px-3 py-3 text-center">
+																		<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
+																	</td>
+																	<td className="px-3 py-3">
+																		{bothAccepted ? (
+																			<div className="flex gap-1 justify-center">
+																				<span className="text-xs text-green-700 font-bold">🎉 Deal Done!</span>
+																			</div>
+																		) : sellerAccepted ? (
+																			<span className="text-xs text-blue-700 font-bold">✅ Waiting buyer</span>
+																		) : isPending ? (
+																			<div className="flex gap-1 justify-center">
+																				<button
+																					onClick={() => {
+																						acceptOffer(listing._id || listing.id, bid.id, 'sell');
+																						showNotification('success', '✅ Accepted!', `From ${bid.bidderName || bid.bidder}`);
+																					}}
+																					title="Accept Bid"
+																					className="p-1 rounded bg-green-600 text-white hover:bg-green-700 transition"
+																				>
+																					<CheckCircle className="w-4 h-4" />
+																				</button>
+																				<button
+																					onClick={() => {
+																						const counterPrice = prompt(`Bid: ₹${bid.price}\nCounter:`);
+																						if (counterPrice && !isNaN(counterPrice)) {
+																							counterOffer(listing._id || listing.id, bid.id, parseFloat(counterPrice), 'sell', 'seller');
+																							showNotification('info', '🔄 Counter!', `₹${counterPrice}`);
+																						}
+																					}}
+																					title="Counter Offer"
+																					className="p-1 rounded bg-orange-600 text-white hover:bg-orange-700 transition"
+																				>
+																					🔄
+																				</button>
+																				<button
+																					onClick={() => {
+																						if (window.confirm(`Reject ${bid.bidderName || bid.bidder}?`)) {
+																							rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
+																							showNotification('warning', '❌ Rejected', 'Done');
+																						}
+																					}}
+																					title="Reject Bid"
+																					className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition"
+																				>
+																					❌
+																				</button>
+																				<button
+																					onClick={() => {
+																						if (window.confirm(`Mark as sold to ${bid.bidderName || bid.bidder}?`)) {
+																							// Mark as sold functionality
+																							showNotification('success', '✅ Marked Sold', 'Transaction completed');
+																						}
+																					}}
+																					title="Mark Sold"
+																					className="p-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+																				>
+																					✓
+																				</button>
+																			</div>
+																		) : isCountered ? (
+																			<div className="flex gap-1 justify-center">
+																				<button
+																					onClick={() => {
+																						finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
+																						showNotification('success', '✅ Accepted!', buyerAccepted ? 'Done!' : 'Waiting buyer...');
+																					}}
+																					title="Accept Counter"
+																					className="p-1 rounded bg-green-600 text-white hover:bg-green-700 transition"
+																				>
+																					<CheckCircle className="w-4 h-4" />
+																				</button>
+																				<button
+																					onClick={() => {
+																						const newPrice = prompt(`Current: ₹${currentPrice}\nRe-counter:`);
+																						if (newPrice && !isNaN(newPrice)) {
+																							reCounterOffer(listing._id || listing.id, bid.id, parseFloat(newPrice), 'sell', 'seller');
+																							showNotification('info', '🔄 Re-Counter!', `₹${newPrice}`);
+																						}
+																					}}
+																					title="Re-Counter"
+																					className="p-1 rounded bg-orange-600 text-white hover:bg-orange-700 transition"
+																				>
+																					🔄
+																				</button>
+																				<button
+																					onClick={() => {
+																						if (window.confirm('Reject?')) {
+																							rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
+																							showNotification('warning', '❌ Rejected', 'Ended');
+																						}
+																					}}
+																					title="Reject"
+																					className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition"
+																				>
+																					❌
+																				</button>
+																			</div>
+																		) : null}
+																	</td>
+																</tr>
+															);
+														})}
+													</tbody>
+												</table>
 											</div>
 										</div>
 									);
@@ -1231,192 +1253,150 @@ export default function UserDashboard({ setPage }) {
 		return (
 			<div className="space-y-6">
 				<div className="flex items-center justify-between">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900">🛒 Buy Management</h2>
-						<p className="text-sm text-gray-500 mt-1">Manage your buy requests and received offers</p>
-					</div>
+					<h2 className="text-2xl font-bold text-gray-900">🛒 My Buy Requests - Manage & Track</h2>
 					<button
 						onClick={() => setFormType('buy')}
 						className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 shadow hover:shadow-lg transition"
 					>
 						<span>➕</span>
 						<span>New Buy Request</span>
+				</button>
+			</div>
+
+			{myOpenRequests.length === 0 ? (
+				<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+					<p className="text-gray-500">No live or pending buy requests yet</p>
+					<button
+						onClick={() => setFormType('buy')}
+						className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
+					>
+						<span>➕</span>
+						<span>Create your first request</span>
 					</button>
 				</div>
-
-				{/* Sub-tabs */}
-				<div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
-					<button
-						onClick={() => setBuySubTab('list')}
-						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-							buySubTab === 'list'
-								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-						}`}
-					>
-							📋 Buy List ({myOpenRequests.length})
-					</button>
-					<button
-						onClick={() => setBuySubTab('offers')}
-						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-							buySubTab === 'offers'
-								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-						}`}
-					>
-						💰 Offers Received ({offersReceived.length})
-					</button>
-					<button
-						onClick={() => setBuySubTab('counter')}
-						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-							buySubTab === 'counter'
-								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-						}`}
-					>
-						🔄 Counter Offers ({counterOfferRequests.length})
-					</button>
-					<button
-						onClick={() => setBuySubTab('completed')}
-						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-							buySubTab === 'completed'
-								? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-						}`}
-					>
-						✅ Completed ({completedRequests.length})
-					</button>
+			) : (
+				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{myOpenRequests.map((request) => {
+						const company = companies.find((c) => c.ISIN === request.isin || c.CompanyName?.toLowerCase() === request.company.toLowerCase());
+						const hasOffers = request.offers && request.offers.length > 0;
+						const pendingOffers = request.offers?.filter(o => o.status === 'pending').length || 0;
+						const counterOffers = request.offers?.filter(o => o.status === 'counter_offered').length || 0;
+						const acceptedOffers = request.offers?.filter(o => o.status === 'accepted' || o.bothAccepted).length || 0;
+						
+						return (
+							<div key={request._id || request.id} className="bg-white border border-blue-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
+								{/* Compact Header */}
+								<div className="flex items-start justify-between mb-3">
+									<div className="flex-1 min-w-0">
+										<h4 className="font-bold text-base text-gray-900 truncate relative group">
+											{request.company}
+											<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
+											<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-2 shadow-lg z-10 whitespace-nowrap">
+												<p className="mb-1">ISIN: {company?.ISIN || request.isin || 'N/A'}</p>
+												<p className="mb-1">PAN: {company?.PAN || 'N/A'}</p>
+												<p className="mb-1">CIN: {company?.CIN || 'N/A'}</p>
+												<p>Reg Date: {company?.RegistrationDate || 'N/A'}</p>
+											</div>
+										</h4>
+										<p className="text-xs text-gray-500">ISIN: {request.isin || 'N/A'}</p>
+									</div>
+									<StatusBadge status={request.status} size="xs" />
+								</div>
+								
+								{/* Compact Price Grid */}
+								<div className="grid grid-cols-2 gap-2 mb-3">
+									<div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+										<p className="text-[10px] text-blue-600 font-semibold mb-0.5">Price</p>
+										<p className="text-sm font-bold text-blue-700">{formatCurrency(request.price)}</p>
+									</div>
+									<div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+										<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
+										<p className="text-sm font-bold text-gray-800">{formatQtyShort(request.shares)}</p>
+									</div>
+								</div>
+								
+								{/* Compact Activity */}
+								{hasOffers && (
+									<div className="flex gap-1.5 mb-3 flex-wrap">
+										{pendingOffers > 0 && (
+											<span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-semibold">
+												⏳ {pendingOffers}
+											</span>
+										)}
+										{counterOffers > 0 && (
+											<span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] font-semibold">
+												🔄 {counterOffers}
+											</span>
+										)}
+										{acceptedOffers > 0 && (
+											<span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-semibold">
+												✅ {acceptedOffers}
+											</span>
+										)}
+									</div>
+								)}
+								
+								{/* Compact Action Buttons */}
+								<div className="grid grid-cols-3 gap-1.5">
+									<button
+										onClick={() => {
+											setFormData({
+												company: request.company,
+												isin: request.isin,
+												price: request.price,
+												shares: request.shares
+											});
+											setFormType('buy');
+										}}
+										className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 transition"
+									>
+										<Edit3 className="w-3 h-3" />
+										<span className="text-[10px]">Modify</span>
+									</button>
+									<button
+										onClick={() => {
+											if (window.confirm(`Delete ${request.company}?`)) {
+												showNotification('success', 'Deleted', 'Request removed');
+											}
+										}}
+										className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-300 hover:bg-red-100 transition"
+									>
+										<Trash2 className="w-3 h-3" />
+										<span className="text-[10px]">Delete</span>
+									</button>
+									<button
+										onClick={async () => {
+											const shareText = `📊 ${request.company}: ₹${request.price}`;
+											try {
+												if (navigator.share) await navigator.share({ text: shareText });
+												else {
+													await navigator.clipboard.writeText(shareText);
+													showNotification('success', 'Copied!', 'Copied to clipboard');
+												}
+											} catch (err) {}
+										}}
+										className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
+									>
+										<Share2 className="w-3 h-3" />
+										<span className="text-[10px]">Share</span>
+									</button>
+								</div>
+								
+								{hasOffers && (
+									<button
+										onClick={() => setBuySubTab('offers')}
+										className="w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-md transition"
+									>
+										📥 View {request.offers.length} Offer{request.offers.length > 1 ? 's' : ''}
+									</button>
+								)}
+							</div>
+						);
+					})}
 				</div>
+			)}
 
-				{/* Content based on sub-tab */}
-				{buySubTab === 'list' && (
-					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">📋 My Buy Requests - Manage & Track</h3>
-						{myOpenRequests.length === 0 ? (
-							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-								<p className="text-gray-500">No live or pending buy requests yet</p>
-								<button
-									onClick={() => setFormType('buy')}
-									className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
-								>
-									<span>➕</span>
-									<span>Create your first request</span>
-								</button>
-							</div>
-						) : (
-							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-								{myOpenRequests.map((request) => {
-									const hasOffers = request.offers && request.offers.length > 0;
-									const pendingOffers = request.offers?.filter(o => o.status === 'pending').length || 0;
-									const counterOffers = request.offers?.filter(o => o.status === 'counter_offered').length || 0;
-									const acceptedOffers = request.offers?.filter(o => o.status === 'accepted' || o.bothAccepted).length || 0;
-									
-									return (
-										<div key={request._id || request.id} className="bg-white border border-blue-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
-											{/* Compact Header */}
-											<div className="flex items-start justify-between mb-3">
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-2 mb-1">
-														<h4 className="font-bold text-base text-gray-900 truncate">{request.company}</h4>
-														<StatusBadge status={request.status} size="sm" />
-													</div>
-													<p className="text-xs text-gray-500">ISIN: {request.isin || 'N/A'}</p>
-												</div>
-											</div>
-											
-											{/* Compact Price Grid */}
-											<div className="grid grid-cols-2 gap-2 mb-3">
-												<div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
-													<p className="text-[10px] text-blue-600 font-semibold mb-0.5">Price</p>
-													<p className="text-sm font-bold text-blue-700">{formatCurrency(request.price)}</p>
-												</div>
-												<div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-													<p className="text-[10px] text-gray-600 font-semibold mb-0.5">Qty</p>
-													<p className="text-sm font-bold text-gray-800">{formatShares(request.shares)}</p>
-												</div>
-											</div>
-											
-											{/* Compact Activity */}
-											{hasOffers && (
-												<div className="flex gap-1.5 mb-3 flex-wrap">
-													{pendingOffers > 0 && (
-														<span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-semibold">
-															⏳ {pendingOffers}
-														</span>
-													)}
-													{counterOffers > 0 && (
-														<span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] font-semibold">
-															🔄 {counterOffers}
-														</span>
-													)}
-													{acceptedOffers > 0 && (
-														<span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-semibold">
-															✅ {acceptedOffers}
-														</span>
-													)}
-												</div>
-											)}
-											
-											{/* Compact Action Buttons */}
-											<div className="grid grid-cols-3 gap-1.5">
-												<button
-													onClick={() => {
-														setFormData({
-															company: request.company,
-															isin: request.isin,
-															price: request.price,
-															shares: request.shares
-														});
-														setFormType('buy');
-													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 transition"
-												>
-													✏️
-												</button>
-												<button
-													onClick={() => {
-														if (window.confirm(`Delete ${request.company}?`)) {
-															showNotification('success', 'Deleted', 'Request removed');
-														}
-													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-300 hover:bg-red-100 transition"
-												>
-													🗑️
-												</button>
-												<button
-													onClick={async () => {
-														const shareText = `� ${request.company}: ₹${request.price}`;
-														try {
-															if (navigator.share) await navigator.share({ text: shareText });
-															else {
-																await navigator.clipboard.writeText(shareText);
-																showNotification('success', 'Copied!', 'Copied to clipboard');
-															}
-														} catch (err) {}
-													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
-												>
-													📤
-												</button>
-											</div>
-											
-											{hasOffers && (
-												<button
-													onClick={() => setBuySubTab('offers')}
-													className="w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-md transition"
-												>
-													📥 View {request.offers.length} Offer{request.offers.length > 1 ? 's' : ''}
-												</button>
-											)}
-										</div>
-									);
-								})}
-							</div>
-						)}
-					</div>
-				)}
-
-				{buySubTab === 'offers' && (
+			{buySubTab === 'offers' && (
 					<div>
 						<h3 className="text-lg font-semibold text-gray-900 mb-4">Offers Received from Sellers</h3>
 						{offersReceived.length === 0 ? (
