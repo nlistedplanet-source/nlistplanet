@@ -1874,49 +1874,53 @@ export default function UserDashboard({ setPage }) {
 							const sellerUsername = listing.userId?.username || listing.sellerName || 'Unknown';
 							const listingDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
 							
-							return (
-								<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
-									{/* Green accent bar */}
-									<div className="h-1.5 bg-green-500"></div>
-									
-									<div className="p-3">
-										{/* Date and BUY tag on same line */}
-										<div className="flex items-center justify-between mb-2">
-											<div className="flex items-center gap-1 text-gray-500 text-[10px]">
-												<span>📅</span>
-												<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-											</div>
-											<span className="bg-green-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+					return (
+						<div key={listing.id || listing._id} className="bg-white border border-green-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 overflow-hidden">
+							{/* Green accent bar */}
+							<div className="h-1.5 bg-green-500"></div>
+							
+							<div className="p-3">
+								{/* Date and BUY tag on same line */}
+								<div className="flex items-center justify-between mb-2">
+									<div className="flex items-center gap-1 text-gray-500 text-[10px]">
+										<span>📅</span>
+										<span>{listingDate || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+									</div>
+									<span className="bg-green-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+								</div>
+								
+								{/* Company name with logo */}
+								<div className="flex items-center gap-2 mb-2">
+									<div className="w-8 h-8 rounded bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center flex-shrink-0 border border-green-200 overflow-hidden">
+										{company?.Logo ? (
+											<img src={company.Logo} alt={listing.company} className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+										) : null}
+										<span className="text-sm font-bold text-green-600" style={{ display: company?.Logo ? 'none' : 'flex' }}>{listing.company.charAt(0)}</span>
+									</div>
+									<div className="flex-1 min-w-0">
+										<div className="flex items-center gap-1">
+											<h3 className="text-sm font-bold text-gray-800 truncate relative group">
+												{listing.company}
+												<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
+												<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-2 shadow-lg z-10 whitespace-nowrap">
+													<p className="mb-1">ISIN: {company?.ISIN || listing.isin || 'N/A'}</p>
+													<p className="mb-1">PAN: {company?.PAN || 'N/A'}</p>
+													<p className="mb-1">CIN: {company?.CIN || 'N/A'}</p>
+													<p>Reg Date: {company?.RegistrationDate || 'N/A'}</p>
+												</div>
+											</h3>
 										</div>
-										
-										{/* Company name with logo */}
-										<div className="flex items-center gap-2 mb-2">
-											<div className="w-8 h-8 rounded bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center flex-shrink-0 border border-green-200">
-												<span className="text-sm font-bold text-green-600">{listing.company.charAt(0)}</span>
-											</div>
-											<div className="flex-1 min-w-0">
-												<div className="flex items-center gap-1">
-													<h3 className="text-sm font-bold text-gray-800 truncate relative group">
-														{listing.company}
-														<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
-														<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-1.5 shadow-lg z-10 whitespace-nowrap">
-															<p>ISIN: {listing.isin || 'N/A'}</p>
-														</div>
-													</h3>
-												</div>
-												<div className="flex items-center gap-1 text-gray-500">
-													<Building2 className="w-3 h-3 text-green-600" />
-													<span className="text-[10px] truncate">{company?.sector || 'Financial Services'}</span>
-												</div>
-												<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
-													<User className="w-3 h-3 text-gray-400" />
-													<span className="truncate">@{sellerUsername}</span>
-													<CheckCircle className="w-3 h-3 text-green-600" />
-												</div>
-											</div>
+										<div className="flex items-center gap-1 text-gray-500">
+											<Building2 className="w-3 h-3 text-green-600" />
+											<span className="text-[10px] truncate">{company?.Sector || company?.sector || 'Financial Services'}</span>
 										</div>
-										
-										{/* Price and Quantity */}
+										<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
+											<User className="w-3 h-3 text-gray-400" />
+											<span className="truncate">{sellerUsername}</span>
+											<CheckCircle className="w-3 h-3 text-green-600" />
+										</div>
+									</div>
+								</div>										{/* Price and Quantity */}
 										<div className="bg-green-50 rounded p-2 mb-2">
 											<div className="grid grid-cols-2 gap-2">
 												<div>
@@ -1930,7 +1934,7 @@ export default function UserDashboard({ setPage }) {
 											</div>
 										</div>
 										
-										{/* Action buttons - removed download */}
+										{/* Action buttons */}
 										<div className="flex items-center gap-2">
 											<button
 												onClick={() => {
@@ -1942,17 +1946,12 @@ export default function UserDashboard({ setPage }) {
 												{myBid ? 'Update' : 'Bid'}
 											</button>
 											<button
-												onClick={() => setSelectedItem({ item: listing, type: 'sell' })}
-												className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
-											>
-												Details
-											</button>
-											<button
 												onClick={() => handleShareListing(listing, company)}
-												className="text-gray-500 hover:text-gray-700 transition p-1"
+												className="flex items-center gap-1 border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
 												title="Share"
 											>
-												<Share2 className="w-4 h-4" />
+												<Share2 className="w-3.5 h-3.5" />
+												<span>Share</span>
 											</button>
 										</div>
 								</div>
@@ -2001,34 +2000,38 @@ export default function UserDashboard({ setPage }) {
 												<span className="bg-orange-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">SELL</span>
 											</div>
 											
-											{/* Company logo and info */}
-											<div className="flex items-center gap-2 mb-2">
-												<div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200">
-													<span className="text-sm font-bold text-orange-600">{request.company.charAt(0)}</span>
-												</div>
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-1">
-														<h3 className="text-sm font-bold text-gray-800 truncate relative group">
-															{request.company}
-															<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
-															<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-1.5 shadow-lg z-10 whitespace-nowrap">
-																<p>ISIN: {request.isin || 'N/A'}</p>
-															</div>
-														</h3>
-													</div>
-													<div className="flex items-center gap-1 text-gray-500">
-														<Building2 className="w-3 h-3 text-orange-600" />
-														<span className="text-[10px] truncate">{company?.sector || 'Financial Services'}</span>
-													</div>
-													<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
-														<User className="w-3 h-3 text-gray-400" />
-														<span className="truncate">{buyerUsername}</span>
-														<CheckCircle className="w-3 h-3 text-orange-600" />
-													</div>
-												</div>
+							{/* Company logo and info */}
+							<div className="flex items-center gap-2 mb-2">
+								<div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200 overflow-hidden">
+									{company?.Logo ? (
+										<img src={company.Logo} alt={request.company} className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+									) : null}
+									<span className="text-sm font-bold text-orange-600" style={{ display: company?.Logo ? 'none' : 'flex' }}>{request.company.charAt(0)}</span>
+								</div>
+								<div className="flex-1 min-w-0">
+									<div className="flex items-center gap-1">
+										<h3 className="text-sm font-bold text-gray-800 truncate relative group">
+											{request.company}
+											<Info className="w-3 h-3 text-gray-400 cursor-pointer inline ml-1" />
+											<div className="absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-800 text-white text-[10px] rounded p-2 shadow-lg z-10 whitespace-nowrap">
+												<p className="mb-1">ISIN: {company?.ISIN || request.isin || 'N/A'}</p>
+												<p className="mb-1">PAN: {company?.PAN || 'N/A'}</p>
+												<p className="mb-1">CIN: {company?.CIN || 'N/A'}</p>
+												<p>Reg Date: {company?.RegistrationDate || 'N/A'}</p>
 											</div>
-											
-											{/* Price and Quantity */}
+										</h3>
+									</div>
+									<div className="flex items-center gap-1 text-gray-500">
+										<Building2 className="w-3 h-3 text-orange-600" />
+										<span className="text-[10px] truncate">{company?.Sector || company?.sector || 'Financial Services'}</span>
+									</div>
+									<div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
+										<User className="w-3 h-3 text-gray-400" />
+										<span className="truncate">{buyerUsername}</span>
+										<CheckCircle className="w-3 h-3 text-orange-600" />
+									</div>
+								</div>
+							</div>											{/* Price and Quantity */}
 											<div className="bg-yellow-50 rounded p-2 mb-2">
 												<div className="grid grid-cols-2 gap-2">
 													<div>
@@ -2054,12 +2057,6 @@ export default function UserDashboard({ setPage }) {
 													{myOffer ? 'Update' : 'Offer'}
 												</button>
 												<button
-													onClick={() => setSelectedItem({ item: request, type: 'buy' })}
-													className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
-												>
-													Details
-												</button>
-												<button
 													onClick={() => {
 														const shareText = `Check out this ${request.company} unlisted share post on Nlist Planet!`;
 														if (navigator.share) {
@@ -2073,9 +2070,11 @@ export default function UserDashboard({ setPage }) {
 															alert('Link copied!');
 														}
 													}}
-													className="text-gray-500 hover:text-gray-700 transition p-1"
+													className="flex items-center gap-1 border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1.5 rounded text-xs transition"
+													title="Share"
 												>
-													<Share2 className="w-4 h-4" />
+													<Share2 className="w-3.5 h-3.5" />
+													<span>Share</span>
 												</button>
 											</div>
 										</div>
