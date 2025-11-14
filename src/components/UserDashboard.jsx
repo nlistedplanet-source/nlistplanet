@@ -80,28 +80,6 @@ const EmptyState = ({ icon = '?', title, description, actionLabel, onAction }) =
 	</div>
 );
 
-const SectionHeader = ({ title, subtitle, actionLabel, onAction, actionTone = 'primary' }) => (
-	<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-		<div>
-			<h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-			{subtitle && <p className="text-sm text-gray-500 mt-1 max-w-2xl">{subtitle}</p>}
-		</div>
-		{actionLabel && onAction && (
-			<button
-				onClick={onAction}
-				className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
-					actionTone === 'secondary'
-						? 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-						: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow hover:shadow-lg'
-				}`}
-			>
-				<span>?</span>
-				<span>{actionLabel}</span>
-			</button>
-		)}
-	</div>
-);
-
 const formatCurrency = (value) => {
 	const numeric = Number(value);
 	if (!Number.isFinite(numeric)) return `?${value}`;
@@ -189,7 +167,6 @@ export default function UserDashboard({ setPage }) {
 	
 	// Search and filter states
 	const [searchQuery, setSearchQuery] = useState('');
-	const [selectedIndustries, setSelectedIndustries] = useState([]);
 	
 	// Portfolio section states
 	const [editingPrice, setEditingPrice] = useState(null);
@@ -1818,46 +1795,49 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const renderBrowse = () => {
-		// Get all unique industries from companies
-		const allIndustries = [...new Set(companies.map(c => c.Sector || c.sector).filter(Boolean))].sort();
-		
 		// Filter function
-		const filterListings = (items) => {
-			return items.filter(item => {
-				// Search filter (company name or username)
-				const searchLower = searchQuery.toLowerCase();
-				const companyMatch = item.company?.toLowerCase().includes(searchLower);
-				const usernameMatch = (item.userId?.username || item.sellerName || item.buyerName || '')
-					.toLowerCase().includes(searchLower);
-				const searchMatch = !searchQuery || companyMatch || usernameMatch;
-				
-				// Industry filter
-				const company = companies.find(c => 
-					c.ISIN === item.isin || 
-					c.CompanyName?.toLowerCase() === item.company?.toLowerCase() ||
-					c.ScripName?.toLowerCase() === item.company?.toLowerCase()
-				);
-				const itemIndustry = company?.Sector || company?.sector;
-				const industryMatch = selectedIndustries.length === 0 || 
-					selectedIndustries.includes(itemIndustry);
-				
-				return searchMatch && industryMatch;
-			});
-		};
-		
-		const filteredListings = filterListings(availableListings);
+	const filterListings = (items) => {
+		return items.filter(item => {
+			// Search filter (company name or username)
+			const searchLower = searchQuery.toLowerCase();
+			const companyMatch = item.company?.toLowerCase().includes(searchLower);
+			const usernameMatch = (item.userId?.username || item.sellerName || item.buyerName || '')
+				.toLowerCase().includes(searchLower);
+			return !searchQuery || companyMatch || usernameMatch;
+		});
+	};		const filteredListings = filterListings(availableListings);
 		const filteredRequests = filterListings(availableRequests);
 		
 		return (
 		<div className="space-y-8">
-			<SectionHeader
-				title="Explore Marketplace"
-				subtitle="Discover fresh opportunities and respond instantly with bids or offers."
-			/>
-			
 			{/* Search and Filter Section */}
-			<div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
-				{/* Search Box */}
+			<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
+			<button
+				onClick={() => setBrowseFilter('sell')}
+				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+					browseFilter === 'sell'
+						? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow'
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+				}`}
+			>
+				<span>📋</span>
+				<span>Bid for Buy</span>
+			</button>
+			<button
+				onClick={() => setBrowseFilter('buy')}
+				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+					browseFilter === 'buy'
+						? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow'
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+				}`}
+			>
+				<span>🛒</span>
+				<span>Offer to Sell</span>
+			</button>
+		</div>
+			
+			{/* Search Box */}
+			<div className="bg-white border border-gray-200 rounded-2xl p-4">
 				<div className="relative">
 					<input
 						type="text"
@@ -1875,75 +1855,16 @@ export default function UserDashboard({ setPage }) {
 						</button>
 					)}
 				</div>
-				
-				{/* Industry Filter */}
-				<div>
-					<p className="text-xs font-semibold text-gray-600 mb-2">Filter by Industry:</p>
-					<div className="flex flex-wrap gap-2">
-						{allIndustries.map(industry => (
-							<button
-								key={industry}
-								onClick={() => {
-									setSelectedIndustries(prev => 
-										prev.includes(industry)
-											? prev.filter(i => i !== industry)
-											: [...prev, industry]
-									);
-								}}
-								className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-									selectedIndustries.includes(industry)
-										? 'bg-blue-600 text-white'
-										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-								}`}
-							>
-								{industry}
-							</button>
-						))}
-						{selectedIndustries.length > 0 && (
-							<button
-								onClick={() => setSelectedIndustries([])}
-								className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200"
-							>
-								Clear All ✕
-							</button>
-						)}
-					</div>
-				</div>
-			</div>
-			
-		<div className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white rounded-2xl p-3">
-			<button
-				onClick={() => setBrowseFilter('sell')}
-				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
-					browseFilter === 'sell'
-						? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow'
-						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-				}`}
-			>
-				<span>📋</span>
-				<span>Available Listings</span>
-			</button>
-			<button
-				onClick={() => setBrowseFilter('buy')}
-				className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
-					browseFilter === 'buy'
-						? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow'
-						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-				}`}
-			>
-				<span>🛒</span>
-				<span>Open Buy Requests</span>
-			</button>
-		</div>			{browseFilter === 'sell' ? (
+			</div>			{browseFilter === 'sell' ? (
 				<div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 					{filteredListings.length === 0 ? (
 						<div className="col-span-full">
 							<EmptyState
 								icon="🔍"
-								title={searchQuery || selectedIndustries.length > 0 ? "No matching listings" : "No active listings from others"}
-								description={searchQuery || selectedIndustries.length > 0 ? "Try adjusting your filters" : "Check back soon or post a buy request to let sellers know what you need."}
-								actionLabel={searchQuery || selectedIndustries.length > 0 ? null : "Post buy request"}
-								onAction={searchQuery || selectedIndustries.length > 0 ? null : () => setFormType('buy')}
+								title={searchQuery ? "No matching listings" : "No active listings from others"}
+								description={searchQuery ? "Try a different search term" : "Check back soon or post a buy request to let sellers know what you need."}
+								actionLabel={searchQuery ? null : "Post buy request"}
+								onAction={searchQuery ? null : () => setFormType('buy')}
 							/>
 						</div>
 					) : (
@@ -2046,10 +1967,10 @@ export default function UserDashboard({ setPage }) {
 						<div className="col-span-full">
 							<EmptyState
 								icon="🔍"
-								title={searchQuery || selectedIndustries.length > 0 ? "No matching requests" : "No open requests from others"}
-								description={searchQuery || selectedIndustries.length > 0 ? "Try adjusting your filters" : "List your shares for sale and reach serious buyers faster."}
-								actionLabel={searchQuery || selectedIndustries.length > 0 ? null : "Create listing"}
-								onAction={searchQuery || selectedIndustries.length > 0 ? null : () => setFormType('sell')}
+								title={searchQuery ? "No matching requests" : "No open requests from others"}
+								description={searchQuery ? "Try a different search term" : "List your shares for sale and reach serious buyers faster."}
+								actionLabel={searchQuery ? null : "Create listing"}
+								onAction={searchQuery ? null : () => setFormType('sell')}
 							/>
 						</div>
 					) : (
