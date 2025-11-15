@@ -32,12 +32,12 @@ export default function Header({ setPage, currentPage }) {
             : 'bg-transparent'
           : scrolled
             ? 'bg-white/85 border-b border-gray-200 shadow-sm'
-            : 'bg-white/60'
+            : 'bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50'
       }`}
     >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Standard header height to avoid pushing content */}
-          <div className="flex justify-between items-center h-16">
+          {/* Taller header so the logo is fully visible */}
+          <div className="flex justify-between items-end gap-6 min-h-[140px] py-4">
 
           {/* Logo Section - keep large logo but anchor it to the bottom to avoid cropping */}
           <div className="flex items-end gap-2 h-48">
@@ -51,7 +51,7 @@ export default function Header({ setPage, currentPage }) {
 
           {/* Navigation Links */}
           {!isDashboardPage && (
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1 self-center">
               <button
                 onClick={() => setPage('home')}
                 className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
@@ -76,7 +76,7 @@ export default function Header({ setPage, currentPage }) {
           )}
 
           {/* Right Side Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-center">
             {user ? (
               <>
                 {/* User Avatar & Name */}
