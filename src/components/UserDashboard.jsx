@@ -789,15 +789,40 @@ export default function UserDashboard({ setPage }) {
 	const handlePlaceBid = async (e) => {
 		e.preventDefault();
 		if (!tradeContext) return;
+		// Validate and normalize inputs before hitting API
+		const rawPrice = Number(bidOfferData.price);
+		const rawQty = Number(bidOfferData.quantity);
+		const available = Number(tradeContext?.item?.shares ?? 0);
+
+		if (!Number.isFinite(rawPrice) || rawPrice <= 0) {
+			showNotification('error', 'Invalid price', 'Enter a valid positive price per share.');
+			return;
+		}
+		if (!Number.isFinite(rawQty) || rawQty <= 0 || !Number.isInteger(rawQty)) {
+			showNotification('error', 'Invalid quantity', 'Enter a valid whole number quantity greater than 0.');
+			return;
+		}
+		if (available > 0 && rawQty > available) {
+			showNotification('error', 'Quantity too high', `Only ${available.toLocaleString()} shares available in this listing.`);
+			return;
+		}
+
 		try {
-			await placeBid(tradeContext.item._id || tradeContext.item.id, { ...bidOfferData, bidder: user.email, bidderName: user.name });
-			showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${bidOfferData.price} for ${bidOfferData.quantity} shares submitted.`);
+			await placeBid(
+				tradeContext.item._id || tradeContext.item.id,
+				{ price: rawPrice, quantity: rawQty, bidder: user.email, bidderName: user.name }
+			);
+			showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${rawPrice} for ${rawQty} shares submitted.`);
 			setTradeContext(null);
 			setSelectedItem(null);
 			setBidOfferData({ price: '', quantity: '' });
 		} catch (error) {
 			console.error('Failed to place bid:', error);
-			showNotification('error', 'Failed to place bid', 'Please try again later.');
+			const message = error?.response?.data?.message
+				|| error?.response?.data?.error
+				|| (error?.message?.includes('Network') ? 'Backend unavailable. Please retry in ~30s.' : error?.message)
+				|| 'Could not place bid at this time.';
+			showNotification('error', 'Failed to place bid', message);
 		}
 	};
 

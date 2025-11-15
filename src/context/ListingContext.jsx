@@ -74,14 +74,22 @@ export function ListingProvider({ children }) {
   // Place Bid on Sell Listing
   const placeBid = async (listingId, bidData) => {
     try {
-      const response = await listingAPI.placeBid(listingId, bidData);
+      const normalized = {
+        ...bidData,
+        price: Number(bidData.price),
+        quantity: Number(bidData.quantity)
+      };
+      const response = await listingAPI.placeBid(listingId, normalized);
       const updatedListing = response.data.listing;
       setSellListings(sellListings.map(listing => 
         listing._id === listingId ? updatedListing : listing
       ));
     } catch (error) {
       console.error('Failed to place bid:', error);
-      throw error;
+      // Re-throw with backend message if available for better UX
+      const err = new Error(error?.response?.data?.message || error?.response?.data?.error || error.message || 'Failed to place bid');
+      err.response = error?.response;
+      throw err;
     }
   };
 
