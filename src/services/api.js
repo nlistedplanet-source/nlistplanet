@@ -51,6 +51,7 @@ export const listingAPI = {
   createSellListing: (listingData) => api.post('/listings/sell', listingData),
   createBuyRequest: (listingData) => api.post('/listings/buy', listingData),
   placeBid: (listingId, bidData) => api.post(`/listings/${listingId}/bid`, bidData),
+  acceptBid: (listingId, bidId, party) => api.post(`/listings/${listingId}/bid/${bidId}/accept`, { party }),
   createTrade: (listingId, tradeData) => api.post(`/listings/${listingId}/create-trade`, tradeData)
   ,
   boostListing: (listingId) => api.post(`/listings/${listingId}/boost`),

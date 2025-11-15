@@ -287,6 +287,31 @@ export function ListingProvider({ children }) {
 
   // Final Accept - Track which party accepted
   const finalAcceptByParty = async (listingId, bidId, type, party) => {
+    try {
+      if (type === 'sell') {
+        const response = await listingAPI.acceptBid(listingId, bidId, party);
+        // response returns listing and maybe trade when both accepted
+        const updatedListing = response.data.listing || response.data.success?.listing || response.data;
+        const trade = response.data.trade || response.data.success?.trade;
+        if (updatedListing) {
+          setSellListings(sellListings.map(l => l._id === updatedListing._id ? updatedListing : l));
+        }
+        if (trade) {
+          // fetched trade; we can refresh listing and trades
+          await fetchListings();
+          return trade;
+        }
+        return null;
+      } else {
+        const response = await listingAPI.acceptBid(listingId, bidId, party); // same endpoint supported
+        const updatedRequest = response.data.listing || response.data;
+        await fetchListings();
+        return response.data.trade || null;
+      }
+    } catch (error) {
+      console.error('Failed to accept via API:', error);
+      // fallback to local state update in case of network issues
+    }
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
         if (listing._id === listingId) {
@@ -297,6 +322,7 @@ export function ListingProvider({ children }) {
               const bothAccepted = buyerAccepted && sellerAccepted;
               
               // If both accepted, create Trade in backend and return it
+              // This local path is a fallback if API call fails; usually backend will handle this
               let createdTrade = null;
               if (bothAccepted) {
                 createdTrade = await createTradeFromAcceptedBid(listing, bid);
