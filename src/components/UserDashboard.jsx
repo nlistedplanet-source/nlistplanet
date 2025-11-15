@@ -161,7 +161,7 @@ export default function UserDashboard({ setPage }) {
 	const { companies, searchCompany } = useCompany();
 	const portfolio = usePortfolio();
 
-	const [activeTab, setActiveTab] = useState('marketplace');
+	const [activeTab, setActiveTab] = useState('overview');
 	const [buySubTab, setBuySubTab] = useState('list');
 	const [sellSubTab, setSellSubTab] = useState('list');
 	const [browseFilter, setBrowseFilter] = useState('sell');
@@ -765,6 +765,7 @@ export default function UserDashboard({ setPage }) {
 	};
 
 	const navItems = [
+		{ id: 'overview', label: 'Overview', icon: '📊' },
 		{ id: 'marketplace', label: 'Unlist Mall', icon: '🏪' },
 		{
 			id: 'buy',
@@ -855,7 +856,7 @@ export default function UserDashboard({ setPage }) {
 					<button
 						onClick={() => {
 							setSellSubTab('bids');
-							if (notification.show) setNotification({ show: false, type: 'success', title: '', message: '' });
+							setNotification({ show: false, type: 'success', title: '', message: '' });
 						}}
 						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
 							sellSubTab === 'bids'
@@ -1967,6 +1968,190 @@ export default function UserDashboard({ setPage }) {
 		);
 	};
 
+	const renderOverview = () => {
+		const totalSellListings = myListings.length;
+		const activeSellListings = myListings.filter(l => l.status === 'active').length;
+		const totalBuyRequests = myRequests.length;
+		const activeBuyRequests = myRequests.filter(r => r.status === 'active').length;
+		const totalBidsReceived = myListings.reduce((acc, l) => acc + (l.bids?.length || 0), 0);
+		const totalOffersReceived = myRequests.reduce((acc, r) => acc + (r.offers?.length || 0), 0);
+		const totalBidsPlaced = myBidsOnSellListings.length;
+		const totalOffersPlaced = myOffersOnBuyRequests.length;
+		const totalTrades = myTrades.length;
+		const pendingTrades = myTrades.filter(t => t.status === 'pending' || t.status === 'submitted').length;
+		const completedTrades = myTrades.filter(t => t.status === 'approved' || t.status === 'complete').length;
+
+		return (
+			<div className="space-y-6">
+				<div className="mb-6">
+					<h2 className="text-3xl font-bold text-gray-900 mb-2">📊 Dashboard Overview</h2>
+					<p className="text-sm text-gray-600">Your complete unlisted shares trading summary</p>
+				</div>
+
+				{/* Quick Stats Grid */}
+				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+					{/* Sell Stats */}
+					<div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">📈</span>
+							<span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full">SELL</span>
+						</div>
+						<p className="text-3xl font-bold text-emerald-700">{totalSellListings}</p>
+						<p className="text-xs text-gray-600 mt-1">Total Listings</p>
+						<p className="text-xs text-emerald-600 font-semibold mt-1">{activeSellListings} Active</p>
+					</div>
+
+					{/* Buy Stats */}
+					<div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">🛒</span>
+							<span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded-full">BUY</span>
+						</div>
+						<p className="text-3xl font-bold text-blue-700">{totalBuyRequests}</p>
+						<p className="text-xs text-gray-600 mt-1">Total Requests</p>
+						<p className="text-xs text-blue-600 font-semibold mt-1">{activeBuyRequests} Active</p>
+					</div>
+
+					{/* Bids Received */}
+					<div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">💰</span>
+							<span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded-full">RECEIVED</span>
+						</div>
+						<p className="text-3xl font-bold text-purple-700">{totalBidsReceived}</p>
+						<p className="text-xs text-gray-600 mt-1">Bids on Sells</p>
+						<p className="text-xs text-purple-600 font-semibold mt-1">{totalOffersReceived} Offers on Buys</p>
+					</div>
+
+					{/* Bids/Offers Placed */}
+					<div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">🎯</span>
+							<span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-1 rounded-full">PLACED</span>
+						</div>
+						<p className="text-3xl font-bold text-orange-700">{totalBidsPlaced + totalOffersPlaced}</p>
+						<p className="text-xs text-gray-600 mt-1">Total Bids/Offers</p>
+						<p className="text-xs text-orange-600 font-semibold mt-1">{totalBidsPlaced} Bids • {totalOffersPlaced} Offers</p>
+					</div>
+
+					{/* Trades */}
+					<div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">🤝</span>
+							<span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">TRADES</span>
+						</div>
+						<p className="text-3xl font-bold text-green-700">{totalTrades}</p>
+						<p className="text-xs text-gray-600 mt-1">Total Trades</p>
+						<p className="text-xs text-green-600 font-semibold mt-1">{pendingTrades} Pending • {completedTrades} Done</p>
+					</div>
+
+					{/* Portfolio */}
+					<div className="bg-gradient-to-br from-indigo-50 to-violet-50 border-2 border-indigo-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+						<div className="flex items-center justify-between mb-3">
+							<span className="text-3xl">💼</span>
+							<span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full">PORTFOLIO</span>
+						</div>
+						<p className="text-3xl font-bold text-indigo-700">{portfolio?.holdings?.length || 0}</p>
+						<p className="text-xs text-gray-600 mt-1">Holdings</p>
+					</div>
+				</div>
+
+				{/* Quick Actions */}
+				<div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
+					<h3 className="text-lg font-bold text-gray-900 mb-4">⚡ Quick Actions</h3>
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+						<button
+							onClick={() => setFormType('sell')}
+							className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white hover:shadow-lg transition"
+						>
+							<span className="text-3xl">📈</span>
+							<span className="text-sm font-semibold">List for Sale</span>
+						</button>
+						<button
+							onClick={() => setFormType('buy')}
+							className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:shadow-lg transition"
+						>
+							<span className="text-3xl">🛒</span>
+							<span className="text-sm font-semibold">Post Buy Request</span>
+						</button>
+						<button
+							onClick={() => setActiveTab('marketplace')}
+							className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:shadow-lg transition"
+						>
+							<span className="text-3xl">🏪</span>
+							<span className="text-sm font-semibold">Browse Market</span>
+						</button>
+						<button
+							onClick={() => setActiveTab('portfolio')}
+							className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white hover:shadow-lg transition"
+						>
+							<span className="text-3xl">💼</span>
+							<span className="text-sm font-semibold">View Portfolio</span>
+						</button>
+					</div>
+				</div>
+
+				{/* Recent Activity */}
+				<div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
+					<h3 className="text-lg font-bold text-gray-900 mb-4">📋 Recent Activity</h3>
+					<div className="space-y-3">
+						{totalBidsReceived > 0 && (
+							<div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+								<span className="text-2xl">💰</span>
+								<div className="flex-1">
+									<p className="text-sm font-semibold text-gray-900">New Bids on Your Listings</p>
+									<p className="text-xs text-gray-600">{totalBidsReceived} bid(s) received</p>
+								</div>
+								<button
+									onClick={() => setActiveTab('sell')}
+									className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition"
+								>
+									View
+								</button>
+							</div>
+						)}
+						{totalOffersReceived > 0 && (
+							<div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+								<span className="text-2xl">📨</span>
+								<div className="flex-1">
+									<p className="text-sm font-semibold text-gray-900">New Offers on Your Requests</p>
+									<p className="text-xs text-gray-600">{totalOffersReceived} offer(s) received</p>
+								</div>
+								<button
+									onClick={() => setActiveTab('buy')}
+									className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition"
+								>
+									View
+								</button>
+							</div>
+						)}
+						{pendingTrades > 0 && (
+							<div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+								<span className="text-2xl">⏳</span>
+								<div className="flex-1">
+									<p className="text-sm font-semibold text-gray-900">Pending Trades</p>
+									<p className="text-xs text-gray-600">{pendingTrades} trade(s) awaiting action</p>
+								</div>
+								<button
+									onClick={() => setActiveTab('orders')}
+									className="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition"
+								>
+									View
+								</button>
+							</div>
+						)}
+						{totalBidsReceived === 0 && totalOffersReceived === 0 && pendingTrades === 0 && (
+							<div className="text-center py-8 text-gray-500">
+								<p className="text-sm">No recent activity</p>
+								<p className="text-xs mt-1">Start trading to see your activity here!</p>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	};
+
 	const renderBrowse = () => {
 		// Filter function
 	const filterListings = (items) => {
@@ -2922,6 +3107,8 @@ export default function UserDashboard({ setPage }) {
 
 	const renderActiveTab = () => {
 		switch (activeTab) {
+			case 'overview':
+				return renderOverview();
 			case 'marketplace':
 				return renderBrowse();
 			case 'buy':
