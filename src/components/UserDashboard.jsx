@@ -212,11 +212,6 @@ export default function UserDashboard({ setPage }) {
 	const [showNotificationPanel, setShowNotificationPanel] = useState(false);
 	const [viewedBidsCount, setViewedBidsCount] = useState(0);
 	const [viewedOffersCount, setViewedOffersCount] = useState(0);
-	
-	// Calculate unviewed notification counts
-	const unviewedBidsCount = Math.max(0, sellBidsCount - viewedBidsCount);
-	const unviewedOffersCount = Math.max(0, buyOffersCount - viewedOffersCount);
-	const totalUnviewedCount = unviewedBidsCount + unviewedOffersCount;
 
 	// Funny username generator
 	const generateFunnyUsername = () => {
@@ -601,6 +596,11 @@ export default function UserDashboard({ setPage }) {
 	const sellCompletedCount = useMemo(() => {
 		return myListings.filter(l => l.status === 'approved' || l.status === 'closed').length;
 	}, [myListings]);
+	
+	// Calculate unviewed notification counts (must be after sellBidsCount and buyOffersCount)
+	const unviewedBidsCount = Math.max(0, sellBidsCount - viewedBidsCount);
+	const unviewedOffersCount = Math.max(0, buyOffersCount - viewedOffersCount);
+	const totalUnviewedCount = unviewedBidsCount + unviewedOffersCount;
 	
 	const availableListings = useMemo(
 		() => user ? sellListings.filter((listing) => 

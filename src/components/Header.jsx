@@ -40,11 +40,12 @@ export default function Header({ setPage, currentPage }) {
           <div className="flex justify-between items-center h-16">
 
           {/* Logo Section - replaced with new logo file */}
-          <div className="flex items-end gap-2 h-16">
+          <div className="flex items-center gap-2">
             <img
               src="/images/logos/nlist_logo.svg"
               alt="NList Logo"
-              className="h-full w-auto object-contain object-bottom"
+              className="w-auto object-contain"
+              style={{ maxHeight: '192px' }}
             />
           </div>
 
