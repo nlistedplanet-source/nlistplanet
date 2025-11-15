@@ -781,7 +781,6 @@ export default function UserDashboard({ setPage }) {
 			id: 'buy',
 			label: 'Buy',
 			icon: '🛒',
-			counter: myRequests.length,
 			children: [
 				{ id: 'buy_list', label: 'Buy List' },
 				{ id: 'buy_offers', label: 'Offers Received' },
@@ -793,7 +792,6 @@ export default function UserDashboard({ setPage }) {
 			id: 'sell',
 			label: 'Sell',
 			icon: '📈',
-			counter: myListings.length,
 			children: [
 				{ id: 'sell_list', label: 'Sell List' },
 				{ id: 'sell_bids', label: 'Bids Received' },

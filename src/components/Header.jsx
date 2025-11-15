@@ -39,12 +39,12 @@ export default function Header({ setPage, currentPage }) {
           {/* Standard header height to avoid pushing content */}
           <div className="flex justify-between items-center h-16">
 
-          {/* Logo Section - replaced with new logo file */}
-          <div className="flex items-center gap-2">
+          {/* Logo Section - keep large logo but anchor it to the bottom to avoid cropping */}
+          <div className="flex items-end gap-2 h-48">
             <img
               src="/images/logos/nlist_logo.svg"
               alt="NList Logo"
-              className="w-auto object-contain"
+              className="h-full w-auto object-contain object-bottom"
               style={{ maxHeight: '192px' }}
             />
           </div>
