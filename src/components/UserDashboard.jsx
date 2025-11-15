@@ -210,6 +210,13 @@ export default function UserDashboard({ setPage }) {
 	
 	// Notification panel state
 	const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+	const [viewedBidsCount, setViewedBidsCount] = useState(0);
+	const [viewedOffersCount, setViewedOffersCount] = useState(0);
+	
+	// Calculate unviewed notification counts
+	const unviewedBidsCount = Math.max(0, sellBidsCount - viewedBidsCount);
+	const unviewedOffersCount = Math.max(0, buyOffersCount - viewedOffersCount);
+	const totalUnviewedCount = unviewedBidsCount + unviewedOffersCount;
 
 	// Funny username generator
 	const generateFunnyUsername = () => {
@@ -776,10 +783,10 @@ export default function UserDashboard({ setPage }) {
 			icon: '🛒',
 			counter: myRequests.length,
 			children: [
-				{ id: 'buy_list', label: 'Buy List', counter: myRequests.length },
-				{ id: 'buy_offers', label: 'Offers Received', counter: buyOffersCount },
-				{ id: 'buy_counter', label: 'Counter Offers', counter: buyCounterOffersCount },
-				{ id: 'buy_completed', label: 'Completed', counter: buyCompletedCount }
+				{ id: 'buy_list', label: 'Buy List' },
+				{ id: 'buy_offers', label: 'Offers Received' },
+				{ id: 'buy_counter', label: 'Counter Offers' },
+				{ id: 'buy_completed', label: 'Completed' }
 			]
 		},
 		{
@@ -788,10 +795,10 @@ export default function UserDashboard({ setPage }) {
 			icon: '📈',
 			counter: myListings.length,
 			children: [
-				{ id: 'sell_list', label: 'Sell List', counter: sellListCount },
-				{ id: 'sell_bids', label: 'Bids Received', counter: sellBidsCount },
-				{ id: 'sell_counter', label: 'Counter Offers', counter: sellCounterOffersCount },
-				{ id: 'sell_completed', label: 'Completed', counter: sellCompletedCount }
+				{ id: 'sell_list', label: 'Sell List' },
+				{ id: 'sell_bids', label: 'Bids Received' },
+				{ id: 'sell_counter', label: 'Counter Offers' },
+				{ id: 'sell_completed', label: 'Completed' }
 			]
 		},
 		{ id: 'my_bids', label: 'My Bids', icon: '🎯' },
@@ -3721,40 +3728,41 @@ export default function UserDashboard({ setPage }) {
 									className="relative p-2.5 rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md transition"
 								>
 									<svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-									</svg>
-									{(sellBidsCount + buyOffersCount) > 0 && (
-										<span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow-lg">
-											{sellBidsCount + buyOffersCount}
-										</span>
-									)}
-								</button>
-								
-								{/* Notification Panel Dropdown */}
+									<path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+								</svg>
+								{totalUnviewedCount > 0 && (
+									<span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow-lg">
+										{totalUnviewedCount}
+									</span>
+								)}
+							</button>								{/* Notification Panel Dropdown */}
 								{showNotificationPanel && (
 									<div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border-2 border-purple-100 overflow-hidden z-50 animate-slideDown">
-										<div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 border-b border-purple-200">
-											<h3 className="text-white font-bold text-sm flex items-center justify-between">
-												<span>🔔 Notifications</span>
-												<span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{sellBidsCount + buyOffersCount}</span>
-											</h3>
+								<div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 border-b border-purple-200">
+									<h3 className="text-white font-bold text-sm flex items-center justify-between">
+										<span>🔔 Notifications</span>
+										{totalUnviewedCount > 0 && (
+											<span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{totalUnviewedCount} new</span>
+										)}
+									</h3>
+								</div>
+								
+								<div className="max-h-96 overflow-y-auto">
+									{totalUnviewedCount === 0 ? (
+										<div className="p-8 text-center">
+											<div className="text-4xl mb-2">🔕</div>
+											<p className="text-gray-500 text-sm">No new notifications</p>
 										</div>
-										
-										<div className="max-h-96 overflow-y-auto">
-											{sellBidsCount === 0 && buyOffersCount === 0 ? (
-												<div className="p-8 text-center">
-													<div className="text-4xl mb-2">🔕</div>
-													<p className="text-gray-500 text-sm">No new notifications</p>
-												</div>
-											) : (
-												<div className="divide-y divide-gray-100">
-													{sellBidsCount > 0 && (
-														<button
-															onClick={() => {
-																setActiveTab('sell');
-																setSellSubTab('bids');
-																setShowNotificationPanel(false);
-															}}
+									) : (
+										<div className="divide-y divide-gray-100">
+											{unviewedBidsCount > 0 && (
+												<button
+													onClick={() => {
+														setActiveTab('sell');
+														setSellSubTab('bids');
+														setViewedBidsCount(sellBidsCount);
+														setShowNotificationPanel(false);
+													}}
 															className="w-full px-4 py-3 hover:bg-emerald-50 transition text-left"
 														>
 															<div className="flex items-start gap-3">
@@ -3763,17 +3771,18 @@ export default function UserDashboard({ setPage }) {
 																</div>
 																<div className="flex-1 min-w-0">
 																	<p className="text-sm font-semibold text-gray-900">New Bids on Sell Listings</p>
-																	<p className="text-xs text-gray-600 mt-0.5">You have {sellBidsCount} new bid{sellBidsCount > 1 ? 's' : ''}</p>
+																	<p className="text-xs text-gray-600 mt-0.5">You have {unviewedBidsCount} new bid{unviewedBidsCount > 1 ? 's' : ''}</p>
 																	<p className="text-xs text-emerald-600 font-semibold mt-1">Click to review →</p>
 																</div>
-																<span className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">{sellBidsCount}</span>
+																<span className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">{unviewedBidsCount}</span>
 															</div>
 														</button>
 													)}
 													
-													{buyOffersCount > 0 && (
+													{unviewedOffersCount > 0 && (
 														<button
 															onClick={() => {
+																setViewedOffersCount(buyOffersCount);
 																setActiveTab('buy');
 																setBuySubTab('offers');
 																setShowNotificationPanel(false);
@@ -3786,10 +3795,10 @@ export default function UserDashboard({ setPage }) {
 																</div>
 																<div className="flex-1 min-w-0">
 																	<p className="text-sm font-semibold text-gray-900">New Offers on Buy Requests</p>
-																	<p className="text-xs text-gray-600 mt-0.5">You have {buyOffersCount} new offer{buyOffersCount > 1 ? 's' : ''}</p>
+																	<p className="text-xs text-gray-600 mt-0.5">You have {unviewedOffersCount} new offer{unviewedOffersCount > 1 ? 's' : ''}</p>
 																	<p className="text-xs text-blue-600 font-semibold mt-1">Click to review →</p>
 																</div>
-																<span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">{buyOffersCount}</span>
+																<span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">{unviewedOffersCount}</span>
 															</div>
 														</button>
 													)}
