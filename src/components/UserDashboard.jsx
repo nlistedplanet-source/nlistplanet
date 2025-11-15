@@ -141,6 +141,22 @@ const formatDateTime = (iso) => {
 	return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 };
 
+// Format time left for boost badge
+const formatBoostRemaining = (iso) => {
+	if (!iso) return '24h';
+	const expiresAt = new Date(iso).getTime();
+	if (Number.isNaN(expiresAt)) return '24h';
+	const diffMs = expiresAt - Date.now();
+	if (diffMs <= 0) return 'expired';
+	const totalMinutes = Math.floor(diffMs / (1000 * 60));
+	const days = Math.floor(totalMinutes / (60 * 24));
+	const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+	const minutes = totalMinutes % 60;
+	if (days > 0) return `${days}d ${hours}h`;
+	if (hours > 0) return `${hours}h ${minutes}m`;
+	return `${Math.max(minutes, 1)}m`;
+};
+
 export default function UserDashboard({ setPage }) {
 	const { user, logout, getUserDisplayName, updateUserProfile } = useAuth();
 	const {
@@ -155,8 +171,10 @@ export default function UserDashboard({ setPage }) {
 		counterOffer,
 		reCounterOffer,
 		finalAcceptByParty,
-		rejectCounterOffer
-		,fetchListings
+		rejectCounterOffer,
+		boostListing,
+		markListingSold,
+		fetchListings
 	} = useListing();
 	const { companies, searchCompany } = useCompany();
 	const portfolio = usePortfolio();
@@ -179,6 +197,10 @@ export default function UserDashboard({ setPage }) {
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	const [shareCardData, setShareCardData] = useState(null);
 	const shareCardRef = useRef(null);
+	
+	// Sell listing actions state
+	const [boostingListingId, setBoostingListingId] = useState(null);
+	const [markingSoldId, setMarkingSoldId] = useState(null);
 	
 	// Trade proof upload states
 	const [myTrades, setMyTrades] = useState([]);
@@ -697,6 +719,36 @@ export default function UserDashboard({ setPage }) {
 		setCompanySuggestions([]);
 	};
 
+	const handleBoostListing = async (listingId) => {
+		if (!listingId) return;
+		setBoostingListingId(listingId);
+		try {
+			await boostListing(listingId);
+			showNotification('success', 'Boost activated 🚀', 'Listing will stay on top for the next 24 hours. ₹100 deducted.');
+		} catch (error) {
+			const message = error?.response?.data?.error || error.message || 'Could not boost listing at the moment.';
+			showNotification('error', 'Boost failed', message);
+		} finally {
+			setBoostingListingId(null);
+		}
+	};
+
+	const handleMarkListingSold = async (listingId, companyName) => {
+		if (!listingId) return;
+		const confirmMark = window.confirm(`Mark ${companyName || 'this listing'} as sold? Buyers will not be able to place more bids.`);
+		if (!confirmMark) return;
+		setMarkingSoldId(listingId);
+		try {
+			await markListingSold(listingId);
+			showNotification('success', 'Marked as sold ✅', `${companyName || 'Listing'} moved to Completed tab.`);
+		} catch (error) {
+			const message = error?.response?.data?.error || error.message || 'Could not mark listing as sold.';
+			showNotification('error', 'Action failed', message);
+		} finally {
+			setMarkingSoldId(null);
+		}
+	};
+
 	const handleCreateSellListing = async (e) => {
 		e.preventDefault();
 		// Show confirmation modal first
@@ -925,24 +977,40 @@ export default function UserDashboard({ setPage }) {
 						) : (
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 								{myOpenListings.map((listing) => {
+									const listingId = listing._id || listing.id;
 									const bidsCount = listing.bids?.length || 0;
 									const pendingBids = listing.bids?.filter(b => b.status === 'pending')?.length || 0;
 									const negotiatingBids = listing.bids?.filter(b => b.status === 'counter_offered')?.length || 0;
 									const acceptedBids = listing.bids?.filter(b => b.buyerAccepted || b.sellerAccepted || b.bothAccepted)?.length || 0;
-									
+									const isBoostActive = Boolean(listing.boosted && (!listing.boostedUntil || new Date(listing.boostedUntil) > new Date()));
+									const boostExpiresLabel = isBoostActive ? formatBoostRemaining(listing.boostedUntil) : null;
+									const cardClasses = isBoostActive
+										? 'bg-gradient-to-br from-amber-50 via-white to-emerald-50 border border-amber-300 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-200'
+										: 'bg-white border border-emerald-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200';
+							
 									return (
-										<div key={listing._id || listing.id} className="bg-white border border-emerald-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
+										<div key={listingId} className={cardClasses}>
 											{/* Compact Header */}
 											<div className="flex items-start justify-between mb-3">
 												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-2 mb-1">
+													<div className="flex items-center gap-2 mb-1 flex-wrap">
 														<h4 className="font-bold text-base text-gray-900 truncate">{listing.company}</h4>
 														<StatusBadge status={listing.status} size="sm" />
+														{isBoostActive && (
+															<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+																🚀 Boosted · {boostExpiresLabel}
+															</span>
+														)}
 													</div>
 													<p className="text-xs text-gray-500">ISIN: {listing.isin || 'N/A'}</p>
 												</div>
+												{listing.boosted && !isBoostActive && (
+													<span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+														Boost expired
+													</span>
+												)}
 											</div>
-											
+									
 											{/* Compact Price Grid */}
 											<div className="grid grid-cols-2 gap-2 mb-3">
 												<div className="bg-emerald-50 rounded-lg p-2 border border-emerald-200">
@@ -954,7 +1022,7 @@ export default function UserDashboard({ setPage }) {
 													<p className="text-sm font-bold text-gray-800">{formatShares(listing.shares)}</p>
 												</div>
 											</div>
-											
+									
 											{/* Compact Activity */}
 											{bidsCount > 0 && (
 												<div className="flex gap-1.5 mb-3 flex-wrap">
@@ -975,50 +1043,67 @@ export default function UserDashboard({ setPage }) {
 													)}
 												</div>
 											)}
-											
-											{/* Compact Action Buttons */}
-											<div className="grid grid-cols-3 gap-1.5">
+									
+											{/* Boost + Actions */}
+											<div className="space-y-2">
 												<button
-													onClick={() => {
-														setFormType('sell');
-														setFormData({
-															company: listing.company,
-															isin: listing.isin,
-															price: listing.price,
-															shares: listing.shares
-														});
-													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition"
+													onClick={() => handleBoostListing(listingId)}
+													disabled={isBoostActive || boostingListingId === listingId}
+													className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+														isBoostActive
+															? 'bg-amber-100 text-amber-800 border-amber-200'
+															: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-600 shadow hover:shadow-md disabled:opacity-60'
+													}`}
 												>
-													✏️
+													{boostingListingId === listingId
+														? 'Processing boost...'
+														: isBoostActive
+															? `Boost active • ${boostExpiresLabel}`
+															: 'Boost listing · ₹100 / 24h'}
 												</button>
-												<button
-													onClick={() => {
-														if (window.confirm(`Delete ${listing.company}?`)) {
-															showNotification('success', 'Deleted', 'Listing removed');
-														}
+												<div className="grid grid-cols-3 gap-1.5">
+													<button
+														onClick={() => {
+															setFormType('sell');
+															setFormData({
+																company: listing.company,
+																isin: listing.isin,
+																price: listing.price,
+																shares: listing.shares
+															});
+														}}
+														className="px-2 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition"
+														title="Edit listing"
+													>
+														✏️
+													</button>
+													<button
+														onClick={async () => {
+															const shareText = `📈 ${listing.company}: ₹${listing.price}`;
+															try {
+																if (navigator.share) await navigator.share({ text: shareText });
+																else {
+																	await navigator.clipboard.writeText(shareText);
+																	showNotification('success', 'Copied!', 'Copied to clipboard');
+																}
+															} catch (err) {}
 													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-300 hover:bg-red-100 transition"
-												>
-													🗑️
-												</button>
-												<button
-													onClick={async () => {
-														const shareText = `📈 ${listing.company}: ₹${listing.price}`;
-														try {
-															if (navigator.share) await navigator.share({ text: shareText });
-															else {
-																await navigator.clipboard.writeText(shareText);
-																showNotification('success', 'Copied!', 'Copied to clipboard');
-															}
-														} catch (err) {}
-													}}
-													className="px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
-												>
-													📤
-												</button>
+														className="px-2 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-300 hover:bg-green-100 transition"
+														title="Share listing"
+													>
+														📤
+													</button>
+													<button
+														onClick={() => handleMarkListingSold(listingId, listing.company)}
+														disabled={markingSoldId === listingId}
+														className="px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 transition disabled:opacity-60"
+														title="Mark as sold"
+													>
+														{markingSoldId === listingId ? '⏳' : '✅'}
+													</button>
+												</div>
 											</div>
-											
+									
 											{bidsCount > 0 && (
 												<button
 													onClick={() => setSellSubTab('bids')}

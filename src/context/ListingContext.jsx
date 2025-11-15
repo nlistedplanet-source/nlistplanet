@@ -455,6 +455,34 @@ export function ListingProvider({ children }) {
     }
   };
 
+  const boostListing = async (listingId) => {
+    try {
+      const response = await listingAPI.boostListing(listingId);
+      const updatedListing = response.data.listing;
+      setSellListings(prev => prev.map(listing =>
+        (listing._id === (updatedListing?._id || listingId)) ? updatedListing : listing
+      ));
+      return updatedListing;
+    } catch (error) {
+      console.error('Failed to boost listing:', error);
+      throw error;
+    }
+  };
+
+  const markListingSold = async (listingId) => {
+    try {
+      const response = await listingAPI.markSold(listingId);
+      const updatedListing = response.data.listing;
+      setSellListings(prev => prev.map(listing =>
+        (listing._id === (updatedListing?._id || listingId)) ? updatedListing : listing
+      ));
+      return updatedListing;
+    } catch (error) {
+      console.error('Failed to mark listing sold:', error);
+      throw error;
+    }
+  };
+
   return (
     <ListingContext.Provider value={{ 
       sellListings,
@@ -473,6 +501,8 @@ export function ListingProvider({ children }) {
       finalAcceptByParty,
       acceptCounterOffer,
       rejectCounterOffer,
+      boostListing,
+      markListingSold,
       fetchListings
     }}>
       {children}
