@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useListing } from '../context/ListingContext';
 import { useAuth } from '../context/AuthContext';
 import { useCompany } from '../context/CompanyContext';
@@ -29,6 +29,12 @@ export default function AdminDashboard({ setPage }) {
   });
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySuggestions, setCompanySuggestions] = useState([]);
+  
+  // Trades state
+  const [trades, setTrades] = useState([]);
+  const [selectedTrade, setSelectedTrade] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  
   // Mock Users/KYC data for admin tab scaffold
   const [kycUsers, setKycUsers] = useState([
     { id: 'U1001', name: 'Aarav Sharma', email: 'aarav@example.com', joinedAt: Date.now() - 86400000 * 12, kycStatus: 'under_review', docs: { pan: true, address: true, cml: false, bank: true } },
@@ -44,6 +50,53 @@ export default function AdminDashboard({ setPage }) {
     { id: 'SR003', userId: 'U1002', userName: 'Priya Singh', email: 'priya@example.com', subject: 'How to add portfolio?', message: 'I want to add my existing shares to portfolio. Please guide.', status: 'resolved', createdAt: Date.now() - 86400000 * 7, response: 'Please go to Portfolio tab and click Add Existing Share button.' },
   ]);
   const [selectedRequest, setSelectedRequest] = useState(null);
+
+  // Fetch trades on mount
+  useEffect(() => {
+    fetchAllTrades();
+  }, []);
+
+  const fetchAllTrades = async () => {
+    try {
+      const { tradeAPI } = await import('../services/api');
+      const response = await tradeAPI.getMyTrades(); // Admin sees all trades
+      setTrades(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch trades:', error);
+    }
+  };
+
+  const handleVerifyTrade = async (tradeId) => {
+    try {
+      const { tradeAPI } = await import('../services/api');
+      await tradeAPI.verifyTrade(tradeId);
+      showNotification('success', 'Trade Verified', 'Trade has been marked as complete');
+      fetchAllTrades();
+      setSelectedTrade(null);
+    } catch (error) {
+      console.error('Failed to verify trade:', error);
+      showNotification('error', 'Verification Failed', error.response?.data?.error || 'Failed to verify trade');
+    }
+  };
+
+  const handleRejectTrade = async (tradeId) => {
+    if (!rejectionReason.trim()) {
+      showNotification('error', 'Reason Required', 'Please provide a rejection reason');
+      return;
+    }
+    
+    try {
+      const { tradeAPI } = await import('../services/api');
+      await tradeAPI.rejectTrade(tradeId, rejectionReason);
+      showNotification('success', 'Trade Rejected', 'Trade has been rejected and parties notified');
+      fetchAllTrades();
+      setSelectedTrade(null);
+      setRejectionReason('');
+    } catch (error) {
+      console.error('Failed to reject trade:', error);
+      showNotification('error', 'Rejection Failed', error.response?.data?.error || 'Failed to reject trade');
+    }
+  };
 
   // Show notification helper
   const showNotification = (type, title, message) => {
@@ -294,6 +347,20 @@ export default function AdminDashboard({ setPage }) {
                 <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 1a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm4-4a1 1 0 100 2h.01a1 1 0 100-2H13zM9 9a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM7 8a1 1 0 000 2h.01a1 1 0 000-2H7z" clipRule="evenodd" />
               </svg>
               <span className="flex-1 text-left">Manage Buy</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('trades')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'trades'
+                  ? 'bg-white text-purple-700 shadow-lg shadow-purple-500/50 scale-105'
+                  : 'text-white hover:bg-white/10 hover:scale-105'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+              </svg>
+              <span className="flex-1 text-left">Verify Trades ({trades.filter(t => t.status === 'pending_closure').length})</span>
             </button>
 
             <button
@@ -557,6 +624,52 @@ export default function AdminDashboard({ setPage }) {
                 ) : (
                   <div className="col-span-full text-center py-12">
                     <p className="text-gray-600">No buy requests available</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'trades' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Trade Verifications</h3>
+                {trades.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                    <div className="text-5xl mb-4">🔎</div>
+                    <p className="text-gray-600 font-semibold">No trades pending verification</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {trades.map((trade) => (
+                      <div key={trade._id} className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-gray-900">{trade.company} <span className="text-xs text-gray-500">({trade.tradeNumber || trade._id})</span></h4>
+                            </div>
+                            <p className="text-xs text-gray-500">ISIN: {trade.isin}</p>
+                            <p className="text-xs text-gray-500 mt-1">{trade.sellerId?.name || trade.sellerId?.username} → {trade.buyerId?.name || trade.buyerId?.username}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">₹{trade.totalAmount?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">Qty: {trade.quantity}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 mt-4">
+                          {trade.status === 'pending_closure' && (
+                            <>
+                              <button onClick={() => { setSelectedTrade(trade); }} className="px-4 py-2 rounded-lg bg-emerald-600 text-white">View & Verify</button>
+                              <button onClick={() => { setSelectedTrade(trade); setRejectionReason(''); }} className="px-4 py-2 rounded-lg bg-rose-600 text-white">Reject</button>
+                            </>
+                          )}
+                          {trade.status === 'complete' && (
+                            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700">✅ Completed</span>
+                          )}
+                          {trade.status === 'rejected' && (
+                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-700">❌ Rejected</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1810,6 +1923,67 @@ export default function AdminDashboard({ setPage }) {
             </p>
           </div>
         </main>
+        {/* Trade Details Modal */}
+        {selectedTrade && activeTab === 'trades' && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Verify Trade - {selectedTrade.tradeNumber || selectedTrade._id}</h3>
+                  <p className="text-xs text-gray-500">{selectedTrade.company} • ISIN: {selectedTrade.isin}</p>
+                </div>
+                <button onClick={() => setSelectedTrade(null)} className="text-gray-500 hover:text-gray-700">✖</button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-gray-500">Seller</p>
+                  <p className="font-semibold">{selectedTrade.sellerId?.name || selectedTrade.sellerId?.username}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Buyer</p>
+                  <p className="font-semibold">{selectedTrade.buyerId?.name || selectedTrade.buyerId?.username}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-gray-500">Price</p>
+                  <p className="font-semibold">₹{selectedTrade.price?.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Quantity</p>
+                  <p className="font-semibold">{selectedTrade.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total</p>
+                  <p className="font-semibold">₹{selectedTrade.totalAmount?.toLocaleString()}</p>
+                </div>
+              </div>
+              {selectedTrade.feeBreakdown && (
+                <div className="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-500">Fee Breakdown</p>
+                  <div className="grid grid-cols-3 gap-2 mt-2 text-sm">
+                    <div>Base: ₹{selectedTrade.feeBreakdown.basePrice?.toLocaleString()}</div>
+                    <div>Fee: ₹{selectedTrade.feeBreakdown.fee?.toLocaleString()}</div>
+                    <div>Final: ₹{selectedTrade.feeBreakdown.finalPrice?.toLocaleString()}</div>
+                  </div>
+                </div>
+              )}
+              <div className="mt-4">
+                <p className="text-xs text-gray-500">Seller Proofs</p>
+                {selectedTrade.proofs?.seller?.dpSlip && <a className="text-sm text-blue-600 block" href={`/${selectedTrade.proofs.seller.dpSlip}`} target="_blank">View DP Slip</a>}
+                {selectedTrade.proofs?.seller?.transferConfirmation && <a className="text-sm text-blue-600 block" href={`/${selectedTrade.proofs.seller.transferConfirmation}`} target="_blank">View Transfer Confirmation</a>}
+                <p className="text-xs text-gray-500 mt-2">Buyer Proofs</p>
+                {selectedTrade.proofs?.buyer?.paymentScreenshot && <a className="text-sm text-blue-600 block" href={`/${selectedTrade.proofs.buyer.paymentScreenshot}`} target="_blank">View Payment Screenshot</a>}
+                {selectedTrade.proofs?.buyer?.utr && <p className="text-sm text-gray-600 mt-1">UTR: <span className="font-semibold">{selectedTrade.proofs.buyer.utr}</span></p>}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => handleVerifyTrade(selectedTrade._id)} className="px-4 py-2 rounded-lg bg-emerald-600 text-white">Verify & Complete</button>
+                <button onClick={() => { if (!rejectionReason.trim()) { setRejectionReason(''); } handleRejectTrade(selectedTrade._id); }} className="px-4 py-2 rounded-lg bg-rose-600 text-white">Reject</button>
+                <input value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Rejection reason (required)" className="ml-auto border border-gray-200 rounded-lg px-3 py-2 w-full max-w-md" />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Support Request Response Modal */}

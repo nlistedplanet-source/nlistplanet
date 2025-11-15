@@ -6,6 +6,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import UserProfile from './UserProfile';
 import { motion } from 'framer-motion';
 import { CheckCircle, Building2, Share2, User, Info, CalendarDays, Edit3, Trash2 } from 'lucide-react';
+import { listingAPI, tradeAPI } from '../services/api';
 import ChangePassword from './ChangePassword';
 import Notification from './Notification';
 import { toPng } from 'html-to-image';
@@ -13,12 +14,15 @@ import { toPng } from 'html-to-image';
 const STATUS_META = {
 	active: { icon: '🟢', label: 'Active', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	pending_admin_approval: { icon: '⏳', label: 'Pending Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
+	pending_closure: { icon: '⏳', label: 'Pending Closure', classes: 'bg-yellow-100 text-yellow-700 border border-yellow-200' },
 	pending: { icon: '⏳', label: 'Pending', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
 	under_review: { icon: '🔍', label: 'Under Review', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
 	submitted: { icon: '📨', label: 'Submitted', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
 	draft: { icon: '📝', label: 'Draft', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
 	awaiting_admin: { icon: '⏳', label: 'Awaiting Admin', classes: 'bg-amber-100 text-amber-700 border border-amber-200' },
 	approved: { icon: '✅', label: 'Approved', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	complete: { icon: '✅', label: 'Complete', classes: 'bg-green-100 text-green-700 border border-green-200' },
+	rejected: { icon: '❌', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' },
 	closed: { icon: '🔒', label: 'Closed', classes: 'bg-slate-100 text-slate-600 border border-slate-200' }
 };
 
@@ -152,6 +156,7 @@ export default function UserDashboard({ setPage }) {
 		reCounterOffer,
 		finalAcceptByParty,
 		rejectCounterOffer
+		,fetchListings
 	} = useListing();
 	const { companies, searchCompany } = useCompany();
 	const portfolio = usePortfolio();
@@ -174,6 +179,17 @@ export default function UserDashboard({ setPage }) {
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	const [shareCardData, setShareCardData] = useState(null);
 	const shareCardRef = useRef(null);
+	
+	// Trade proof upload states
+	const [myTrades, setMyTrades] = useState([]);
+	const [showProofUpload, setShowProofUpload] = useState(false);
+	const [selectedTrade, setSelectedTrade] = useState(null);
+	const [proofFiles, setProofFiles] = useState({
+		dpSlip: null,
+		transferConfirmation: null,
+		paymentScreenshot: null,
+		utr: ''
+	});
 	
 	// Search and filter states
 	const [searchQuery, setSearchQuery] = useState('');
@@ -255,7 +271,75 @@ export default function UserDashboard({ setPage }) {
 		"Don't stop when you're tired. Stop when you're done."
 	],
 	[]
-);	const showNotification = (type, title, message) => {
+);
+	
+	// Fetch trades on mount
+	useEffect(() => {
+		fetchTrades();
+	}, []);
+	
+	const fetchTrades = async () => {
+		try {
+			const { tradeAPI } = await import('../services/api');
+			const response = await tradeAPI.getMyTrades();
+			setMyTrades(response.data || []);
+		} catch (error) {
+			console.error('Failed to fetch trades:', error);
+		}
+	};
+	
+	// Handle proof upload for seller
+	const handleSellerProofUpload = async (trade) => {
+		setSelectedTrade(trade);
+		setShowProofUpload(true);
+	};
+	
+	// Handle proof upload for buyer
+	const handleBuyerProofUpload = async (trade) => {
+		setSelectedTrade(trade);
+		setShowProofUpload(true);
+	};
+	
+	// Submit proof files
+	const submitProofs = async () => {
+		try {
+			const { tradeAPI } = await import('../services/api');
+			const formData = new FormData();
+			
+			// Check if current user is seller or buyer
+			const isSeller = selectedTrade.sellerId._id === user.userId || selectedTrade.sellerId === user.userId;
+			
+			if (isSeller) {
+				// Seller proofs
+				if (!proofFiles.dpSlip || !proofFiles.transferConfirmation) {
+					showNotification('error', 'Missing Files', 'Please upload both DP Slip and Transfer Confirmation');
+					return;
+				}
+				formData.append('dpSlip', proofFiles.dpSlip);
+				formData.append('transferConfirmation', proofFiles.transferConfirmation);
+				await tradeAPI.uploadSellerProofs(selectedTrade._id, formData);
+			} else {
+				// Buyer proofs
+				if (!proofFiles.paymentScreenshot || !proofFiles.utr) {
+					showNotification('error', 'Missing Information', 'Please upload Payment Screenshot and enter UTR number');
+					return;
+				}
+				formData.append('paymentScreenshot', proofFiles.paymentScreenshot);
+				formData.append('utr', proofFiles.utr);
+				await tradeAPI.uploadBuyerProofs(selectedTrade._id, formData);
+			}
+			
+			showNotification('success', 'Proofs Uploaded', 'Your proofs have been submitted successfully');
+			setShowProofUpload(false);
+			setProofFiles({ dpSlip: null, transferConfirmation: null, paymentScreenshot: null, utr: '' });
+			fetchTrades();
+		} catch (error) {
+			console.error('Failed to upload proofs:', error);
+			showNotification('error', 'Upload Failed', error.response?.data?.error || 'Failed to upload proofs');
+		}
+	};
+	
+	const showNotification = (type, title, message) => {
 		setNotification({ show: true, type, title, message });
 	};
 
@@ -291,9 +375,10 @@ export default function UserDashboard({ setPage }) {
 					// Create caption with company link
 					const companySlug = listing.company.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
 					const shareUrl = `${window.location.origin}/share/${companySlug}`;
+					const displayPriceForShare = listing.displayPrice || listing.price;
 					const caption = `🚀 Check out this unlisted share of *${listing.company}* listed on *Nlist Planet*!
 
-📊 *Ask Price:* ₹${listing.price.toFixed(2)}
+📊 *Ask Price:* ₹${displayPriceForShare.toFixed(2)}
 📦 *Quantity:* ${(listing.shares / 100000).toFixed(2)} Lakh
 🏭 *Sector:* ${company?.sector || 'Manufacturing'}
 📅 *Listed:* ${listingDate}
@@ -800,6 +885,16 @@ export default function UserDashboard({ setPage }) {
 					>
 						✅ Completed ({completedListings.length})
 					</button>
+					<button
+						onClick={() => setSellSubTab('trades')}
+						className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+							sellSubTab === 'trades'
+								? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+						}`}
+					>
+						🤝 My Trades ({myTrades.length})
+					</button>
 				</div>
 
 				{/* Content based on sub-tab */}
@@ -981,7 +1076,7 @@ export default function UserDashboard({ setPage }) {
 															const buyerAccepted = bid.buyerAccepted || false;
 															const sellerAccepted = bid.sellerAccepted || false;
 															const bothAccepted = bid.bothAccepted || (buyerAccepted && sellerAccepted);
-															const currentPrice = bid.counterPrice || bid.price;
+															const currentPrice = bid.counterDisplayPrice || bid.displayPrice || bid.counterPrice || bid.price;
 															const isPending = bid.status === 'pending';
 															const isCountered = bid.status === 'counter_offered';
 															
@@ -1013,7 +1108,7 @@ export default function UserDashboard({ setPage }) {
 																			<div className="flex gap-1 justify-center">
 																				<button
 																					onClick={() => {
-																						acceptOffer(listing._id || listing.id, bid.id, 'sell');
+																						finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
 																						showNotification('success', '✅ Accepted!', `From ${bid.bidderName || bid.bidder}`);
 																					}}
 																					title="Accept Bid"
@@ -1144,7 +1239,7 @@ export default function UserDashboard({ setPage }) {
 															<div>
 																<p className="text-sm font-semibold text-gray-900">{bid.bidderName || bid.bidder}</p>
 																<p className="text-xs text-gray-600 mt-1">
-																	Counter: {formatCurrency(bid.counterPrice)} × {formatShares(bid.quantity)}
+																	Counter: {formatCurrency(bid.counterDisplayPrice || bid.counterPrice)} × {formatShares(bid.quantity)}
 																</p>
 																{bid.counterAt && (
 																	<p className="text-xs text-gray-400 mt-1">{formatDate(bid.counterAt)}</p>
@@ -1216,6 +1311,104 @@ export default function UserDashboard({ setPage }) {
 											{listing.closedAt && (
 												<p className="text-xs text-gray-400 mt-3">Closed: {formatDate(listing.closedAt)}</p>
 											)}
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				)}
+
+				{sellSubTab === 'trades' && (
+					<div>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">🤝 My Trades - Upload Proofs</h3>
+						{myTrades.length === 0 ? (
+							<div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+								<div className="text-5xl mb-4">🤝</div>
+								<p className="text-gray-600 font-semibold">No trades yet</p>
+								<p className="text-sm text-gray-500 mt-2">Trades appear here when both parties accept an offer</p>
+							</div>
+						) : (
+							<div className="grid gap-5 md:grid-cols-2">
+								{myTrades.map((trade) => {
+									const isSeller = trade.sellerId._id === user.userId || trade.sellerId === user.userId;
+									const myProofs = isSeller ? trade.proofs?.seller : trade.proofs?.buyer;
+									const proofsUploaded = myProofs && (isSeller ? (myProofs.dpSlip && myProofs.transferConfirmation) : (myProofs.paymentScreenshot && myProofs.utr));
+									
+									return (
+										<div key={trade._id} className={`border-2 rounded-xl p-5 ${
+											trade.status === 'complete' ? 'bg-green-50 border-green-300' :
+											trade.status === 'rejected' ? 'bg-red-50 border-red-300' :
+											'bg-white border-purple-300'
+										}`}>
+											<div className="flex items-start justify-between mb-4">
+												<div>
+													<h4 className="font-semibold text-gray-900">{trade.company} <span className="text-xs text-gray-500 ml-2">({trade.tradeNumber || trade._id})</span></h4>
+													<p className="text-xs text-gray-500">ISIN: {trade.isin}</p>
+													<p className="text-xs text-gray-500 mt-1">Role: <span className="font-semibold">{isSeller ? '📤 SELLER' : '📥 BUYER'}</span></p>
+												</div>
+												<span className={`px-3 py-1 rounded-full text-xs font-bold ${
+													trade.status === 'pending_closure' ? 'bg-yellow-100 text-yellow-700' :
+													trade.status === 'complete' ? 'bg-green-100 text-green-700' :
+													trade.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+												}`}>
+													{trade.status === 'pending_closure' ? '⏳ Pending Closure' : 
+													 trade.status === 'complete' ? '✅ Complete' :
+													 trade.status === 'rejected' ? '❌ Rejected' : trade.status}
+												</span>
+											</div>
+											
+											<div className="bg-white rounded-lg p-4 mb-4 space-y-2">
+												<div className="flex justify-between text-sm">
+													<span className="text-gray-600">Price:</span>
+													<span className="font-bold text-gray-900">₹{trade.price.toLocaleString()}</span>
+												</div>
+												<div className="flex justify-between text-sm">
+													<span className="text-gray-600">Quantity:</span>
+													<span className="font-bold text-gray-900">{trade.quantity.toLocaleString()}</span>
+												</div>
+												<div className="h-px bg-gray-200"></div>
+												<div className="flex justify-between">
+													<span className="text-gray-700 font-semibold">Total Amount:</span>
+													<span className="font-bold text-purple-600 text-lg">₹{trade.totalAmount.toLocaleString()}</span>
+												</div>
+											</div>
+											
+											{trade.status === 'pending_closure' && (
+												<div className="mt-4">
+													{proofsUploaded ? (
+														<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+															<p className="text-sm text-blue-700 font-semibold">✅ Your proofs uploaded</p>
+															<p className="text-xs text-blue-600 mt-1">Waiting for {isSeller ? 'buyer' : 'seller'} & admin verification</p>
+														</div>
+													) : (
+														<button
+															onClick={() => isSeller ? handleSellerProofUpload(trade) : handleBuyerProofUpload(trade)}
+															className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition"
+														>
+															📤 Upload {isSeller ? 'Seller' : 'Buyer'} Proofs
+														</button>
+													)}
+												</div>
+											)}
+											
+											{trade.status === 'complete' && (
+												<div className="mt-4 bg-green-100 border border-green-300 rounded-lg p-3 text-center">
+													<p className="text-sm text-green-700 font-semibold">✅ Trade Completed Successfully</p>
+													{trade.completedAt && <p className="text-xs text-green-600 mt-1">Completed: {new Date(trade.completedAt).toLocaleDateString()}</p>}
+												</div>
+											)}
+											
+											{trade.status === 'rejected' && trade.rejectionReason && (
+												<div className="mt-4 bg-red-100 border border-red-300 rounded-lg p-3">
+													<p className="text-sm text-red-700 font-semibold">❌ Trade Rejected</p>
+													<p className="text-xs text-red-600 mt-1">Reason: {trade.rejectionReason}</p>
+												</div>
+											)}
+											
+											<p className="text-xs text-gray-400 mt-3">
+												Created: {new Date(trade.createdAt).toLocaleDateString()}
+											</p>
 										</div>
 									);
 								})}
@@ -1470,7 +1663,7 @@ export default function UserDashboard({ setPage }) {
 																<>
 																	<button
 																		onClick={() => {
-																			acceptOffer(request._id || request.id, offer.id);
+																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
 																			showNotification('success', 'Accepted! ✅', 'Seller notified.');
 																		}}
 																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
@@ -1905,7 +2098,7 @@ export default function UserDashboard({ setPage }) {
 											<div className="grid grid-cols-2 gap-2">
 												<div>
 													<p className="text-gray-500 text-[9px]">Ask Price</p>
-													<h4 className="text-sm font-semibold text-green-700">{formatCurrency(listing.price)}</h4>
+													<h4 className="text-sm font-semibold text-green-700">{formatCurrency(listing.displayPrice || listing.price)}</h4>
 												</div>
 												<div className="text-right">
 													<p className="text-gray-500 text-[9px]">Quantity</p>
@@ -2437,6 +2630,49 @@ export default function UserDashboard({ setPage }) {
 												</p>
 												<p className="text-xs text-gray-500">Listing Status: {bid.listingStatus || 'Active'}</p>
 											</div>
+											{bid.sellerAccepted && !bid.buyerAccepted && (
+												<div className="mt-3 text-right">
+													<button
+														onClick={async () => {
+															// Buyer confirms seller acceptance
+															await finalAcceptByParty(bid.listingId, bid._id || bid.id, 'sell', 'buyer');
+															showNotification('success', 'Confirmed ✅', 'You have confirmed the seller acceptance.');
+															// Try to wait for a trade to be created on backend and then confirm trade via API
+															fetchListings();
+															let tradeId = null;
+															for (let i = 0; i < 6; i++) {
+																await new Promise(r => setTimeout(r, 400));
+																await fetchListings();
+																try {
+																	const listingsResponse = await listingAPI.getAllListings();
+																	if (listingsResponse && listingsResponse.data) {
+																		const updatedListing = listingsResponse.data.find(l => (l._id || l.id) === bid.listingId);
+																		if (updatedListing && (updatedListing.tradeId || (updatedListing.tradeId && updatedListing.tradeId._id))) {
+																			tradeId = updatedListing.tradeId._id || updatedListing.tradeId;
+																			break;
+																		}
+																	}
+																} catch (e) {
+																	// ignore errors and retry
+																}
+															}
+															if (tradeId) {
+																try {
+																	await tradeAPI.getTrade(tradeId); // ensure trade exists
+																	await tradeAPI.confirmTrade(tradeId);
+																	showNotification('success', 'Trade Confirmed', 'Trade confirmed and sent to admin for verification');
+																	fetchListings();
+																} catch (err) {
+																	console.error('Failed to confirm trade:', err);
+																}
+															}
+														}}
+													className="px-4 py-1 text-sm rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+													>
+														Confirm & Accept
+													</button>
+												</div>
+											)}
 										</div>
 									);
 								})}
@@ -2594,6 +2830,43 @@ export default function UserDashboard({ setPage }) {
 					>
 						Contact Support
 					</button>
+								<button
+									onClick={async () => {
+										try {
+											if (listing.boosted && new Date(listing.boostedUntil) > new Date()) {
+												showNotification('info', 'Boost Already Active', 'This listing is already boosted');
+											} else {
+												const response = await listingAPI.boostListing(listing._id);
+												showNotification('success', 'Boosted', 'Listing boosted for 1 day');
+												// refresh listings
+												fetchListings();
+											}
+										} catch (err) {
+											console.error(err);
+											showNotification('error', 'Boost Failed', err.response?.data?.error || 'Failed to boost');
+										}
+									}}
+									className="px-2 py-1.5 rounded-lg text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-300 hover:bg-purple-100 transition"
+								>
+									🚀
+								</button>
+								<button
+									onClick={async () => {
+										try {
+											if (window.confirm(`Mark ${listing.company} as Sold?`)) {
+												await listingAPI.markSold(listing._id);
+												showNotification('success', 'Marked Sold', 'Listing marked as sold');
+												fetchListings();
+											}
+										} catch (err) {
+											console.error(err);
+											showNotification('error', 'Mark Sold Failed', err.response?.data?.error || 'Failed to mark sold');
+										}
+									}}
+									className="px-2 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-300 hover:bg-gray-100 transition"
+								>
+									🔒
+								</button>
 				</div>
 			</div>
 		);
@@ -2721,14 +2994,16 @@ export default function UserDashboard({ setPage }) {
 		const handleClose = () => setSelectedItem(null);
 
 		// Direct accept for pending bids/offers (no counter yet)
-		const onAccept = (interactionId) => {
-			if (type === 'sell') {
-				acceptBid(item.id, interactionId);
-				showNotification('success', 'Bid accepted ✅', 'We have notified the bidder. Await admin approval.');
-			} else {
-				acceptOffer(item.id, interactionId);
-				showNotification('success', 'Offer accepted ✅', 'Seller will be notified immediately.');
-			}
+			const onAccept = (interactionId) => {
+				if (type === 'sell') {
+					// Seller accepts bid — mark sellerAccepted, wait for buyer confirmation
+					finalAcceptByParty(item.id, interactionId, 'sell', 'seller');
+					showNotification('success', 'Bid accepted ✅', 'Buyer will be notified. Please wait for confirmation.');
+				} else {
+					// Buyer accepts offer — mark buyerAccepted
+					finalAcceptByParty(item.id, interactionId, 'buy', 'buyer');
+					showNotification('success', 'Offer accepted ✅', 'Seller will be notified.');
+				}
 			setSelectedItem(null);
 		};
 
@@ -3322,6 +3597,150 @@ export default function UserDashboard({ setPage }) {
 
 			{showPasswordModal && (
 				<ChangePassword onClose={() => setShowPasswordModal(false)} />
+			)}
+
+			{/* Proof Upload Modal */}
+			{showProofUpload && selectedTrade && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+					<div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-fadeIn max-h-[90vh] overflow-y-auto">
+						<div className="flex justify-between items-start mb-6">
+							<div>
+								<h2 className="text-2xl font-bold text-gray-900">Upload Transaction Proofs</h2>
+								<p className="text-sm text-gray-500 mt-1">Trade ID: {selectedTrade.tradeNumber || selectedTrade._id}</p>
+								<p className="text-sm text-gray-600 mt-1">Company: {selectedTrade.company}</p>
+							</div>
+							<button onClick={() => {
+								setShowProofUpload(false);
+								setProofFiles({ dpSlip: null, transferConfirmation: null, paymentScreenshot: null, utr: '' });
+							}} className="text-gray-400 hover:text-gray-600 transition">
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+						
+						<div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 mb-6">
+							<div className="grid grid-cols-2 gap-4 text-sm">
+								<div>
+									<span className="text-gray-600">Price:</span>
+									<span className="font-bold text-gray-900 ml-2">₹{selectedTrade.price.toLocaleString()}</span>
+								</div>
+								<div>
+									<span className="text-gray-600">Quantity:</span>
+									<span className="font-bold text-gray-900 ml-2">{selectedTrade.quantity.toLocaleString()}</span>
+								</div>
+								<div className="col-span-2">
+									<span className="text-gray-600">Total Amount:</span>
+									<span className="font-bold text-purple-600 ml-2 text-lg">₹{selectedTrade.totalAmount.toLocaleString()}</span>
+								</div>
+							</div>
+						</div>
+						
+						{(selectedTrade.sellerId._id === user.userId || selectedTrade.sellerId === user.userId) ? (
+							// Seller proofs
+							<div className="space-y-6">
+								<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+									<div className="flex">
+										<div className="flex-shrink-0">
+											<svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+												<path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+											</svg>
+										</div>
+										<div className="ml-3">
+											<p className="text-sm text-yellow-700">As a <strong>SELLER</strong>, you need to upload:</p>
+										</div>
+									</div>
+								</div>
+								
+								<div>
+									<label className="block text-sm font-semibold text-gray-700 mb-2">
+										1. DP Slip (Demat Transfer Proof) *
+									</label>
+									<input
+										type="file"
+										accept="image/*,application/pdf"
+										onChange={(e) => setProofFiles(prev => ({ ...prev, dpSlip: e.target.files[0] }))}
+										className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 outline-none transition"
+									/>
+									{proofFiles.dpSlip && <p className="text-xs text-green-600 mt-1">✓ {proofFiles.dpSlip.name}</p>}
+								</div>
+								
+								<div>
+									<label className="block text-sm font-semibold text-gray-700 mb-2">
+										2. Transfer Confirmation Document *
+									</label>
+									<input
+										type="file"
+										accept="image/*,application/pdf"
+										onChange={(e) => setProofFiles(prev => ({ ...prev, transferConfirmation: e.target.files[0] }))}
+										className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 outline-none transition"
+									/>
+									{proofFiles.transferConfirmation && <p className="text-xs text-green-600 mt-1">✓ {proofFiles.transferConfirmation.name}</p>}
+								</div>
+							</div>
+						) : (
+							// Buyer proofs
+							<div className="space-y-6">
+								<div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+									<div className="flex">
+										<div className="flex-shrink-0">
+											<svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+												<path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+											</svg>
+										</div>
+										<div className="ml-3">
+											<p className="text-sm text-blue-700">As a <strong>BUYER</strong>, you need to upload:</p>
+										</div>
+									</div>
+								</div>
+								
+								<div>
+									<label className="block text-sm font-semibold text-gray-700 mb-2">
+										1. Payment Screenshot *
+									</label>
+									<input
+										type="file"
+										accept="image/*"
+										onChange={(e) => setProofFiles(prev => ({ ...prev, paymentScreenshot: e.target.files[0] }))}
+										className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 outline-none transition"
+									/>
+									{proofFiles.paymentScreenshot && <p className="text-xs text-green-600 mt-1">✓ {proofFiles.paymentScreenshot.name}</p>}
+								</div>
+								
+								<div>
+									<label className="block text-sm font-semibold text-gray-700 mb-2">
+										2. UTR Number (Transaction Reference) *
+									</label>
+									<input
+										type="text"
+										value={proofFiles.utr}
+										onChange={(e) => setProofFiles(prev => ({ ...prev, utr: e.target.value }))}
+										placeholder="Enter 12-digit UTR number"
+										className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-500 outline-none transition"
+									/>
+								</div>
+							</div>
+						)}
+						
+						<div className="flex gap-3 mt-8">
+							<button
+								onClick={() => {
+									setShowProofUpload(false);
+									setProofFiles({ dpSlip: null, transferConfirmation: null, paymentScreenshot: null, utr: '' });
+								}}
+								className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={submitProofs}
+								className="flex-1 px-5 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition"
+							>
+								Upload Proofs
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 
 			{/* Confirmation Modal */}

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { listingAPI } from '../services/api';
+import { listingAPI, tradeAPI } from '../services/api';
 
 export const ListingContext = createContext();
 
@@ -31,6 +31,12 @@ export function ListingProvider({ children }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const computeDisplayValue = (basePrice) => {
+    let display = Number((basePrice * 1.02).toFixed(2));
+    if (basePrice >= 10) display = Math.ceil(display);
+    return display;
   };
 
   // Create Sell Listing
@@ -93,6 +99,28 @@ export function ListingProvider({ children }) {
       }
       return request;
     }));
+  };
+
+  // Helper function to create Trade when both parties accept
+  const createTradeFromAcceptedBid = async (listing, bid) => {
+    try {
+      const tradeData = {
+        bidId: bid._id,
+        buyerId: bid.userId,
+        price: bid.counterPrice || bid.price,
+        quantity: bid.quantity
+      };
+      
+      const response = await listingAPI.createTrade(listing._id, tradeData);
+      console.log('Trade created successfully:', response.data.trade);
+      
+      // Refresh listings to get updated status
+      await fetchListings();
+      return response.data.trade;
+    } catch (error) {
+      console.error('Failed to create trade:', error);
+      return null;
+    }
   };
 
   // Accept Bid (Seller accepts bid)
@@ -162,10 +190,11 @@ export function ListingProvider({ children }) {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
         if (listing._id === listingId) {
-          const updatedBids = listing.bids.map(bid => 
+              const updatedBids = listing.bids.map(bid => 
             bid._id === bidId ? { 
               ...bid, 
               counterPrice: newPrice,
+              counterDisplayPrice: computeDisplayValue(newPrice),
               status: 'counter_offered',
               counterBy: counterBy, // 'seller' or 'buyer'
               buyerAccepted: false,
@@ -185,6 +214,7 @@ export function ListingProvider({ children }) {
             offer.id === bidId ? { 
               ...offer, 
               counterPrice: newPrice,
+              counterDisplayPrice: computeDisplayValue(newPrice),
               status: 'counter_offered',
               counterBy: counterBy, // 'buyer' or 'seller'
               buyerAccepted: false,
@@ -205,10 +235,11 @@ export function ListingProvider({ children }) {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
         if (listing._id === listingId) {
-          const updatedBids = listing.bids.map(bid => 
+            const updatedBids = listing.bids.map(bid => 
             bid._id === bidId ? { 
               ...bid, 
               counterPrice: newPrice,
+              counterDisplayPrice: computeDisplayValue(newPrice),
               status: 'counter_offered',
               counterBy: counterBy,
               buyerAccepted: false,
@@ -229,10 +260,11 @@ export function ListingProvider({ children }) {
     } else {
       setBuyRequests(buyRequests.map(request => {
         if (request._id === listingId) {
-          const updatedOffers = (request.offers || []).map(offer => 
+            const updatedOffers = (request.offers || []).map(offer => 
             offer.id === bidId ? { 
               ...offer, 
               counterPrice: newPrice,
+              counterDisplayPrice: computeDisplayValue(newPrice),
               status: 'counter_offered',
               counterBy: counterBy,
               buyerAccepted: false,
@@ -254,7 +286,7 @@ export function ListingProvider({ children }) {
   };
 
   // Final Accept - Track which party accepted
-  const finalAcceptByParty = (listingId, bidId, type, party) => {
+  const finalAcceptByParty = async (listingId, bidId, type, party) => {
     if (type === 'sell') {
       setSellListings(sellListings.map(listing => {
         if (listing._id === listingId) {
@@ -263,6 +295,12 @@ export function ListingProvider({ children }) {
               const buyerAccepted = party === 'buyer' ? true : bid.buyerAccepted || false;
               const sellerAccepted = party === 'seller' ? true : bid.sellerAccepted || false;
               const bothAccepted = buyerAccepted && sellerAccepted;
+              
+              // If both accepted, create Trade in backend and return it
+              let createdTrade = null;
+              if (bothAccepted) {
+                createdTrade = await createTradeFromAcceptedBid(listing, bid);
+              }
               
               return {
                 ...bid,
@@ -276,17 +314,20 @@ export function ListingProvider({ children }) {
             return bid;
           });
           
-          // If both accepted, mark listing for admin approval
+          // If both accepted, mark listing as pending_closure (ready for proof upload)
           const bothAcceptedBid = updatedBids.find(b => b.bothAccepted);
           return { 
             ...listing, 
             bids: updatedBids,
-            status: bothAcceptedBid ? 'pending_admin_approval' : listing.status,
+            status: bothAcceptedBid ? 'pending_closure' : listing.status,
             acceptedBid: bothAcceptedBid ? bidId : listing.acceptedBid
           };
         }
         return listing;
       }));
+      // When called for sell type, if both parties accepted and createdTrade exists return it.
+      // Because createTradeFromAcceptedBid is async we need to detect it by fetching trades (handled by createTradeFromAcceptedBid). Return null for now.
+      return null;
     } else {
       setBuyRequests(buyRequests.map(request => {
         if (request._id === listingId) {
@@ -310,6 +351,10 @@ export function ListingProvider({ children }) {
           
           // If both accepted, mark request for admin approval
           const bothAcceptedOffer = updatedOffers.find(o => o.bothAccepted);
+          // If both accepted, create trade and update
+          if (bothAcceptedOffer) {
+            createTradeFromAcceptedBid(request, bothAcceptedOffer);
+          }
           return { 
             ...request, 
             offers: updatedOffers,
@@ -319,6 +364,7 @@ export function ListingProvider({ children }) {
         }
         return request;
       }));
+      return null;
     }
   };
 

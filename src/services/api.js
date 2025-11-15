@@ -50,7 +50,11 @@ export const listingAPI = {
   getAllListings: () => api.get('/listings'),
   createSellListing: (listingData) => api.post('/listings/sell', listingData),
   createBuyRequest: (listingData) => api.post('/listings/buy', listingData),
-  placeBid: (listingId, bidData) => api.post(`/listings/${listingId}/bid`, bidData)
+  placeBid: (listingId, bidData) => api.post(`/listings/${listingId}/bid`, bidData),
+  createTrade: (listingId, tradeData) => api.post(`/listings/${listingId}/create-trade`, tradeData)
+  ,
+  boostListing: (listingId) => api.post(`/listings/${listingId}/boost`),
+  markSold: (listingId) => api.post(`/listings/${listingId}/mark-sold`)
 };
 
 // Bid APIs
@@ -68,6 +72,32 @@ export const portfolioAPI = {
   getPortfolio: () => api.get('/portfolio'),
   addTransaction: (transactionData) => api.post('/portfolio/transactions', transactionData),
   updateHoldingPrice: (isin, newPrice) => api.patch(`/portfolio/holdings/${isin}/price`, { newPrice })
+};
+
+// Trade APIs
+export const tradeAPI = {
+  getMyTrades: () => api.get('/trades/my-trades'),
+  getTrade: (tradeId) => api.get(`/trades/${tradeId}`),
+  uploadSellerProofs: (tradeId, formData) => {
+    return axios.post(`${API_BASE_URL}/trades/${tradeId}/seller-proofs`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    });
+  },
+  uploadBuyerProofs: (tradeId, formData) => {
+    return axios.post(`${API_BASE_URL}/trades/${tradeId}/buyer-proofs`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    });
+  },
+  verifyTrade: (tradeId) => api.post(`/trades/${tradeId}/verify`),
+  rejectTrade: (tradeId, reason) => api.post(`/trades/${tradeId}/reject`, { reason })
+  ,
+  confirmTrade: (tradeId) => api.post(`/trades/${tradeId}/confirm`)
 };
 
 export default api;
