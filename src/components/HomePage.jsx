@@ -33,7 +33,7 @@ export default function HomePage({ setPage }) {
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 pt-3 md:pt-4 pb-12 px-8 min-h-screen flex flex-col justify-between relative overflow-hidden">
+      <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 pt-6 md:pt-8 pb-12 px-8 min-h-screen flex flex-col justify-between relative overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute top-20 right-10 w-64 h-64 bg-emerald-200 rounded-full opacity-20 blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-teal-200 rounded-full opacity-20 blur-3xl"></div>

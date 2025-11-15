@@ -25,7 +25,7 @@ export default function Header({ setPage, currentPage }) {
 
   return (
     <header
-      className={`w-full sticky top-0 z-50 transition-all duration-300 backdrop-blur-md ${
+      className={`w-full relative z-40 transition-all duration-300 backdrop-blur-md ${
         isDashboardPage
           ? scrolled
             ? 'bg-white/80 border-b border-gray-200 shadow-sm'
@@ -35,12 +35,12 @@ export default function Header({ setPage, currentPage }) {
             : 'bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50'
       }`}
     >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Taller header so the logo is fully visible */}
-          <div className="flex justify-between items-end gap-6 min-h-[140px] py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Slightly taller than standard header for breathing room */}
+        <div className="flex justify-between items-end gap-6 min-h-[100px] py-4">
 
-          {/* Logo Section - keep large logo but anchor it to the bottom to avoid cropping */}
-          <div className="flex items-end gap-2 h-48">
+          {/* Logo Section - keep large logo while preventing top clipping */}
+          <div className="flex items-end gap-2 h-32">
             <img
               src="/images/logos/nlist_logo.svg"
               alt="NList Logo"
