@@ -321,13 +321,6 @@ export function ListingProvider({ children }) {
               const sellerAccepted = party === 'seller' ? true : bid.sellerAccepted || false;
               const bothAccepted = buyerAccepted && sellerAccepted;
               
-              // If both accepted, create Trade in backend and return it
-              // This local path is a fallback if API call fails; usually backend will handle this
-              let createdTrade = null;
-              if (bothAccepted) {
-                createdTrade = await createTradeFromAcceptedBid(listing, bid);
-              }
-              
               return {
                 ...bid,
                 buyerAccepted,

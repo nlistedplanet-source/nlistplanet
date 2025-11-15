@@ -2830,43 +2830,6 @@ export default function UserDashboard({ setPage }) {
 					>
 						Contact Support
 					</button>
-								<button
-									onClick={async () => {
-										try {
-											if (listing.boosted && new Date(listing.boostedUntil) > new Date()) {
-												showNotification('info', 'Boost Already Active', 'This listing is already boosted');
-											} else {
-												const response = await listingAPI.boostListing(listing._id);
-												showNotification('success', 'Boosted', 'Listing boosted for 1 day');
-												// refresh listings
-												fetchListings();
-											}
-										} catch (err) {
-											console.error(err);
-											showNotification('error', 'Boost Failed', err.response?.data?.error || 'Failed to boost');
-										}
-									}}
-									className="px-2 py-1.5 rounded-lg text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-300 hover:bg-purple-100 transition"
-								>
-									🚀
-								</button>
-								<button
-									onClick={async () => {
-										try {
-											if (window.confirm(`Mark ${listing.company} as Sold?`)) {
-												await listingAPI.markSold(listing._id);
-												showNotification('success', 'Marked Sold', 'Listing marked as sold');
-												fetchListings();
-											}
-										} catch (err) {
-											console.error(err);
-											showNotification('error', 'Mark Sold Failed', err.response?.data?.error || 'Failed to mark sold');
-										}
-									}}
-									className="px-2 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-300 hover:bg-gray-100 transition"
-								>
-									🔒
-								</button>
 				</div>
 			</div>
 		);
