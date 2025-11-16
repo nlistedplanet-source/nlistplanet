@@ -27,12 +27,22 @@ const STATUS_META = {
 };
 
 const INTERACTION_META = {
+	// New clean sell flow statuses
+	pending_seller_response: { icon: '⏳', label: 'Pending Seller', classes: 'bg-yellow-100 text-yellow-700 border border-yellow-200' },
+	accepted_by_seller: { icon: '✅', label: 'Seller Accepted', classes: 'bg-blue-100 text-blue-700 border border-blue-200' },
+	counter_by_seller: { icon: '🔄', label: 'Seller Counter', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
+	counter_by_buyer: { icon: '🔄', label: 'Buyer Counter', classes: 'bg-purple-100 text-purple-700 border border-purple-200' },
+	counter_accepted_by_buyer: { icon: '🤝', label: 'Buyer Accepted', classes: 'bg-green-100 text-green-700 border border-green-200' },
+	counter_accepted_by_seller: { icon: '🤝', label: 'Seller Accepted', classes: 'bg-green-100 text-green-700 border border-green-200' },
+	both_accepted: { icon: '🎉', label: 'Both Accepted', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-300' },
+	rejected_by_seller: { icon: '❌', label: 'Seller Rejected', classes: 'bg-red-100 text-red-700 border border-red-200' },
+	rejected_by_buyer: { icon: '❌', label: 'Buyer Rejected', classes: 'bg-red-100 text-red-700 border border-red-200' },
+	// Legacy statuses (backward compatibility)
 	pending: { icon: '⏳', label: 'Pending', classes: 'bg-slate-100 text-slate-600 border border-slate-200' },
 	accepted: { icon: '✅', label: 'Accepted', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	counter_offered: { icon: '🔄', label: 'Countered', classes: 'bg-orange-100 text-orange-700 border border-orange-200' },
 	counter_accepted_by_bidder: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 	counter_accepted_by_offerer: { icon: '🤝', label: 'Agreed', classes: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
-	both_accepted: { icon: '🎉', label: 'Both Accepted', classes: 'bg-green-100 text-green-700 border border-green-300' },
 	rejected: { icon: '❌', label: 'Rejected', classes: 'bg-rose-100 text-rose-700 border border-rose-200' }
 };
 
@@ -166,6 +176,16 @@ export default function UserDashboard({ setPage }) {
 		createBuyRequest,
 		placeBid,
 		makeOffer,
+		// New clean sell flow functions
+		acceptBidBySeller,
+		counterBidBySeller,
+		rejectBidBySeller,
+		confirmBidByBuyer,
+		acceptCounterByBuyer,
+		reCounterByBuyer,
+		rejectCounterByBuyer,
+		confirmCounterBySeller,
+		// Legacy functions
 		acceptBid,
 		acceptOffer,
 		counterOffer,
@@ -1017,7 +1037,7 @@ export default function UserDashboard({ setPage }) {
 								{filteredOpenListings.map((listing) => {
 									const listingId = listing._id || listing.id;
 									const bidsCount = listing.bids?.length || 0;
-									const pendingBids = listing.bids?.filter(b => b.status === 'pending')?.length || 0;
+									const pendingBids = listing.bids?.filter(b => b.status === 'pending_seller_response')?.length || 0;
 									const negotiatingBids = listing.bids?.filter(b => b.status === 'counter_offered')?.length || 0;
 									const acceptedBids = listing.bids?.filter(b => b.buyerAccepted || b.sellerAccepted || b.bothAccepted)?.length || 0;
 									const isBoostActive = Boolean(listing.boosted && (!listing.boostedUntil || new Date(listing.boostedUntil) > new Date()));
@@ -1208,12 +1228,16 @@ export default function UserDashboard({ setPage }) {
 													</thead>
 													<tbody>
 														{activeBids.map((bid) => {
-															const buyerAccepted = bid.buyerAccepted || false;
-															const sellerAccepted = bid.sellerAccepted || false;
-															const bothAccepted = bid.bothAccepted || (buyerAccepted && sellerAccepted);
+															// New status-based logic
+															const isPendingSellerResponse = bid.status === 'pending_seller_response';
+															const isAcceptedBySeller = bid.status === 'accepted_by_seller';
+															const isCounterBySeller = bid.status === 'counter_by_seller';
+															const isCounterByBuyer = bid.status === 'counter_by_buyer';
+															const isCounterAcceptedByBuyer = bid.status === 'counter_accepted_by_buyer';
+															const isCounterAcceptedBySeller = bid.status === 'counter_accepted_by_seller';
+															const isBothAccepted = bid.status === 'both_accepted';
+															const isRejected = bid.status === 'rejected_by_seller' || bid.status === 'rejected_by_buyer';
 															const currentPrice = bid.counterDisplayPrice || bid.displayPrice || bid.counterPrice || bid.price;
-															const isPending = bid.status === 'pending';
-															const isCountered = bid.status === 'counter_offered';
 															
 															return (
 																<tr key={bid._id || bid.id} className="border-b border-gray-200 hover:bg-purple-50">
@@ -1233,18 +1257,39 @@ export default function UserDashboard({ setPage }) {
 																		<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
 																	</td>
 																	<td className="px-3 py-3">
-																		{bothAccepted ? (
+																		{isBothAccepted ? (
 																			<div className="flex gap-1 justify-center">
-																				<span className="text-xs text-green-700 font-bold">🎉 Deal Done!</span>
+																				<span className="text-xs text-green-700 font-bold">🎉 Both Accepted!</span>
 																			</div>
-																		) : sellerAccepted ? (
-																			<span className="text-xs text-blue-700 font-bold">✅ Waiting buyer</span>
-																		) : isPending ? (
+																		) : isAcceptedBySeller ? (
+																			<span className="text-xs text-blue-700 font-bold">⏳ Waiting buyer confirmation</span>
+																		) : isCounterAcceptedByBuyer ? (
 																			<div className="flex gap-1 justify-center">
 																				<button
-																					onClick={() => {
-																						finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
-																						showNotification('success', '✅ Accepted!', `From ${bid.bidderName || bid.bidder}`);
+																					onClick={async () => {
+																						try {
+																							await confirmCounterBySeller(listing._id || listing.id, bid._id || bid.id);
+																							showNotification('success', '🎉 Deal Confirmed!', 'Trade created!');
+																						} catch (err) {
+																							showNotification('error', 'Failed', err.message);
+																						}
+																					}}
+																					title="Final Confirm - Create Trade"
+																					className="px-2 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 transition font-bold"
+																				>
+																					✅ Confirm Deal
+																				</button>
+																			</div>
+																		) : isPendingSellerResponse ? (
+																			<div className="flex gap-1 justify-center">
+																				<button
+																					onClick={async () => {
+																						try {
+																							await acceptBidBySeller(listing._id || listing.id, bid._id || bid.id);
+																							showNotification('success', '✅ Accepted!', `Waiting for ${bid.bidderName || bid.bidder} to confirm`);
+																						} catch (err) {
+																							showNotification('error', 'Failed', err.message);
+																						}
 																					}}
 																					title="Accept Bid"
 																					className="p-1 rounded bg-green-600 text-white hover:bg-green-700 transition"
@@ -1252,11 +1297,15 @@ export default function UserDashboard({ setPage }) {
 																					<CheckCircle className="w-4 h-4" />
 																				</button>
 																				<button
-																					onClick={() => {
-																						const counterPrice = prompt(`Bid: ₹${bid.price}\nCounter:`);
+																					onClick={async () => {
+																						const counterPrice = prompt(`Bid: ₹${bid.price}\nYour Counter Offer:`);
 																						if (counterPrice && !isNaN(counterPrice)) {
-																							counterOffer(listing._id || listing.id, bid.id, parseFloat(counterPrice), 'sell', 'seller');
-																							showNotification('info', '🔄 Counter!', `₹${counterPrice}`);
+																							try {
+																								await counterBidBySeller(listing._id || listing.id, bid._id || bid.id, parseFloat(counterPrice));
+																								showNotification('info', '🔄 Counter Sent!', `₹${counterPrice}`);
+																							} catch (err) {
+																								showNotification('error', 'Failed', err.message);
+																							}
 																						}
 																					}}
 																					title="Counter Offer"
@@ -1265,10 +1314,14 @@ export default function UserDashboard({ setPage }) {
 																					🔄
 																				</button>
 																				<button
-																					onClick={() => {
-																						if (window.confirm(`Reject ${bid.bidderName || bid.bidder}?`)) {
-																							rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																							showNotification('warning', '❌ Rejected', 'Done');
+																					onClick={async () => {
+																						if (window.confirm(`Reject bid from ${bid.bidderName || bid.bidder}?`)) {
+																							try {
+																								await rejectBidBySeller(listing._id || listing.id, bid._id || bid.id, 'Not interested');
+																								showNotification('warning', '❌ Rejected', 'Bid rejected');
+																							} catch (err) {
+																								showNotification('error', 'Failed', err.message);
+																							}
 																						}
 																					}}
 																					title="Reject Bid"
@@ -1276,18 +1329,59 @@ export default function UserDashboard({ setPage }) {
 																				>
 																					❌
 																				</button>
+																			</div>
+																		) : isCounterByBuyer ? (
+																			<div className="flex gap-1 justify-center">
 																				<button
-																					onClick={() => {
-																						if (window.confirm(`Mark as sold to ${bid.bidderName || bid.bidder}?`)) {
-																							// Mark as sold functionality
-																							showNotification('success', '✅ Marked Sold', 'Transaction completed');
+																					onClick={async () => {
+																						try {
+																							await acceptBidBySeller(listing._id || listing.id, bid._id || bid.id);
+																							showNotification('success', '✅ Counter Accepted!', 'Waiting buyer to confirm');
+																						} catch (err) {
+																							showNotification('error', 'Failed', err.message);
 																						}
 																					}}
-																					title="Mark Sold"
-																					className="p-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+																					className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700"
 																				>
-																					✓
+																					✅ Accept ₹{bid.counterPrice}
 																				</button>
+																				<button
+																					onClick={async () => {
+																						const newPrice = prompt(`Buyer offered: ₹${bid.counterPrice}\nYour Counter:`);
+																						if (newPrice && !isNaN(newPrice)) {
+																							try {
+																								await counterBidBySeller(listing._id || listing.id, bid._id || bid.id, parseFloat(newPrice));
+																								showNotification('info', '🔄 Re-Counter', `₹${newPrice}`);
+																							} catch (err) {
+																								showNotification('error', 'Failed', err.message);
+																							}
+																						}
+																					}}
+																					className="px-2 py-1 text-xs rounded bg-orange-600 text-white hover:bg-orange-700"
+																				>
+																					🔄 Counter
+																				</button>
+																				<button
+																					onClick={async () => {
+																						if (window.confirm('Reject buyer counter?')) {
+																							try {
+																								await rejectBidBySeller(listing._id || listing.id, bid._id || bid.id, 'Counter not acceptable');
+																								showNotification('warning', '❌ Rejected', 'Counter rejected');
+																							} catch (err) {
+																								showNotification('error', 'Failed', err.message);
+																							}
+																						}
+																					}}
+																					className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
+																				>
+																					❌
+																				</button>
+																			</div>
+																		) : isRejected ? (
+																			<span className="text-xs text-red-700 font-bold">❌ Rejected</span>
+																		) : (
+																			<span className="text-xs text-gray-500">{bid.status}</span>
+																		)}
 																			</div>
 																		) : isCountered ? (
 																			<div className="flex gap-1 justify-center">
