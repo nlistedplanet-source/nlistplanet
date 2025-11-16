@@ -1039,7 +1039,7 @@ export default function UserDashboard({ setPage }) {
 									const bidsCount = listing.bids?.length || 0;
 									const pendingBids = listing.bids?.filter(b => b.status === 'pending_seller_response')?.length || 0;
 									const negotiatingBids = listing.bids?.filter(b => b.status === 'counter_offered')?.length || 0;
-									const acceptedBids = listing.bids?.filter(b => b.buyerAccepted || b.sellerAccepted || b.bothAccepted)?.length || 0;
+									const acceptedBids = listing.bids?.filter(b => ['accepted_by_seller', 'both_accepted', 'counter_accepted_by_buyer', 'counter_accepted_by_seller'].includes(b.status))?.length || 0;
 									const isBoostActive = Boolean(listing.boosted && (!listing.boostedUntil || new Date(listing.boostedUntil) > new Date()));
 									const boostExpiresLabel = isBoostActive ? formatBoostRemaining(listing.boostedUntil) : null;
 									const compactQty = formatQtyShort(listing.shares);
@@ -1254,7 +1254,7 @@ export default function UserDashboard({ setPage }) {
 																		<p className="text-sm font-bold text-gray-800">{formatQtyShort(bid.quantity)}</p>
 																	</td>
 																	<td className="px-3 py-3 text-center">
-																		<InteractionBadge status={bothAccepted ? 'both_accepted' : bid.status} />
+																		<InteractionBadge status={bid.status} />
 																	</td>
 																	<td className="px-3 py-3">
 																		{isBothAccepted ? (
@@ -1382,46 +1382,6 @@ export default function UserDashboard({ setPage }) {
 																		) : (
 																			<span className="text-xs text-gray-500">{bid.status}</span>
 																		)}
-																			</div>
-																		) : isCountered ? (
-																			<div className="flex gap-1 justify-center">
-																				<button
-																					onClick={() => {
-																						finalAcceptByParty(listing._id || listing.id, bid.id, 'sell', 'seller');
-																						showNotification('success', '✅ Accepted!', buyerAccepted ? 'Done!' : 'Waiting buyer...');
-																					}}
-																					title="Accept Counter"
-																					className="p-1 rounded bg-green-600 text-white hover:bg-green-700 transition"
-																				>
-																					<CheckCircle className="w-4 h-4" />
-																				</button>
-																				<button
-																					onClick={() => {
-																						const newPrice = prompt(`Current: ₹${currentPrice}\nRe-counter:`);
-																						if (newPrice && !isNaN(newPrice)) {
-																							reCounterOffer(listing._id || listing.id, bid.id, parseFloat(newPrice), 'sell', 'seller');
-																							showNotification('info', '🔄 Re-Counter!', `₹${newPrice}`);
-																						}
-																					}}
-																					title="Re-Counter"
-																					className="p-1 rounded bg-orange-600 text-white hover:bg-orange-700 transition"
-																				>
-																					🔄
-																				</button>
-																				<button
-																					onClick={() => {
-																						if (window.confirm('Reject?')) {
-																							rejectCounterOffer(listing._id || listing.id, bid.id, 'sell');
-																							showNotification('warning', '❌ Rejected', 'Ended');
-																						}
-																					}}
-																					title="Reject"
-																					className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition"
-																				>
-																					❌
-																				</button>
-																			</div>
-																		) : null}
 																	</td>
 																</tr>
 															);
@@ -1703,7 +1663,7 @@ export default function UserDashboard({ setPage }) {
 						const hasOffers = request.offers && request.offers.length > 0;
 						const pendingOffers = request.offers?.filter(o => o.status === 'pending').length || 0;
 						const counterOffers = request.offers?.filter(o => o.status === 'counter_offered').length || 0;
-						const acceptedOffers = request.offers?.filter(o => o.status === 'accepted' || o.bothAccepted).length || 0;
+						const acceptedOffers = request.offers?.filter(o => ['accepted', 'both_accepted'].includes(o.status)).length || 0;
 						
 						return (
 							<div key={request._id || request.id} className="bg-white border border-blue-200 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-200">
@@ -1842,9 +1802,8 @@ export default function UserDashboard({ setPage }) {
 											{request.offers?.map((offer) => {
 												const isPending = offer.status === 'pending';
 												const isCountered = offer.status === 'counter_offered';
-												const isBothAccepted = offer.bothAccepted || offer.status === 'both_accepted';
-												const buyerAccepted = offer.buyerAccepted || false;
-												const sellerAccepted = offer.sellerAccepted || false;
+												const isBothAccepted = offer.status === 'both_accepted';
+												
 												
 												return (
 													<div key={offer._id || offer.id} className={`rounded-lg p-3 border ${
@@ -1873,11 +1832,11 @@ export default function UserDashboard({ setPage }) {
 															<div className="bg-white rounded p-2 mb-2 border border-gray-200">
 																<p className="text-[10px] font-semibold text-gray-600 mb-1">Status:</p>
 																<div className="flex gap-1.5 text-[10px]">
-																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${buyerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-																		🛒 {buyerAccepted ? '✅' : '⏳'}
+																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+																		🛒 {['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? '✅' : '⏳'}
 																	</span>
-																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${sellerAccepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-																		📈 {sellerAccepted ? '✅' : '⏳'}
+																	<span className={`px-1.5 py-0.5 rounded-full font-semibold ${['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+																		📈 {['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? '✅' : '⏳'}
 																	</span>
 																</div>
 															</div>
@@ -1921,12 +1880,12 @@ export default function UserDashboard({ setPage }) {
 																		❌
 																	</button>
 																</>
-															) : isCountered && !buyerAccepted ? (
+															) : isCountered && !['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? (
 																<>
 																	<button
 																		onClick={() => {
 																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
-																			showNotification('success', sellerAccepted ? 'Deal Done! 🎉' : 'Accepted! ✅', sellerAccepted ? 'Both agreed!' : 'Waiting seller...');
+																			showNotification('success', ['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? 'Deal Done! 🎉' : 'Accepted! ✅', ['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? 'Both agreed!' : 'Waiting seller...');
 																		}}
 																		className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-md transition"
 																	>
@@ -1954,7 +1913,7 @@ export default function UserDashboard({ setPage }) {
 																		❌
 																	</button>
 																</>
-															) : buyerAccepted ? (
+															) : ['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? (
 																<div className="w-full bg-blue-100 border border-blue-300 rounded p-2 text-center">
 																	<p className="text-xs font-semibold text-blue-700">⏳ Waiting for seller...</p>
 																</div>
@@ -2004,12 +1963,8 @@ export default function UserDashboard({ setPage }) {
 											
 											<div className="space-y-2">
 												{counterOffers.map((offer) => {
-													const buyerAccepted = offer.buyerAccepted || false;
-													const sellerAccepted = offer.sellerAccepted || false;
-													const bothAccepted = offer.bothAccepted || (buyerAccepted && sellerAccepted);
-													const currentPrice = offer.counterPrice || offer.price;
-													
-													return (
+												const bothAccepted = offer.status === 'both_accepted';
+												const currentPrice = offer.counterPrice || offer.price;													return (
 														<div key={offer._id || offer.id} className={`rounded-lg p-3 border ${
 															bothAccepted ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300'
 														}`}>
@@ -2018,7 +1973,7 @@ export default function UserDashboard({ setPage }) {
 																	<p className="text-sm font-bold text-gray-900">💼 {offer.sellerName || offer.seller}</p>
 																	<p className="text-[10px] text-gray-500">{formatDateTime(offer.counterAt || offer.createdAt)}</p>
 																</div>
-																<InteractionBadge status={bothAccepted ? 'both_accepted' : offer.status} />
+																<InteractionBadge status={offer.status} />
 															</div>
 															
 															<div className="grid grid-cols-2 gap-2 mb-2">
@@ -2036,16 +1991,16 @@ export default function UserDashboard({ setPage }) {
 																<p className="text-[10px] font-bold text-gray-700 mb-1.5">Status:</p>
 																<div className="grid grid-cols-2 gap-1.5">
 																	<div className={`rounded p-1.5 border text-center ${
-																		buyerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
+																		['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
 																	}`}>
 																		<p className="text-[10px] text-gray-600">🛒 You</p>
-																		<p className="text-lg">{buyerAccepted ? '✅' : '⏳'}</p>
+																		<p className="text-lg">{['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? '✅' : '⏳'}</p>
 																	</div>
 																	<div className={`rounded p-1.5 border text-center ${
-																		sellerAccepted ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
+																		['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
 																	}`}>
 																		<p className="text-[10px] text-gray-600">📈 Seller</p>
-																		<p className="text-lg">{sellerAccepted ? '✅' : '⏳'}</p>
+																		<p className="text-lg">{['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(offer.status) ? '✅' : '⏳'}</p>
 																	</div>
 																</div>
 															</div>
@@ -2055,7 +2010,7 @@ export default function UserDashboard({ setPage }) {
 																	<p className="text-xs font-bold text-green-700">🎉 Deal Done!</p>
 																	<p className="text-[10px] text-green-600">Admin approval pending</p>
 																</div>
-															) : buyerAccepted ? (
+															) : ['counter_accepted_by_buyer', 'both_accepted'].includes(offer.status) ? (
 																<div className="bg-blue-100 border border-blue-300 rounded p-2 text-center">
 																	<p className="text-xs font-bold text-blue-700">✅ You accepted</p>
 																	<p className="text-[10px] text-blue-600">Waiting seller...</p>
@@ -2065,7 +2020,7 @@ export default function UserDashboard({ setPage }) {
 																	<button
 																		onClick={() => {
 																			finalAcceptByParty(request._id || request.id, offer.id, 'buy', 'buyer');
-																			showNotification('success', '✅ Accepted!', sellerAccepted ? 'Done!' : 'Waiting seller...');
+																			showNotification('success', '✅ Accepted!', offer.status === 'counter_accepted_by_seller' ? 'Done!' : 'Waiting seller...');
 																		}}
 																		className="w-full px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-md transition"
 																	>
@@ -3471,21 +3426,12 @@ export default function UserDashboard({ setPage }) {
 								// Determine current state and available actions
 								const isPending = interaction.status === 'pending';
 								const isCounterOffered = interaction.status === 'counter_offered';
-								const isBothAccepted = interaction.status === 'both_accepted' || interaction.bothAccepted;
-								
-								// Check acceptance status
-								const buyerAccepted = interaction.buyerAccepted || false;
-								const sellerAccepted = interaction.sellerAccepted || false;
-								const myPartyAccepted = type === 'sell' ? sellerAccepted : buyerAccepted;
-								
-								// Available actions
-								const canDirectAccept = isPending && isOwner;
-								const canInitialCounter = isPending && isOwner;
-								const canReCounter = isCounterOffered && !myPartyAccepted;
-								const canAcceptCounter = isCounterOffered && !myPartyAccepted;
-								const canReject = (isPending || isCounterOffered) && !isBothAccepted;
-								
-								return (
+							const isBothAccepted = interaction.status === 'both_accepted';								// Available actions
+							const canDirectAccept = isPending && isOwner;
+							const canInitialCounter = isPending && isOwner;
+							const canReCounter = isCounterOffered;
+							const canAcceptCounter = isCounterOffered;
+							const canReject = (isPending || isCounterOffered) && !isBothAccepted;								return (
 									<div key={interaction.id} className="border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
 										<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 											<div>
@@ -3514,13 +3460,13 @@ export default function UserDashboard({ setPage }) {
 										{/* Acceptance Status */}
 										{isCounterOffered && (
 											<div className="mt-3 grid grid-cols-2 gap-2">
-												<div className={`p-2 rounded-lg border ${sellerAccepted ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
+												<div className={`p-2 rounded-lg border ${['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(interaction.status) ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
 													<p className="text-xs font-semibold text-gray-700">🏷️ Seller</p>
-													<p className="text-xs">{sellerAccepted ? '✅ Accepted' : '⏳ Pending'}</p>
+													<p className="text-xs">{['counter_accepted_by_seller', 'both_accepted', 'accepted_by_seller'].includes(interaction.status) ? '✅ Accepted' : '⏳ Pending'}</p>
 												</div>
-												<div className={`p-2 rounded-lg border ${buyerAccepted ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
+												<div className={`p-2 rounded-lg border ${['counter_accepted_by_buyer', 'both_accepted'].includes(interaction.status) ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
 													<p className="text-xs font-semibold text-gray-700">🛒 Buyer</p>
-													<p className="text-xs">{buyerAccepted ? '✅ Accepted' : '⏳ Pending'}</p>
+													<p className="text-xs">{['counter_accepted_by_buyer', 'both_accepted'].includes(interaction.status) ? '✅ Accepted' : '⏳ Pending'}</p>
 												</div>
 											</div>
 										)}
