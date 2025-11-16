@@ -131,7 +131,119 @@ export function ListingProvider({ children }) {
     }
   };
 
-  // Accept Bid (Seller accepts bid)
+  // SELLER ACTIONS - New Clean Flow
+  
+  // Seller accepts bid directly (goes to "accepted_by_seller" -> buyer must confirm)
+  const acceptBidBySeller = async (listingId, bidId) => {
+    try {
+      const response = await listingAPI.acceptBidBySeller(listingId, bidId);
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to accept bid:', error);
+      throw error;
+    }
+  };
+  
+  // Seller counters with new price
+  const counterBidBySeller = async (listingId, bidId, counterPrice, message) => {
+    try {
+      const response = await listingAPI.counterBidBySeller(listingId, bidId, { counterPrice, message });
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to counter bid:', error);
+      throw error;
+    }
+  };
+  
+  // Seller rejects bid
+  const rejectBidBySeller = async (listingId, bidId, reason) => {
+    try {
+      const response = await listingAPI.rejectBidBySeller(listingId, bidId, { reason });
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to reject bid:', error);
+      throw error;
+    }
+  };
+  
+  // BUYER ACTIONS - New Clean Flow
+  
+  // Buyer confirms seller's acceptance (creates trade)
+  const confirmBidByBuyer = async (listingId, bidId) => {
+    try {
+      const response = await listingAPI.confirmBidByBuyer(listingId, bidId);
+      const updatedListing = response.data.listing;
+      const trade = response.data.trade;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      await fetchListings(); // Refresh to get updated data
+      return { success: true, listing: updatedListing, trade };
+    } catch (error) {
+      console.error('Failed to confirm bid:', error);
+      throw error;
+    }
+  };
+  
+  // Buyer accepts seller's counter offer
+  const acceptCounterByBuyer = async (listingId, bidId) => {
+    try {
+      const response = await listingAPI.acceptCounterByBuyer(listingId, bidId);
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to accept counter:', error);
+      throw error;
+    }
+  };
+  
+  // Buyer re-counters with new price
+  const reCounterByBuyer = async (listingId, bidId, counterPrice, message) => {
+    try {
+      const response = await listingAPI.reCounterByBuyer(listingId, bidId, { counterPrice, message });
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to re-counter:', error);
+      throw error;
+    }
+  };
+  
+  // Buyer rejects seller's counter
+  const rejectCounterByBuyer = async (listingId, bidId, reason) => {
+    try {
+      const response = await listingAPI.rejectCounterByBuyer(listingId, bidId, { reason });
+      const updatedListing = response.data.listing;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      return { success: true, listing: updatedListing };
+    } catch (error) {
+      console.error('Failed to reject counter:', error);
+      throw error;
+    }
+  };
+  
+  // Seller confirms buyer's counter acceptance (creates trade)
+  const confirmCounterBySeller = async (listingId, bidId) => {
+    try {
+      const response = await listingAPI.confirmCounterBySeller(listingId, bidId);
+      const updatedListing = response.data.listing;
+      const trade = response.data.trade;
+      setSellListings(sellListings.map(l => l._id === listingId ? updatedListing : l));
+      await fetchListings(); // Refresh to get updated data
+      return { success: true, listing: updatedListing, trade };
+    } catch (error) {
+      console.error('Failed to confirm counter:', error);
+      throw error;
+    }
+  };
+  
+  // LEGACY - Keep old acceptBid for backward compatibility
   const acceptBid = (listingId, bidId) => {
     setSellListings(sellListings.map(listing => {
       if (listing._id === listingId) {
@@ -500,6 +612,18 @@ export function ListingProvider({ children }) {
       createBuyRequest,
       placeBid,
       makeOffer,
+      
+      // New Clean Sell Flow Actions
+      acceptBidBySeller,
+      counterBidBySeller,
+      rejectBidBySeller,
+      confirmBidByBuyer,
+      acceptCounterByBuyer,
+      reCounterByBuyer,
+      rejectCounterByBuyer,
+      confirmCounterBySeller,
+      
+      // Legacy functions (for backward compatibility)
       acceptBid,
       acceptOffer,
       adminApprove,
@@ -509,6 +633,7 @@ export function ListingProvider({ children }) {
       finalAcceptByParty,
       acceptCounterOffer,
       rejectCounterOffer,
+      
       boostListing,
       markListingSold,
       fetchListings

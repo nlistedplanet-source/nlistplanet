@@ -51,9 +51,27 @@ export const listingAPI = {
   createSellListing: (listingData) => api.post('/listings/sell', listingData),
   createBuyRequest: (listingData) => api.post('/listings/buy', listingData),
   placeBid: (listingId, bidData) => api.post(`/listings/${listingId}/bid`, bidData),
+  
+  // New Clean Sell Flow Endpoints
+  acceptBidBySeller: (listingId, bidId) => api.post(`/listings/${listingId}/bids/${bidId}/accept`),
+  counterBidBySeller: (listingId, bidId, data) => api.post(`/listings/${listingId}/bids/${bidId}/counter`, data),
+  rejectBidBySeller: (listingId, bidId, data) => api.post(`/listings/${listingId}/bids/${bidId}/reject`, data),
+  
+  confirmBidByBuyer: (listingId, bidId) => api.post(`/listings/${listingId}/bids/${bidId}/buyer-confirm`),
+  acceptCounterByBuyer: (listingId, bidId) => api.post(`/listings/${listingId}/bids/${bidId}/accept-counter`),
+  reCounterByBuyer: (listingId, bidId, data) => api.post(`/listings/${listingId}/bids/${bidId}/re-counter`, data),
+  rejectCounterByBuyer: (listingId, bidId, data) => api.post(`/listings/${listingId}/bids/${bidId}/reject-counter`, data),
+  
+  confirmCounterBySeller: (listingId, bidId) => api.post(`/listings/${listingId}/bids/${bidId}/seller-confirm-counter`),
+  
+  // Admin endpoints
+  adminApproveTrade: (tradeId) => api.post(`/listings/trades/${tradeId}/admin-approve`),
+  adminRejectTrade: (tradeId, data) => api.post(`/listings/trades/${tradeId}/admin-reject`, data),
+  
+  // Legacy endpoints (keep for backward compatibility)
   acceptBid: (listingId, bidId, party) => api.post(`/listings/${listingId}/bid/${bidId}/accept`, { party }),
-  createTrade: (listingId, tradeData) => api.post(`/listings/${listingId}/create-trade`, tradeData)
-  ,
+  createTrade: (listingId, tradeData) => api.post(`/listings/${listingId}/create-trade`, tradeData),
+  
   boostListing: (listingId) => api.post(`/listings/${listingId}/boost`),
   markSold: (listingId) => api.post(`/listings/${listingId}/mark-sold`)
 };
