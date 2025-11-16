@@ -151,7 +151,7 @@ export default function HomePage({ setPage }) {
           {/* CTA Button */}
           <div className="text-center">
             <button 
-              onClick={() => setShowLoginModal(true)}
+              onClick={() => setPage('marketplace')}
               className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
             >
               Explore Now 
@@ -319,7 +319,7 @@ export default function HomePage({ setPage }) {
           {/* CTA Button */}
           <div className="text-center">
             <button 
-              onClick={() => setShowLoginModal(true)}
+              onClick={() => setPage('marketplace')}
               className="bg-gradient-to-r from-purple-600 to-violet-700 text-white px-10 py-4 rounded-full font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
             >
               Start Selling

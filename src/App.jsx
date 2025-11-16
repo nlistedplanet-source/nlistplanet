@@ -48,6 +48,8 @@ export default function App() {
     switch (page) {
       case 'home':
         return <HomePage setPage={setPage} />;
+      case 'marketplace':
+        return <UserDashboard setPage={setPage} initialTab="marketplace" />;
       case 'about':
         return <AboutUs setPage={setPage} />;
       case 'admin':
@@ -66,7 +68,7 @@ export default function App() {
           <CompanyProvider>
             <PortfolioProvider>
               <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-                {page !== 'user' && page !== 'admin' && page !== 'about' && <Header setPage={setPage} currentPage={page} />}
+                {page !== 'user' && page !== 'admin' && page !== 'about' && page !== 'marketplace' && <Header setPage={setPage} currentPage={page} />}
                 {renderPage()}
               </div>
               <Analytics />

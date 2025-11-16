@@ -63,15 +63,32 @@ export default function Header({ setPage, currentPage }) {
                 Home
               </button>
               <button
-                onClick={() => setPage('about')}
+                onClick={() => setPage('marketplace')}
+                title="Unlisted Shares Mall"
                 className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  currentPage === 'about'
+                  currentPage === 'marketplace'
                     ? 'text-purple-700 bg-purple-50 border border-purple-100'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                About
+                USM
               </button>
+              <a
+                href="https://nlisted.in/blog"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                Blog
+              </a>
+              <a
+                href="https://nlisted.in/how-it-works"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                How it Works
+              </a>
             </nav>
           )}
 
@@ -195,17 +212,35 @@ export default function Header({ setPage, currentPage }) {
               </button>
               <button
                 onClick={() => {
-                  setPage('about');
+                  setPage('marketplace');
                   setShowMobileNav(false);
                 }}
                 className={`w-full text-left px-3 py-2 rounded-lg font-medium text-sm ${
-                  currentPage === 'about'
+                  currentPage === 'marketplace'
                     ? 'text-purple-700 bg-purple-50 border border-purple-100'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                About
+                USM (Unlisted Shares Mall)
               </button>
+              <a
+                href="https://nlisted.in/blog"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowMobileNav(false)}
+                className="w-full text-left px-3 py-2 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                Blog
+              </a>
+              <a
+                href="https://nlisted.in/how-it-works"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowMobileNav(false)}
+                className="w-full text-left px-3 py-2 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                How it Works
+              </a>
             </div>
           </div>
         )}
