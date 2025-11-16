@@ -643,7 +643,12 @@ export default function UserDashboard({ setPage }) {
 			if (listing.bids && listing.bids.length > 0) {
 				listing.bids.forEach(bid => {
 					// Check if this bid belongs to current user
-					if (bid.bidder === user.email || bid.bidderName === user.name || bid.bidderId === user._id || bid.bidderId === user.id) {
+					const userIdMatch = bid.userId?.toString() === user._id || bid.userId?.toString() === user.id;
+					const bidderMatch = bid.bidder === user.email;
+					const bidderNameMatch = bid.bidderName === user.name || bid.bidderName === user.username;
+					const bidderIdMatch = bid.bidderId?.toString() === user._id || bid.bidderId?.toString() === user.id;
+					
+					if (userIdMatch || bidderMatch || bidderNameMatch || bidderIdMatch) {
 						bids.push({
 							...bid,
 							listingId: listing._id || listing.id,
@@ -812,6 +817,8 @@ export default function UserDashboard({ setPage }) {
 				tradeContext.item._id || tradeContext.item.id,
 				{ price: rawPrice, quantity: rawQty, bidder: user.email, bidderName: user.name }
 			);
+			// Refresh listings to show the new bid in UI
+			await fetchListings();
 			showNotification('success', 'Bid submitted! 🎯', `Bid of ₹${rawPrice} for ${rawQty} shares submitted.`);
 			setTradeContext(null);
 			setSelectedItem(null);

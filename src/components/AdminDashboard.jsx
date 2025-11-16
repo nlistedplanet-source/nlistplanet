@@ -1773,42 +1773,78 @@ export default function AdminDashboard({ setPage }) {
                 </h3>
                 {((selectedItem.type === 'sell' && selectedItem.bids?.length > 0) || 
                   (selectedItem.type === 'buy' && selectedItem.offers?.length > 0)) ? (
-                  <div className="space-y-3">
-                    {(selectedItem.type === 'sell' ? selectedItem.bids : selectedItem.offers).map((item, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-bold text-gray-800">
-                              {selectedItem.type === 'sell' ? item.bidder : item.seller}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {new Date(item.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            item.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                            item.status === 'countered' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-200 text-gray-700'
-                          }`}>
-                            {item.status || 'pending'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600">Price</p>
-                            <p className="font-bold text-emerald-600">₹{item.price}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Quantity</p>
-                            <p className="font-bold text-gray-800">{item.quantity} shares</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Total</p>
-                            <p className="font-bold text-blue-600">₹{(item.price * item.quantity).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                      <thead className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-bold">Date</th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">ISIN</th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">Share Name</th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">
+                            {selectedItem.type === 'sell' ? 'Seller' : 'Buyer'}
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">Ask Price</th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">
+                            {selectedItem.type === 'sell' ? 'Buyer' : 'Seller'}
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">
+                            {selectedItem.type === 'sell' ? 'Bid Price' : 'Offer Price'}
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">Quantity</th>
+                          <th className="px-4 py-3 text-left text-sm font-bold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(selectedItem.type === 'sell' ? selectedItem.bids : selectedItem.offers).map((item, index) => (
+                          <tr key={index} className={`border-t border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition`}>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {new Date(item.createdAt || item.timestamp).toLocaleDateString('en-IN', { 
+                                day: '2-digit', 
+                                month: 'short', 
+                                year: 'numeric' 
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-mono text-gray-800">
+                              {selectedItem.isin || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-800">
+                              {selectedItem.company}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {selectedItem.type === 'sell' 
+                                ? (selectedItem.sellerName || selectedItem.seller || 'N/A')
+                                : (selectedItem.buyerName || selectedItem.buyer || 'N/A')
+                              }
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-emerald-600">
+                              ₹{selectedItem.price}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {selectedItem.type === 'sell' 
+                                ? (item.bidderName || item.bidder || 'N/A')
+                                : (item.sellerName || item.seller || 'N/A')
+                              }
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-blue-600">
+                              ₹{item.price}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {item.quantity?.toLocaleString()} shares
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                item.status === 'accepted' || item.status === 'both_accepted' ? 'bg-green-100 text-green-700' :
+                                item.status === 'counter_offered' || item.status === 'countered' ? 'bg-yellow-100 text-yellow-700' :
+                                item.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-200 text-gray-700'
+                              }`}>
+                                {item.status || 'pending'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <p className="text-gray-600 text-center py-4">
